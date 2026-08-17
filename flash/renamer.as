@@ -50,7 +50,13 @@ var KEY_PAD = 20;   // padding around the key name inside its cap
 // Tying both to one figure means neither can be adjusted without disturbing the
 // other.
 var KEY_BOLD_SPREAD = 1.12;   // how much wider to cut the cap
-var KEY_BOLD_DRIFT = 0.08;    // how far the drawn centre sits right of measured
+var KEY_BOLD_DRIFT = 0.12;    // how far the drawn centre sits right of measured
+
+// What is left over after that correction does not scale with the word: names
+// of every length lean the same way. It is the cap itself -- the plate is drawn
+// in perspective with an uneven bevel, so the centre of its lit face is not the
+// centre of its box. A fixed shift, not a proportional one.
+var KEY_FACE_OFFSET = 2;
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
@@ -171,7 +177,7 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     // right: its centre ends up half that gain to the right of the cap's.
     // Widening the cap cannot fix that -- only moving the field can.
     var drift = keyText.textWidth * KEY_BOLD_DRIFT;
-    keyText._x = capW / 2 - KEY_BOX / 2 - drift / 2;
+    keyText._x = capW / 2 - KEY_BOX / 2 - drift / 2 - KEY_FACE_OFFSET;
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
