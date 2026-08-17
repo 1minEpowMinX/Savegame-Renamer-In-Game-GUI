@@ -42,8 +42,15 @@ var KEY_PAD = 20;   // padding around the key name inside its cap
 // DefaultFontBold maps to the same typeface as DefaultFont (see the font
 // mappings the game logs at startup), so the weight is synthesised by the
 // player after the text has been measured: the glyphs render wider than
-// textWidth reports, and grow rightwards. The cap is widened to match.
-var KEY_BOLD_SPREAD = 1.12;
+// textWidth reports, and grow rightwards.
+//
+// That costs two separate corrections, and they are separate constants because
+// they are not the same number: the cap has to be wide enough to hold the drawn
+// run, while the field has to move left by however far the run's centre drifted.
+// Tying both to one figure means neither can be adjusted without disturbing the
+// other.
+var KEY_BOLD_SPREAD = 1.12;   // how much wider to cut the cap
+var KEY_BOLD_DRIFT = 0.08;    // how far the drawn centre sits right of measured
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
@@ -163,8 +170,8 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     // the drawn run keeps its left edge and gains all its extra width on the
     // right: its centre ends up half that gain to the right of the cap's.
     // Widening the cap cannot fix that -- only moving the field can.
-    var boldGain = keyText.textWidth * (KEY_BOLD_SPREAD - 1);
-    keyText._x = capW / 2 - KEY_BOX / 2 - boldGain / 2;
+    var drift = keyText.textWidth * KEY_BOLD_DRIFT;
+    keyText._x = capW / 2 - KEY_BOX / 2 - drift / 2;
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
