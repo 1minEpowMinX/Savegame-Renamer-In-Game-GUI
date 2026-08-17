@@ -106,7 +106,11 @@ var COLOR_PROMPT = 0xF6E890;
 var PROMPT_SIZE = 15;
 var PROMPT_KEY_SIZE = 11;
 var PROMPT_KEY_PAD = 12;
-var PROMPT_ROW = 15;
+// The row has to clear the type, while the cap sits lower than the line it
+// labels, the way the game's own E and X do. Tying the two together is what
+// pushed the wording down onto the rule below.
+var PROMPT_ROW = 22;
+var PROMPT_CAP_H = 16;
 
 // Derived, so a change above moves everything together.
 var IN_X = BOX_X + IN_L;
@@ -170,13 +174,14 @@ function setText(tf, value) {
 // prompt it prints. `spanW` is how wide the pair came out, so a row of them can
 // be centred; `hit` is the clickable area over the whole pair.
 function mkKeyHint(parent, name, depth, key, label, action,
-                   rowH, keySize, capPad, labelSize, labelFont, labelColor) {
+                   rowH, capH, keySize, capPad, labelSize, labelFont, labelColor) {
     var clip = parent.createEmptyMovieClip(name, depth);
 
     // The cap is measured to its key name rather than fixed, so "Enter" and
     // "Del" are not forced to the same width. The game itself ships three cap
     // widths for the same reason.
-    var keyText = mkText(clip, "key", 2, 0, 2 - KEY_RISE, KEY_BOX, rowH, keySize,
+    var capY = (rowH - capH) / 2;
+    var keyText = mkText(clip, "key", 2, 0, capY + 2 - KEY_RISE, KEY_BOX, capH, keySize,
                          COLOR_KEYCAP, FONT_BOLD, "center");
     setText(keyText, key);
     var capW = keyText.textWidth * KEY_BOLD_SPREAD + capPad;
@@ -197,9 +202,9 @@ function mkKeyHint(parent, name, depth, key, label, action,
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
-    cap._y = 0;
+    cap._y = capY;
     cap._width = capW;
-    cap._height = rowH;
+    cap._height = capH;
     cap._alpha = 88;
 
     var labelText = mkText(clip, "label", 3, capW + KEY_GAP, 2, 200, rowH, labelSize,
@@ -289,11 +294,11 @@ footRule._alpha = 35;
 // in this game an action is a key and a word, and making it anything else is
 // what put three different languages in one row.
 var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", "accept", "accept",
-                          ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
+                          ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
 var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", "cancel", "cancel",
-                          ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
+                          ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
 var keyReset = mkKeyHint(box, "keyReset", 9, "Del", "reset", "reset",
-                         ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
+                         ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
 
 function layoutKeys(withReset) {
     var total = keyAccept.spanW + PAIR_GAP + keyCancel.spanW;
@@ -326,12 +331,12 @@ layoutKeys(false);
 // floating beside it. Positioned by its centre, so the prompt stays put when
 // its wording changes length.
 var HINT_CENTRE_X = 612;
-var HINT_Y = 386;
+var HINT_Y = 378;
 
 // The prompt belongs to the game's own line below it, not to the dialog, so it
 // is built at that line's size, face and colour rather than the dialog's.
 var hint = mkKeyHint(_root, "hint", 2, "F2", "rename save", "",
-                     PROMPT_ROW, PROMPT_KEY_SIZE, PROMPT_KEY_PAD,
+                     PROMPT_ROW, PROMPT_CAP_H, PROMPT_KEY_SIZE, PROMPT_KEY_PAD,
                      PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
 hint._x = HINT_CENTRE_X - hint.spanW / 2;
 hint._y = HINT_Y;
