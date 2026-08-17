@@ -84,17 +84,76 @@ void CmdSet(IConsoleCmdArgs* args)
            redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
-// Temporary, replaced by the F2 hook: toggles the dialog so the element can be
-// checked before it is wired to the save list.
+// The save the open dialog belongs to. Task 10 replaces the console argument
+// with the row highlighted in the load menu; everything downstream stays.
+int g_pendingSaveId = -1;
+
+/// Applies `name` to the pending save and redraws the list.
+///
+/// @param name Text as typed, or empty to reset to the original quest name.
+void ApplyRename(const std::string& name)
+{
+    const auto entry = SaveCatalog::Find(g_pendingSaveId);
+    g_pendingSaveId = -1;
+    if (!entry.has_value()) {
+        SR_LOG("the save went away while the dialog was open");
+        return;
+    }
+
+    auto header = whs::Description::Read(entry->file);
+    if (!header.has_value()) {
+        SR_LOG("could not read %s", entry->file.string().c_str());
+        return;
+    }
+
+    header->SetDisplayName(name);
+    if (!header->Write()) {
+        SR_LOG("could not write %s", entry->file.string().c_str());
+        return;
+    }
+
+    SaveCatalog::Refresh();
+    SaveLoadHook::RebuildLoadPage();
+    SR_LOG("%d is now '%s'", entry->id, header->DisplayName().c_str());
+}
+
+/// Opens the dialog for `saveId`.
+///
+/// @param saveId Id as shown in the load list.
+/// @return True when the dialog was shown.
+bool OpenFor(int saveId)
+{
+    const auto entry = SaveCatalog::Find(saveId);
+    if (!entry.has_value()) {
+        SR_LOG("no savegame with id %d", saveId);
+        return false;
+    }
+
+    const auto header = whs::Description::Read(entry->file);
+    const bool canReset = header.has_value() && header->HasCustomName();
+    const std::string shown = canReset ? entry->displayName : std::string{};
+
+    g_pendingSaveId = saveId;
+    if (RenameDialog::Show(shown, canReset)) {
+        return true;
+    }
+    g_pendingSaveId = -1;
+    SR_LOG("could not show the dialog");
+    return false;
+}
+
+// Temporary, replaced by the F2 hook: opens the dialog for a save chosen by id.
 void CmdDialog(IConsoleCmdArgs* args)
 {
     if (RenameDialog::IsOpen()) {
         RenameDialog::Hide();
         return;
     }
-    const char* name = args->GetArgCount() > 1 ? args->GetArg(1) : "test name";
-    if (!RenameDialog::Show(name, true))
-        SR_LOG("could not show the dialog");
+    if (args->GetArgCount() < 2) {
+        SR_LOG("usage: renamer_dialog <id>");
+        return;
+    }
+    OpenFor(std::atoi(args->GetArg(1)));
 }
 
 void RegisterCommands()
@@ -115,6 +174,9 @@ void RegisterCommands()
     // The flash element only exists once the UI has loaded, so this cannot run
     // from KCSEPlugin_Load.
     RenameDialog::Install();
+    RenameDialog::SetAcceptHandler(&ApplyRename);
+    RenameDialog::SetResetHandler([] { ApplyRename(""); });
+    RenameDialog::SetCancelHandler([] { g_pendingSaveId = -1; });
 }
 
 void OnKcseMessage(KCSE::Message* msg)

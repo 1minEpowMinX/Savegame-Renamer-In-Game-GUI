@@ -102,19 +102,27 @@ def check_archive(pak_path, src_dir, errors):
 def deploy():
     """Copy the manifest, the pak and the plugin DLL into the game.
 
-    @return Destination directory.
+    @return Destination directory, or None when a file could not be replaced.
     """
     dest = os.path.join(GAME_ROOT, "Mods", MODID)
     os.makedirs(os.path.join(dest, "Data"), exist_ok=True)
     os.makedirs(os.path.join(dest, "KCSE", "Plugins"), exist_ok=True)
 
-    shutil.copyfile(os.path.join(SRC_DIR, "mod.manifest"), os.path.join(dest, "mod.manifest"))
-    shutil.copyfile(PAK, os.path.join(dest, "Data", os.path.basename(PAK)))
+    copies = [(os.path.join(SRC_DIR, "mod.manifest"), os.path.join(dest, "mod.manifest")),
+              (PAK, os.path.join(dest, "Data", os.path.basename(PAK)))]
     if os.path.isfile(PLUGIN_DLL):
-        shutil.copyfile(PLUGIN_DLL, os.path.join(dest, "KCSE", "Plugins",
-                                                 os.path.basename(PLUGIN_DLL)))
+        copies.append((PLUGIN_DLL, os.path.join(dest, "KCSE", "Plugins",
+                                                os.path.basename(PLUGIN_DLL))))
     else:
         print("warning: %s not built, DLL not deployed" % PLUGIN_DLL)
+
+    for source, target in copies:
+        try:
+            shutil.copyfile(source, target)
+        except PermissionError:
+            # The game keeps its paks and plugin DLLs open for the whole session.
+            print("cannot replace %s: close the game first" % target)
+            return None
     return dest
 
 
@@ -140,7 +148,10 @@ def main():
         print("  " + n)
 
     if args.deploy:
-        print("deployed to " + deploy())
+        dest = deploy()
+        if dest is None:
+            return 1
+        print("deployed to " + dest)
     return 0
 
 

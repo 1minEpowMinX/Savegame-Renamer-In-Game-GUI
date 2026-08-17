@@ -2,7 +2,10 @@
 
 #include <cstring>
 
+#include "CryEngine/CryCommon/SInputEvent.h"
 #include "Offsets/vtables/IFlashUI.h"
+#include "Offsets/vtables/IInput.h"
+#include "Offsets/vtables/IInputEventListener.h"
 #include "Offsets/vtables/IUIElement.h"
 #include "Offsets/vtables/IUIElementEventListener.h"
 #include "crysystem/SSystemGlobalEnvironment.h"
@@ -84,6 +87,32 @@ void SetMenuBusy(bool busy)
     Call(MenuElement(), "SetBusyProtection", "fc_setBusyProtection", args);
 }
 
+/// Feeds Enter and Esc into the movie while the dialog is open.
+///
+/// The engine delivers typed characters to a Scaleform input field on its own
+/// but routes these two elsewhere, so they are observed here and forwarded as
+/// SetInput calls. The listener never consumes an event: the menu is held back
+/// by SetBusyProtection instead.
+class KeyListener : public Offsets::IInputEventListener {
+    bool OnInputEvent(const Offsets::SInputEvent& ev) override
+    {
+        if (!g_open || !(ev.state & Offsets::eIS_Pressed))
+            return false;
+
+        if (ev.keyId == Offsets::eKI_Enter || ev.keyId == Offsets::eKI_NP_Enter)
+            SendInput("accept");
+        else if (ev.keyId == Offsets::eKI_Escape)
+            SendInput("cancel");
+        return false;
+    }
+
+    bool OnInputEventUI(const void*) override { return false; }
+    int GetPriority() const override { return 0; }
+    bool _vf3(const void*) override { return false; }
+};
+
+KeyListener g_keyListener;
+
 /// Takes the dialog off screen after the movie has already hidden itself.
 ///
 /// The movie clears its own artwork before emitting the event, but the element
@@ -97,6 +126,9 @@ void Dismiss()
         if (el)
             el->SetVisible(false);
     }
+    if (env && env->pInput)
+        env->pInput->RemoveEventListener(&g_keyListener);
+
     g_open = false;
     SetMenuBusy(false);
 }
@@ -177,17 +209,16 @@ bool Show(const std::string& currentName, bool canReset)
 
     g_open = true;
     SetMenuBusy(true);
+    if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput)
+        env->pInput->AddEventListener(&g_keyListener);
     return true;
 }
 
 void Hide()
 {
-    if (IUIElement* el = Element()) {
+    if (IUIElement* el = Element())
         Call(el, "Close", "fc_close", SUIArguments());
-        el->SetVisible(false);
-    }
-    g_open = false;
-    SetMenuBusy(false);
+    Dismiss();
 }
 
 bool SendInput(const char* action)
