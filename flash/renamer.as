@@ -207,7 +207,13 @@ function mkKeyHint(parent, name, depth, key, label, action,
     cap._height = capH;
     cap._alpha = 88;
 
-    var labelText = mkText(clip, "label", 3, capW + KEY_GAP, 2, 200, rowH, labelSize,
+    // The label is centred on the cap, not hung from the top of the row: the
+    // game's own prompts put the middle of the key level with the middle of the
+    // words, and hanging both from a shared top left ours sitting on the cap's
+    // lower edge. A text field starts its line two units in, and the glyphs of a
+    // size-S face occupy about 0.6 S below that start.
+    var labelY = capY + capH / 2 - 2 - labelSize * 0.6;
+    var labelText = mkText(clip, "label", 3, capW + KEY_GAP, labelY, 200, rowH, labelSize,
                            labelColor, labelFont, "left");
     setText(labelText, label);
     labelText._width = labelText.textWidth + 4;
