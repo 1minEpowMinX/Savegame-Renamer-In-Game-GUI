@@ -102,7 +102,8 @@ class KeyListener : public Offsets::IInputEventListener {
     {
         return ev.keyId == Offsets::eKI_Enter
             || ev.keyId == Offsets::eKI_NP_Enter
-            || ev.keyId == Offsets::eKI_Escape;
+            || ev.keyId == Offsets::eKI_Escape
+            || ev.keyId == Offsets::eKI_Delete;
     }
 
     bool OnInputEvent(const Offsets::SInputEvent& ev) override
@@ -113,6 +114,8 @@ class KeyListener : public Offsets::IInputEventListener {
         if (ev.state & Offsets::eIS_Pressed) {
             if (ev.keyId == Offsets::eKI_Escape)
                 SendInput("cancel");
+            else if (ev.keyId == Offsets::eKI_Delete)
+                SendInput("reset");   // ignored by the movie unless resettable
             else
                 SendInput("accept");
         }

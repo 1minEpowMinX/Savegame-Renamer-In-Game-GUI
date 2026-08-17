@@ -3,20 +3,21 @@
 // Engine API (inbound, on _root -- see UIElements/SavegameRenamer.xml):
 //   fc_open(currentName, canReset)   show the dialog, prefilled
 //   fc_close()                       hide it without emitting an event
-//   fc_setInput(action)              "accept" | "cancel", fed by the plugin's
-//                                    input listener because the engine delivers
-//                                    typed characters to the movie but not
-//                                    Enter or Esc
+//   fc_setInput(action)              "accept" | "cancel" | "reset", fed by the
+//                                    plugin's input listener because the engine
+//                                    delivers typed characters to the movie but
+//                                    not these keys
 // Events (outbound via fscommand):
 //   onRenameAccept(name), onRenameCancel(), onRenameReset()
+//
+// Every plate here is the game's own: the window frame, the field backing and
+// the key caps are imported from the vanilla movies (see base.xml), so the
+// dialog is built from the same parts as the screens around it.
 //
 // Written for FFDec's AS2 parser: one declaration per var, no object literals,
 // no ternary, no chained assignments.
 
 // ------------------------------------------------------- layout constants --
-// The stage is 800x450 and the element is stretched over the whole screen, so
-// these are effectively fractions of it. The window keeps the 2:1 shape of the
-// frame texture behind it.
 var BOX_W = 440;
 var BOX_H = 220;
 var BOX_X = 180;
@@ -33,6 +34,9 @@ var ROW_TITLE = 30;
 var ROW_INPUT = 30;
 var ROW_META = 20;
 var ROW_KEY = 18;
+var KEY_W = 46;
+var KEY_GAP = 8;
+var PAIR_GAP = 22;
 var GAP = 10;
 
 var SOFT_LIMIT = 40;
@@ -44,17 +48,10 @@ var COLOR_HINT = 0xA2957A;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
 
-// The field is written on a ruled line rather than boxed in: a filled box
-// would hide the panel's damask, and TextField backgrounds have no alpha to
-// let it through. The rule brightens while the field holds the caret.
-var RULE_ALPHA = 70;
-var RULE_ALPHA_FOCUS = 100;
-
-// The reset control is underlined too, so it is kept plainly dimmer and thinner
-// than the field's rule; otherwise the two read as the same thing.
-var BTN_LINE = 0x8A7645;
-var BTN_ALPHA = 55;
-var BTN_ALPHA_FOCUS = 100;
+// The backing dims while the field is idle and comes up to full while it holds
+// the caret: in this menu whatever is active is always the brighter thing.
+var FIELD_ALPHA = 75;
+var FIELD_ALPHA_FOCUS = 100;
 
 // The ImportAssets2 symbol names from base.xml.
 var FONT_REGULAR = "DefaultFont";
@@ -69,7 +66,7 @@ var Y_TITLE = BOX_Y + IN_T;
 var Y_INPUT = Y_TITLE + ROW_TITLE + GAP;
 var Y_META = Y_INPUT + ROW_INPUT + 8;
 var Y_KEYS = BOX_Y + BOX_H - IN_B - ROW_KEY;
-var Y_RULE = Y_KEYS - 10;
+var Y_RULE = Y_KEYS - 12;
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -110,35 +107,37 @@ function setText(tf, value) {
     tf.setTextFormat(tf.styleFmt);
 }
 
-function strokeRect(clip, x, y, w, h, color) {
-    clip.lineStyle(1, color, 100);
-    clip.moveTo(x, y);
-    clip.lineTo(x + w, y);
-    clip.lineTo(x + w, y + h);
-    clip.lineTo(x, y + h);
-    clip.lineTo(x, y);
-}
-
-// A key name in a box followed by what it does, the way the game labels its own
-// prompts along the bottom of the screen. Returns the clip; its `spanW` is how
-// wide the pair came out, so a row of them can be centred.
+// A key cap with its label beside it, the pairing the game uses for every
+// prompt it prints. `spanW` is how wide the pair came out, so a row of them can
+// be centred; `hit` is the clickable area over the whole pair.
 function mkKeyHint(parent, name, depth, key, label) {
     var clip = parent.createEmptyMovieClip(name, depth);
 
-    var keyText = mkText(clip, "key", 1, 5, 1, 120, ROW_KEY, 13,
-                         COLOR_TITLE, FONT_REGULAR, "left");
+    var cap = clip.attachMovie("RenamerKey", "cap", 1);
+    cap._x = 0;
+    cap._y = 0;
+    cap._width = KEY_W;
+    cap._height = ROW_KEY;
+
+    var keyText = mkText(clip, "key", 2, 0, 1, KEY_W, ROW_KEY, 12,
+                         COLOR_TITLE, FONT_REGULAR, "center");
     setText(keyText, key);
-    var keyW = keyText.textWidth + 4;
-    keyText._width = keyW;
 
-    strokeRect(clip, 0, 0, keyW + 10, ROW_KEY, BTN_LINE);
-
-    var labelText = mkText(clip, "label", 2, keyW + 16, 1, 200, ROW_KEY, 13,
+    var labelText = mkText(clip, "label", 3, KEY_W + KEY_GAP, 1, 200, ROW_KEY, 13,
                            COLOR_HINT, FONT_REGULAR, "left");
     setText(labelText, label);
     labelText._width = labelText.textWidth + 4;
 
-    clip.spanW = keyW + 16 + labelText.textWidth + 4;
+    clip.spanW = KEY_W + KEY_GAP + labelText.textWidth + 4;
+    clip.labelText = labelText;
+
+    clip.beginFill(0xFFFFFF, 0);
+    clip.moveTo(0, 0);
+    clip.lineTo(clip.spanW, 0);
+    clip.lineTo(clip.spanW, ROW_KEY);
+    clip.lineTo(0, ROW_KEY);
+    clip.endFill();
+
     return clip;
 }
 
@@ -148,7 +147,16 @@ var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 25,
                    COLOR_TITLE, FONT_DISPLAY, "center");
 setText(title, "Rename savegame");
 
-var input = box.createTextField("input", 3, IN_X, Y_INPUT, IN_W, ROW_INPUT);
+// The field's backing goes on before the field itself: a TextField background
+// has no alpha, and a flat fill would cover the panel's damask.
+var fieldPlate = box.attachMovie("RenamerField", "fieldPlate", 3);
+fieldPlate._x = IN_X;
+fieldPlate._y = Y_INPUT;
+fieldPlate._width = IN_W;
+fieldPlate._height = ROW_INPUT;
+fieldPlate._alpha = FIELD_ALPHA;
+
+var input = box.createTextField("input", 4, IN_X, Y_INPUT + 4, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
@@ -158,64 +166,50 @@ var inputFmt = new TextFormat();
 inputFmt.font = FONT_REGULAR;
 inputFmt.size = 18;
 inputFmt.color = COLOR_TEXT;
-inputFmt.leftMargin = 8;
+inputFmt.leftMargin = 10;
 input.setNewTextFormat(inputFmt);
 
-// The counter sits at the right of the row under the field and the reset
-// control at its left, so the one that only sometimes applies never shifts the
-// one that always does.
-var fieldRule = box.attachMovie("RenamerRule", "fieldRule", 8);
-fieldRule._x = IN_X;
-fieldRule._y = Y_INPUT + ROW_INPUT - 2;
-fieldRule._width = IN_W;
-fieldRule._alpha = RULE_ALPHA;
-
-var counter = mkText(box, "counter", 4, IN_X, Y_META, IN_W, ROW_META, 14,
+var counter = mkText(box, "counter", 5, IN_X, Y_META, IN_W, ROW_META, 14,
                      COLOR_HINT, FONT_REGULAR, "right");
 
-// Reset is bordered like a key prompt so it reads as something to press rather
-// than as another line of text.
-var resetClip = box.createEmptyMovieClip("resetClip", 5);
-resetClip._x = IN_X;
-resetClip._y = Y_META - 2;
-resetClip._visible = false;
-
-var resetBtn = mkText(resetClip, "label", 1, 4, 1, 180, ROW_KEY, 13,
-                      COLOR_TEXT, FONT_REGULAR, "left");
-setText(resetBtn, "Reset to original");
-var resetW = resetBtn.textWidth + 4;
-resetBtn._width = resetW;
-
-resetClip.beginFill(0xFFFFFF, 0);
-resetClip.moveTo(0, 0);
-resetClip.lineTo(resetW + 8, 0);
-resetClip.lineTo(resetW + 8, ROW_KEY);
-resetClip.lineTo(0, ROW_KEY);
-resetClip.endFill();
-
-var resetLine = resetClip.createEmptyMovieClip("line", 2);
-resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA);
-resetLine.moveTo(4, ROW_KEY - 1);
-resetLine.lineTo(resetW + 4, ROW_KEY - 1);
-
-// The same rule again above the prompts, dimmer and narrower so it reads as a
-// divider rather than as a second field. It has to be its own clip: a clip's
-// own drawing sits below every child it holds, so a line drawn straight onto
-// `box` would be hidden by the frame.
-var footRule = box.attachMovie("RenamerRule", "footRule", 9);
+// The rule the game draws between sections of a tooltip, dimmed, separating the
+// prompts from the field. It has to be an attached clip: a clip's own drawing
+// sits below every child it holds, so a line drawn onto `box` would be hidden
+// by the frame.
+var footRule = box.attachMovie("RenamerRule", "footRule", 6);
 footRule._width = IN_W * 0.7;
 footRule._x = IN_X + (IN_W - footRule._width) / 2;
 footRule._y = Y_RULE;
 footRule._alpha = 40;
 
-var keyAccept = mkKeyHint(box, "keyAccept", 6, "Enter", "accept");
-var keyCancel = mkKeyHint(box, "keyCancel", 7, "Esc", "cancel");
+// Three prompts of the same shape. Reset is one of them rather than a button:
+// in this game an action is a key and a word, and making it anything else is
+// what put three different languages in one row.
+var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", "accept");
+var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", "cancel");
+var keyReset = mkKeyHint(box, "keyReset", 9, "Del", "reset");
 
-var keysW = keyAccept.spanW + 26 + keyCancel.spanW;
-keyAccept._x = IN_X + (IN_W - keysW) / 2;
-keyAccept._y = Y_KEYS;
-keyCancel._x = keyAccept._x + keyAccept.spanW + 26;
-keyCancel._y = Y_KEYS;
+function layoutKeys(withReset) {
+    var total = keyAccept.spanW + PAIR_GAP + keyCancel.spanW;
+    if (withReset) {
+        total = total + PAIR_GAP + keyReset.spanW;
+    }
+    var x = IN_X + (IN_W - total) / 2;
+
+    keyAccept._x = x;
+    keyAccept._y = Y_KEYS;
+    x = x + keyAccept.spanW + PAIR_GAP;
+
+    keyCancel._x = x;
+    keyCancel._y = Y_KEYS;
+    x = x + keyCancel.spanW + PAIR_GAP;
+
+    keyReset._x = x;
+    keyReset._y = Y_KEYS;
+    keyReset._visible = withReset;
+}
+
+layoutKeys(false);
 
 // -------------------------------------------------------------- behaviour --
 
@@ -243,35 +237,25 @@ input.onChanged = function () {
 };
 
 input.onSetFocus = function () {
-    fieldRule._alpha = RULE_ALPHA_FOCUS;
+    fieldPlate._alpha = FIELD_ALPHA_FOCUS;
 };
 
 input.onKillFocus = function () {
-    fieldRule._alpha = RULE_ALPHA;
+    fieldPlate._alpha = FIELD_ALPHA;
 };
 
-resetClip.onRollOver = function () {
-    resetBtn.styleFmt.color = COLOR_HOVER;
-    setText(resetBtn, "Reset to original");
-    resetLine.clear();
-    resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA_FOCUS);
-    resetLine.moveTo(4, ROW_KEY - 1);
-    resetLine.lineTo(resetW + 4, ROW_KEY - 1);
+keyReset.onRollOver = function () {
+    keyReset.labelText.styleFmt.color = COLOR_HOVER;
+    setText(keyReset.labelText, "reset");
 };
 
-resetClip.onRollOut = function () {
-    resetBtn.styleFmt.color = COLOR_TEXT;
-    setText(resetBtn, "Reset to original");
-    resetLine.clear();
-    resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA);
-    resetLine.moveTo(4, ROW_KEY - 1);
-    resetLine.lineTo(resetW + 4, ROW_KEY - 1);
+keyReset.onRollOut = function () {
+    keyReset.labelText.styleFmt.color = COLOR_HINT;
+    setText(keyReset.labelText, "reset");
 };
 
-resetClip.onRelease = function () {
-    box._visible = false;
-    Selection.setFocus(null);
-    fscommand("onRenameReset", "");
+keyReset.onRelease = function () {
+    fc_setInput("reset");
 };
 
 // ------------------------------------------------------------ engine calls --
@@ -280,7 +264,7 @@ function fc_open(currentName, canReset) {
     box._visible = true;
     input.text = currentName;
     input.setTextFormat(inputFmt);
-    resetClip._visible = canReset;
+    layoutKeys(canReset);
     updateCounter();
     Selection.setFocus(input);
     Selection.setSelection(input.text.length, input.text.length);
@@ -301,6 +285,12 @@ function fc_setInput(action) {
         box._visible = false;
         Selection.setFocus(null);
         fscommand("onRenameCancel", "");
+    } else if (action == "reset") {
+        if (keyReset._visible) {
+            box._visible = false;
+            Selection.setFocus(null);
+            fscommand("onRenameReset", "");
+        }
     }
 }
 
