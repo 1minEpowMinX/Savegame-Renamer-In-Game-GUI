@@ -14,21 +14,46 @@
 // no ternary, no chained assignments.
 
 // ------------------------------------------------------- layout constants --
-// base.xml draws the frame at 520x260, matching the texture's 2:1 shape, so the
-// window uses exactly that size and the ornament is never stretched.
-var BOX_X = 140;
-var BOX_Y = 95;
-var BOX_W = 520;
-var BOX_H = 260;
-var PAD = 54;
-var TITLE_H = 30;
-var INPUT_H = 34;
+// The stage is 800x450 and the element is stretched over the whole screen, so
+// these are effectively fractions of it. The window keeps the 2:1 shape of the
+// frame texture behind it.
+var BOX_W = 440;
+var BOX_H = 220;
+var BOX_X = 180;
+var BOX_Y = 115;
+
+// The frame's ornament eats into the window, so content is laid out inside
+// these insets rather than against the outer edge.
+var IN_L = 38;
+var IN_R = 38;
+var IN_T = 30;
+var IN_B = 22;
+
+var ROW_TITLE = 26;
+var ROW_INPUT = 30;
+var ROW_META = 20;
+var GAP = 10;
+
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
 
+var COLOR_TITLE = 0xE8DCC0;
 var COLOR_TEXT = 0xCFC2A0;
-var COLOR_WARN = 0xC08040;
+var COLOR_HINT = 0xA2957A;
+var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
+
+// The ImportAssets2 symbol names from base.xml.
+var FONT_REGULAR = "DefaultFont";
+var FONT_BOLD = "DefaultFontBold";
+
+// Derived, so a change above moves everything together.
+var IN_X = BOX_X + IN_L;
+var IN_W = BOX_W - IN_L - IN_R;
+var Y_TITLE = BOX_Y + IN_T;
+var Y_INPUT = Y_TITLE + ROW_TITLE + GAP;
+var Y_META = Y_INPUT + ROW_INPUT + 6;
+var Y_HINT = BOX_Y + BOX_H - IN_B - ROW_META;
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -46,13 +71,15 @@ box.endFill();
 var frame = box.attachMovie("RenamerFrame", "frame", 1);
 frame._x = BOX_X;
 frame._y = BOX_Y;
+frame._width = BOX_W;
+frame._height = BOX_H;
 
 // ---------------------------------------------------------------- helpers --
 
 // embedFonts must be set BEFORE the format is applied: unset, the field falls
 // back to device rendering, which draws nothing here because the movie carries
-// no device font. The names are the ImportAssets2 symbols from base.xml.
-function mkText(parent, name, depth, x, y, w, h, size, color, font) {
+// no device font.
+function mkText(parent, name, depth, x, y, w, h, size, color, font, align) {
     var tf = parent.createTextField(name, depth, x, y, w, h);
     tf.selectable = false;
     tf.embedFonts = true;
@@ -60,13 +87,14 @@ function mkText(parent, name, depth, x, y, w, h, size, color, font) {
     fmt.font = font;
     fmt.size = size;
     fmt.color = color;
+    fmt.align = align;
     tf.setNewTextFormat(fmt);
     tf.styleFmt = fmt;
     return tf;
 }
 
-// setNewTextFormat only styles text assigned afterwards, and some GFx builds
-// drop it on assignment, so the format is re-applied over the whole field.
+// setNewTextFormat only styles text assigned afterwards, and this player drops
+// it on assignment, so the format is re-applied over the whole field.
 function setText(tf, value) {
     tf.text = value;
     tf.setTextFormat(tf.styleFmt);
@@ -74,18 +102,11 @@ function setText(tf, value) {
 
 // ----------------------------------------------------------------- fields --
 
-// The ImportAssets2 symbol names from base.xml. TextFormat.font accepts these
-// directly; the typeface name baked into the font tag ("Kingdom Come Regular")
-// resolves too, but the symbol is what the vanilla menu movie uses.
-var FONT_REGULAR = "DefaultFont";
-var FONT_BOLD = "DefaultFontBold";
-
-var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD,
-                   BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT, FONT_BOLD);
+var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 21,
+                   COLOR_TITLE, FONT_BOLD, "center");
 setText(title, "Rename savegame");
 
-var input = box.createTextField("input", 3, BOX_X + PAD, BOX_Y + PAD + TITLE_H,
-                                BOX_W - PAD * 2, INPUT_H);
+var input = box.createTextField("input", 3, IN_X, Y_INPUT, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
@@ -95,38 +116,39 @@ input.maxChars = MAX_CHARS;
 
 var inputFmt = new TextFormat();
 inputFmt.font = FONT_REGULAR;
-inputFmt.size = 20;
+inputFmt.size = 18;
 inputFmt.color = COLOR_TEXT;
+inputFmt.leftMargin = 6;
 input.setNewTextFormat(inputFmt);
 
-var counter = mkText(box, "counter", 4, BOX_X + PAD,
-                     BOX_Y + PAD + TITLE_H + INPUT_H + 6, 200, 22, 16,
-                     COLOR_TEXT, FONT_REGULAR);
+// The counter sits at the right of the row under the field and the reset
+// control at its left, so the one that only sometimes applies never shifts the
+// one that always does.
+var counter = mkText(box, "counter", 4, IN_X, Y_META, IN_W, ROW_META, 14,
+                     COLOR_HINT, FONT_REGULAR, "right");
 
-// A TextField has no onRelease in AS2, so the button is a clip with an
-// invisible hit area and the label parented inside it.
-var RESET_W = 220;
-var RESET_H = 24;
-
+var RESET_W = 190;
 var resetClip = box.createEmptyMovieClip("resetClip", 5);
-resetClip._x = BOX_X + BOX_W - PAD - RESET_W;
-resetClip._y = BOX_Y + PAD + TITLE_H + INPUT_H + 6;
+resetClip._x = IN_X;
+resetClip._y = Y_META;
 resetClip._visible = false;
 
+// A TextField has no onRelease in AS2, so the control is a clip with an
+// invisible hit area and the label parented inside it.
 resetClip.beginFill(0xFFFFFF, 0);
 resetClip.moveTo(0, 0);
 resetClip.lineTo(RESET_W, 0);
-resetClip.lineTo(RESET_W, RESET_H);
-resetClip.lineTo(0, RESET_H);
+resetClip.lineTo(RESET_W, ROW_META);
+resetClip.lineTo(0, ROW_META);
 resetClip.endFill();
 
-var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, RESET_H, 16,
-                      COLOR_TEXT, FONT_REGULAR);
-setText(resetBtn, "Reset to original");
+var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, ROW_META, 14,
+                      COLOR_TEXT, FONT_REGULAR, "left");
+setText(resetBtn, "Reset to original name");
 
-var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - PAD - 4,
-                  BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_REGULAR);
-setText(hint, "Enter - accept, Esc - cancel");
+var hint = mkText(box, "hint", 6, IN_X, Y_HINT, IN_W, ROW_META, 14,
+                  COLOR_HINT, FONT_REGULAR, "center");
+setText(hint, "Enter accepts, Esc cancels, an empty name resets");
 
 // -------------------------------------------------------------- behaviour --
 
@@ -134,7 +156,7 @@ function updateCounter() {
     if (input.text.length > SOFT_LIMIT) {
         counter.styleFmt.color = COLOR_WARN;
     } else {
-        counter.styleFmt.color = COLOR_TEXT;
+        counter.styleFmt.color = COLOR_HINT;
     }
     setText(counter, input.text.length + " / " + SOFT_LIMIT);
 }
@@ -155,12 +177,12 @@ input.onChanged = function () {
 
 resetClip.onRollOver = function () {
     resetBtn.styleFmt.color = COLOR_HOVER;
-    setText(resetBtn, "Reset to original");
+    setText(resetBtn, "Reset to original name");
 };
 
 resetClip.onRollOut = function () {
     resetBtn.styleFmt.color = COLOR_TEXT;
-    setText(resetBtn, "Reset to original");
+    setText(resetBtn, "Reset to original name");
 };
 
 resetClip.onRelease = function () {
