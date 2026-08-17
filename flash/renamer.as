@@ -38,7 +38,12 @@ var ROW_KEY = 18;
 // so its optical centre sits above its geometric one and the key name has to
 // ride high to look centred.
 var KEY_RISE = 2;
-var KEY_PAD = 18;   // padding around the key name inside its cap
+var KEY_PAD = 20;   // padding around the key name inside its cap
+// DefaultFontBold maps to the same typeface as DefaultFont (see the font
+// mappings the game logs at startup), so the weight is synthesised by the
+// player after the text has been measured: the glyphs render wider than
+// textWidth reports, and grow rightwards. The cap is widened to match.
+var KEY_BOLD_SPREAD = 1.12;
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
@@ -145,7 +150,7 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     var keyText = mkText(clip, "key", 2, 0, 2 - KEY_RISE, KEY_BOX, ROW_KEY, 12,
                          COLOR_KEYCAP, FONT_BOLD, "center");
     setText(keyText, key);
-    var capW = keyText.textWidth + KEY_PAD;
+    var capW = keyText.textWidth * KEY_BOLD_SPREAD + KEY_PAD;
     if (capW < KEY_MIN) {
         capW = KEY_MIN;
     }
