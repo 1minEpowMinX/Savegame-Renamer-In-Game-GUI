@@ -52,22 +52,28 @@ function mkText(parent, name, depth, x, y, w, h, size, color, font) {
     fmt.size = size;
     fmt.color = color;
     tf.setNewTextFormat(fmt);
+    tf.styleFmt = fmt;
     return tf;
+}
+
+// setNewTextFormat only styles text assigned afterwards, and some GFx builds
+// drop it on assignment, so the format is re-applied over the whole field.
+function setText(tf, value) {
+    tf.text = value;
+    tf.setTextFormat(tf.styleFmt);
 }
 
 // ----------------------------------------------------------------- fields --
 
-// Which name TextFormat.font wants for an imported font is not documented for
-// this player: it may be the ImportAssets2 symbol or the typeface name baked
-// into the DefineFont3 tag. The three labels below deliberately use different
-// candidates so that one pass in the game says which resolves.
+// The ImportAssets2 symbol names from base.xml. TextFormat.font accepts these
+// directly; the typeface name baked into the font tag ("Kingdom Come Regular")
+// resolves too, but the symbol is what the vanilla menu movie uses.
 var FONT_REGULAR = "DefaultFont";
 var FONT_BOLD = "DefaultFontBold";
-var FONT_TYPEFACE = "Kingdom Come Regular";
 
 var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD - 6,
                    BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT, FONT_BOLD);
-title.text = "A DefaultFontBold";
+setText(title, "Rename savegame");
 
 var input = box.createTextField("input", 3, BOX_X + PAD, BOX_Y + PAD + TITLE_H,
                                 BOX_W - PAD * 2, INPUT_H);
@@ -92,27 +98,35 @@ var resetBtn = mkText(box, "resetBtn", 5, BOX_X + BOX_W - PAD - 220,
                       BOX_Y + PAD + TITLE_H + INPUT_H + 6, 220, 22, 16,
                       COLOR_TEXT, FONT_REGULAR);
 resetBtn.selectable = true;
-resetBtn.text = "Reset to original";
+setText(resetBtn, "Reset to original");
 resetBtn._visible = false;
 
 var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - 26,
-                  BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_TYPEFACE);
-hint.text = "C Kingdom Come Regular";
+                  BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_REGULAR);
+setText(hint, "Enter - accept, Esc - cancel");
 
 // -------------------------------------------------------------- behaviour --
 
 function updateCounter() {
-    counter.text = "B DefaultFont " + input.text.length + "/" + SOFT_LIMIT;
-    var fmt = new TextFormat();
     if (input.text.length > SOFT_LIMIT) {
-        fmt.color = COLOR_WARN;
+        counter.styleFmt.color = COLOR_WARN;
     } else {
-        fmt.color = COLOR_TEXT;
+        counter.styleFmt.color = COLOR_TEXT;
     }
-    counter.setTextFormat(fmt);
+    setText(counter, input.text.length + " / " + SOFT_LIMIT);
+}
+
+// Characters typed into the field arrive with the default format, which is
+// bound to no font and therefore draws empty boxes. Re-applying the format
+// resets the caret to the start, so it is put back where it was.
+function restyleInput() {
+    var caret = Selection.getCaretIndex();
+    input.setTextFormat(inputFmt);
+    Selection.setSelection(caret, caret);
 }
 
 input.onChanged = function () {
+    restyleInput();
     updateCounter();
 };
 
@@ -127,6 +141,7 @@ resetBtn.onRelease = function () {
 function fc_open(currentName, canReset) {
     box._visible = true;
     input.text = currentName;
+    input.setTextFormat(inputFmt);
     resetBtn._visible = canReset;
     updateCounter();
     Selection.setFocus(input);
