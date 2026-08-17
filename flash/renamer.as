@@ -40,11 +40,15 @@ box.endFill();
 
 // ---------------------------------------------------------------- helpers --
 
-function mkText(parent, name, depth, x, y, w, h, size, color) {
+// embedFonts must be set BEFORE the format is applied: unset, the field falls
+// back to device rendering, which draws nothing here because the movie carries
+// no device font. The names are the ImportAssets2 symbols from base.xml.
+function mkText(parent, name, depth, x, y, w, h, size, color, font) {
     var tf = parent.createTextField(name, depth, x, y, w, h);
     tf.selectable = false;
-    tf.embedFonts = false;
+    tf.embedFonts = true;
     var fmt = new TextFormat();
+    fmt.font = font;
     fmt.size = size;
     fmt.color = color;
     tf.setNewTextFormat(fmt);
@@ -53,41 +57,52 @@ function mkText(parent, name, depth, x, y, w, h, size, color) {
 
 // ----------------------------------------------------------------- fields --
 
+// Which name TextFormat.font wants for an imported font is not documented for
+// this player: it may be the ImportAssets2 symbol or the typeface name baked
+// into the DefineFont3 tag. The three labels below deliberately use different
+// candidates so that one pass in the game says which resolves.
+var FONT_REGULAR = "DefaultFont";
+var FONT_BOLD = "DefaultFontBold";
+var FONT_TYPEFACE = "Kingdom Come Regular";
+
 var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD - 6,
-                   BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT);
-title.text = "Rename savegame";
+                   BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT, FONT_BOLD);
+title.text = "A DefaultFontBold";
 
 var input = box.createTextField("input", 3, BOX_X + PAD, BOX_Y + PAD + TITLE_H,
                                 BOX_W - PAD * 2, INPUT_H);
 input.type = "input";
 input.selectable = true;
-input.embedFonts = false;
+input.embedFonts = true;
 input.border = true;
 input.borderColor = 0x6B5B3A;
 input.maxChars = MAX_CHARS;
 
 var inputFmt = new TextFormat();
+inputFmt.font = FONT_REGULAR;
 inputFmt.size = 20;
 inputFmt.color = COLOR_TEXT;
 input.setNewTextFormat(inputFmt);
 
 var counter = mkText(box, "counter", 4, BOX_X + PAD,
-                     BOX_Y + PAD + TITLE_H + INPUT_H + 6, 120, 22, 16, COLOR_TEXT);
+                     BOX_Y + PAD + TITLE_H + INPUT_H + 6, 200, 22, 16,
+                     COLOR_TEXT, FONT_REGULAR);
 
 var resetBtn = mkText(box, "resetBtn", 5, BOX_X + BOX_W - PAD - 220,
-                      BOX_Y + PAD + TITLE_H + INPUT_H + 6, 220, 22, 16, COLOR_TEXT);
+                      BOX_Y + PAD + TITLE_H + INPUT_H + 6, 220, 22, 16,
+                      COLOR_TEXT, FONT_REGULAR);
 resetBtn.selectable = true;
 resetBtn.text = "Reset to original";
 resetBtn._visible = false;
 
 var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - 26,
-                  BOX_W - PAD * 2, 22, 15, COLOR_TEXT);
-hint.text = "Enter - accept, Esc - cancel";
+                  BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_TYPEFACE);
+hint.text = "C Kingdom Come Regular";
 
 // -------------------------------------------------------------- behaviour --
 
 function updateCounter() {
-    counter.text = input.text.length + " / " + SOFT_LIMIT;
+    counter.text = "B DefaultFont " + input.text.length + "/" + SOFT_LIMIT;
     var fmt = new TextFormat();
     if (input.text.length > SOFT_LIMIT) {
         fmt.color = COLOR_WARN;

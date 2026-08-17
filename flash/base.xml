@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SWF skeleton for the rename dialog, converted by FFDec (-xml2swf) and then
+     filled with renamer.as (-importScript).
+
+     The dialog draws itself from ActionScript, so the only thing that cannot be
+     expressed there is the font: a text field renders nothing unless the movie
+     imports a font from the game's shared library. Both weights the vanilla
+     menu uses are imported here, under the same character ids the game's own
+     Menu.gfx assigns them.
+
+     Stage is 800x450 px (16000x9000 twips), matching the coordinate space
+     renamer.as lays out in. -->
+<swf _xmlExportMajor="2" _xmlExportMinor="2" type="SWF" charset="UTF-8" compression="ZLIB" encrypted="false" frameCount="1" frameRate="30.0" gfx="false" hasEndTag="true" version="8">
+  <displayRect type="RECT" Xmax="16000" Xmin="0" Ymax="9000" Ymin="0" nbits="14"/>
+  <tags>
+
+    <item type="FileAttributesTag" actionScript3="false" forceWriteAsLong="false" hasMetadata="false" noCrossDomainCache="false" reservedA="false" reservedB="0" swfRelativeUrls="false" useDirectBlit="false" useGPU="false" useNetwork="false"/>
+
+    <item type="SetBackgroundColorTag" forceWriteAsLong="false">
+      <backgroundColor type="RGB" blue="0" green="0" red="0"/>
+    </item>
+
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="gfxfontlib.gfx">
+      <tags>
+        <item>100</item>
+      </tags>
+      <names>
+        <item>DefaultFont</item>
+      </names>
+    </item>
+
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="gfxfontlib.gfx">
+      <tags>
+        <item>101</item>
+      </tags>
+      <names>
+        <item>DefaultFontBold</item>
+      </names>
+    </item>
+
+    <!-- "0700" is stop() followed by the end-of-actions byte. The build replaces
+         the whole tag with the compiled renamer.as. -->
+    <item type="DoActionTag" actionBytes="0700" forceWriteAsLong="false"/>
+
+    <item type="ShowFrameTag" forceWriteAsLong="false"/>
+    <item type="EndTag" forceWriteAsLong="false"/>
+
+  </tags>
+</swf>

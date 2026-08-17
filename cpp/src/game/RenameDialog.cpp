@@ -91,19 +91,32 @@ void SetMenuBusy(bool busy)
 ///
 /// The engine delivers typed characters to a Scaleform input field on its own
 /// but routes these two elsewhere, so they are observed here and forwarded as
-/// SetInput calls. The listener never consumes an event: the menu is held back
-/// by SetBusyProtection instead.
+/// SetInput calls.
+///
+/// Unlike MCM's listener this one consumes what it handles: the load list also
+/// acts on Enter, and SetBusyProtection does not hold that back, so a confirmed
+/// rename would otherwise be followed by the game offering to load the save.
+/// Both edges are swallowed, or the release alone still reaches the menu.
 class KeyListener : public Offsets::IInputEventListener {
+    static bool IsOurs(const Offsets::SInputEvent& ev)
+    {
+        return ev.keyId == Offsets::eKI_Enter
+            || ev.keyId == Offsets::eKI_NP_Enter
+            || ev.keyId == Offsets::eKI_Escape;
+    }
+
     bool OnInputEvent(const Offsets::SInputEvent& ev) override
     {
-        if (!g_open || !(ev.state & Offsets::eIS_Pressed))
+        if (!g_open || !IsOurs(ev))
             return false;
 
-        if (ev.keyId == Offsets::eKI_Enter || ev.keyId == Offsets::eKI_NP_Enter)
-            SendInput("accept");
-        else if (ev.keyId == Offsets::eKI_Escape)
-            SendInput("cancel");
-        return false;
+        if (ev.state & Offsets::eIS_Pressed) {
+            if (ev.keyId == Offsets::eKI_Escape)
+                SendInput("cancel");
+            else
+                SendInput("accept");
+        }
+        return true;
     }
 
     bool OnInputEventUI(const void*) override { return false; }
