@@ -36,15 +36,22 @@ var ROW_META = 20;
 var ROW_KEY = 18;
 var KEY_W = 46;
 var KEY_GAP = 8;
-var PAIR_GAP = 22;
-var GAP = 10;
+var PAIR_GAP = 24;
+
+// The rows total 98 of the 152 units between the frame's rails. The surplus is
+// split evenly between the three joints rather than pooled above the prompts,
+// which is what left a hole in the middle of the window.
+var GAP_TITLE = 16;
+var GAP_COUNTER = 4;
+var GAP_RULE = 16;
+var GAP_KEYS = 14;
 
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
 
 var COLOR_TITLE = 0xE8DCC0;
 var COLOR_TEXT = 0xCFC2A0;
-var COLOR_HINT = 0xA2957A;
+var COLOR_HINT = 0xC0B190;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
 // The key plate is a light cap, so its letter is dark, matching the prompts the
@@ -66,10 +73,10 @@ var FONT_DISPLAY = "DisplayFont";
 var IN_X = BOX_X + IN_L;
 var IN_W = BOX_W - IN_L - IN_R;
 var Y_TITLE = BOX_Y + IN_T;
-var Y_INPUT = Y_TITLE + ROW_TITLE + GAP;
-var Y_META = Y_INPUT + ROW_INPUT + 8;
-var Y_KEYS = BOX_Y + BOX_H - IN_B - ROW_KEY;
-var Y_RULE = Y_KEYS - 12;
+var Y_INPUT = Y_TITLE + ROW_TITLE + GAP_TITLE;
+var Y_META = Y_INPUT + ROW_INPUT + GAP_COUNTER;
+var Y_RULE = Y_META + ROW_META + GAP_RULE;
+var Y_KEYS = Y_RULE + GAP_KEYS;
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -121,6 +128,7 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     cap._y = 0;
     cap._width = KEY_W;
     cap._height = ROW_KEY;
+    cap._alpha = 82;
 
     var keyText = mkText(clip, "key", 2, 0, 1, KEY_W, ROW_KEY, 12,
                          COLOR_KEYCAP, FONT_REGULAR, "center");
@@ -182,7 +190,7 @@ ruleBottom._y = Y_INPUT + ROW_INPUT;
 ruleBottom._width = IN_W;
 ruleBottom._alpha = FIELD_ALPHA;
 
-var input = box.createTextField("input", 4, IN_X, Y_INPUT + 2, IN_W, ROW_INPUT);
+var input = box.createTextField("input", 4, IN_X, Y_INPUT + 4, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
@@ -203,10 +211,10 @@ var counter = mkText(box, "counter", 5, IN_X, Y_META, IN_W, ROW_META, 14,
 // sits below every child it holds, so a line drawn onto `box` would be hidden
 // by the frame.
 var footRule = box.attachMovie("RenamerRule", "footRule", 6);
-footRule._width = IN_W * 0.7;
-footRule._x = IN_X + (IN_W - footRule._width) / 2;
+footRule._width = IN_W;
+footRule._x = IN_X;
 footRule._y = Y_RULE;
-footRule._alpha = 40;
+footRule._alpha = 35;
 
 // Three prompts of the same shape. Reset is one of them rather than a button:
 // in this game an action is a key and a word, and making it anything else is
