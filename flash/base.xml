@@ -112,6 +112,62 @@
       </names>
     </item>
 
+    <!-- The rule the game draws between sections of a tooltip, 512x16, reused
+         here under the name field and above the key prompts. Imported and filled
+         exactly like the frame above; drawn at 368x8, which is the width of the
+         dialog's content column. -->
+
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="ApseModalDialog.gfx">
+      <tags>
+        <item>203</item>
+      </tags>
+      <names>
+        <item>Textures/tooltip_separator</item>
+      </names>
+    </item>
+
+    <item type="DefineShapeTag" forceWriteAsLong="true" shapeId="204">
+      <shapeBounds type="RECT" Xmax="7360" Xmin="0" Ymax="160" Ymin="0" nbits="16"/>
+      <shapes type="SHAPEWITHSTYLE" numFillBits="1" numLineBits="0">
+        <fillStyles type="FILLSTYLEARRAY">
+          <fillStyles>
+            <item type="FILLSTYLE" bitmapId="203" fillStyleType="65">
+              <bitmapMatrix type="MATRIX" hasRotate="false" hasScale="true" nRotateBits="0" nScaleBits="22" nTranslateBits="0" scaleX="14.375" scaleY="10.0" translateX="0" translateY="0"/>
+            </item>
+          </fillStyles>
+        </fillStyles>
+        <lineStyles type="LINESTYLEARRAY">
+          <lineStyles/>
+        </lineStyles>
+        <shapeRecords>
+          <item type="StyleChangeRecord" fillStyle1="1" moveBits="16" moveDeltaX="7360" moveDeltaY="160" stateFillStyle0="false" stateFillStyle1="true" stateLineStyle="false" stateMoveTo="true" stateNewStyles="false"/>
+          <item type="StraightEdgeRecord" deltaX="-7360" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="-160" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="StraightEdgeRecord" deltaX="7360" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="160" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="EndShapeRecord" endOfShape="0"/>
+        </shapeRecords>
+      </shapes>
+    </item>
+
+    <item type="DefineSpriteTag" forceWriteAsLong="true" frameCount="1" hasEndTag="true" spriteId="205">
+      <subTags>
+        <item type="PlaceObject2Tag" characterId="204" clipDepth="0" depth="1" forceWriteAsLong="true" placeFlagHasCharacter="true" placeFlagHasClipActions="false" placeFlagHasClipDepth="false" placeFlagHasColorTransform="false" placeFlagHasMatrix="true" placeFlagHasName="false" placeFlagHasRatio="false" placeFlagMove="false" ratio="0">
+          <matrix type="MATRIX" hasRotate="false" hasScale="false" nRotateBits="0" nScaleBits="0" nTranslateBits="0" rotateSkew0="0.0" rotateSkew1="0.0" scaleX="0.0" scaleY="0.0" translateX="0" translateY="0"/>
+        </item>
+        <item type="ShowFrameTag" forceWriteAsLong="false"/>
+      </subTags>
+    </item>
+
+    <item type="ExportAssetsTag" forceWriteAsLong="true">
+      <tags>
+        <item>205</item>
+      </tags>
+      <names>
+        <item>RenamerRule</item>
+      </names>
+    </item>
+
     <!-- "0700" is stop() followed by the end-of-actions byte. The build replaces
          the whole tag with the compiled renamer.as. -->
     <item type="DoActionTag" actionBytes="0700" forceWriteAsLong="false"/>

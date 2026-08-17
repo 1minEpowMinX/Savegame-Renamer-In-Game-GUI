@@ -44,15 +44,17 @@ var COLOR_HINT = 0xA2957A;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
 
-// The field is a recess in the panel, the way inventory slots are, and it
-// lightens while it holds the caret: in this menu whatever is active is always
-// the lighter thing on screen.
-var FIELD_BG = 0x142A3D;
-var FIELD_BG_FOCUS = 0x20405C;
-var FIELD_LINE = 0x6B5B3A;
-var FIELD_LINE_FOCUS = 0xA8945F;
+// The field is written on a ruled line rather than boxed in: a filled box
+// would hide the panel's damask, and TextField backgrounds have no alpha to
+// let it through. The rule brightens while the field holds the caret.
+var RULE_ALPHA = 70;
+var RULE_ALPHA_FOCUS = 100;
 
-var RULE_COLOR = 0x8A7645;
+// The reset control is underlined too, so it is kept plainly dimmer and thinner
+// than the field's rule; otherwise the two read as the same thing.
+var BTN_LINE = 0x8A7645;
+var BTN_ALPHA = 55;
+var BTN_ALPHA_FOCUS = 100;
 
 // The ImportAssets2 symbol names from base.xml.
 var FONT_REGULAR = "DefaultFont";
@@ -129,7 +131,7 @@ function mkKeyHint(parent, name, depth, key, label) {
     var keyW = keyText.textWidth + 4;
     keyText._width = keyW;
 
-    strokeRect(clip, 0, 0, keyW + 10, ROW_KEY, RULE_COLOR);
+    strokeRect(clip, 0, 0, keyW + 10, ROW_KEY, BTN_LINE);
 
     var labelText = mkText(clip, "label", 2, keyW + 16, 1, 200, ROW_KEY, 13,
                            COLOR_HINT, FONT_REGULAR, "left");
@@ -150,10 +152,6 @@ var input = box.createTextField("input", 3, IN_X, Y_INPUT, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
-input.background = true;
-input.backgroundColor = FIELD_BG;
-input.border = true;
-input.borderColor = FIELD_LINE;
 input.maxChars = MAX_CHARS;
 
 var inputFmt = new TextFormat();
@@ -166,6 +164,12 @@ input.setNewTextFormat(inputFmt);
 // The counter sits at the right of the row under the field and the reset
 // control at its left, so the one that only sometimes applies never shifts the
 // one that always does.
+var fieldRule = box.attachMovie("RenamerRule", "fieldRule", 8);
+fieldRule._x = IN_X;
+fieldRule._y = Y_INPUT + ROW_INPUT - 2;
+fieldRule._width = IN_W;
+fieldRule._alpha = RULE_ALPHA;
+
 var counter = mkText(box, "counter", 4, IN_X, Y_META, IN_W, ROW_META, 14,
                      COLOR_HINT, FONT_REGULAR, "right");
 
@@ -176,7 +180,7 @@ resetClip._x = IN_X;
 resetClip._y = Y_META - 2;
 resetClip._visible = false;
 
-var resetBtn = mkText(resetClip, "label", 1, 8, 1, 180, ROW_KEY, 13,
+var resetBtn = mkText(resetClip, "label", 1, 4, 1, 180, ROW_KEY, 13,
                       COLOR_TEXT, FONT_REGULAR, "left");
 setText(resetBtn, "Reset to original");
 var resetW = resetBtn.textWidth + 4;
@@ -184,17 +188,25 @@ resetBtn._width = resetW;
 
 resetClip.beginFill(0xFFFFFF, 0);
 resetClip.moveTo(0, 0);
-resetClip.lineTo(resetW + 16, 0);
-resetClip.lineTo(resetW + 16, ROW_KEY);
+resetClip.lineTo(resetW + 8, 0);
+resetClip.lineTo(resetW + 8, ROW_KEY);
 resetClip.lineTo(0, ROW_KEY);
 resetClip.endFill();
-strokeRect(resetClip, 0, 0, resetW + 16, ROW_KEY, RULE_COLOR);
 
-// A hairline above the prompts, separating them from the field the way the
-// game separates its own bottom prompt bar.
-box.lineStyle(1, RULE_COLOR, 55);
-box.moveTo(IN_X, Y_RULE);
-box.lineTo(IN_X + IN_W, Y_RULE);
+var resetLine = resetClip.createEmptyMovieClip("line", 2);
+resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA);
+resetLine.moveTo(4, ROW_KEY - 1);
+resetLine.lineTo(resetW + 4, ROW_KEY - 1);
+
+// The same rule again above the prompts, dimmer and narrower so it reads as a
+// divider rather than as a second field. It has to be its own clip: a clip's
+// own drawing sits below every child it holds, so a line drawn straight onto
+// `box` would be hidden by the frame.
+var footRule = box.attachMovie("RenamerRule", "footRule", 9);
+footRule._width = IN_W * 0.7;
+footRule._x = IN_X + (IN_W - footRule._width) / 2;
+footRule._y = Y_RULE;
+footRule._alpha = 40;
 
 var keyAccept = mkKeyHint(box, "keyAccept", 6, "Enter", "accept");
 var keyCancel = mkKeyHint(box, "keyCancel", 7, "Esc", "cancel");
@@ -231,23 +243,29 @@ input.onChanged = function () {
 };
 
 input.onSetFocus = function () {
-    input.backgroundColor = FIELD_BG_FOCUS;
-    input.borderColor = FIELD_LINE_FOCUS;
+    fieldRule._alpha = RULE_ALPHA_FOCUS;
 };
 
 input.onKillFocus = function () {
-    input.backgroundColor = FIELD_BG;
-    input.borderColor = FIELD_LINE;
+    fieldRule._alpha = RULE_ALPHA;
 };
 
 resetClip.onRollOver = function () {
     resetBtn.styleFmt.color = COLOR_HOVER;
     setText(resetBtn, "Reset to original");
+    resetLine.clear();
+    resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA_FOCUS);
+    resetLine.moveTo(4, ROW_KEY - 1);
+    resetLine.lineTo(resetW + 4, ROW_KEY - 1);
 };
 
 resetClip.onRollOut = function () {
     resetBtn.styleFmt.color = COLOR_TEXT;
     setText(resetBtn, "Reset to original");
+    resetLine.clear();
+    resetLine.lineStyle(1, BTN_LINE, BTN_ALPHA);
+    resetLine.moveTo(4, ROW_KEY - 1);
+    resetLine.lineTo(resetW + 4, ROW_KEY - 1);
 };
 
 resetClip.onRelease = function () {
