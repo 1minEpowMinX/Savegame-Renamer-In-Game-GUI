@@ -41,7 +41,15 @@ public:
     int SaveId() const { return m_saveId; }
 
     /// Returns the name the load list shows for this save.
+    ///
+    /// A save the mod has not touched carries a localization key here rather
+    /// than readable text.
     std::string DisplayName() const;
+
+    /// Returns the objective the load list appends to the name after " - ".
+    ///
+    /// Empty on a renamed save: a custom name replaces both fields.
+    std::string ObjectiveName() const;
 
     /// Returns true when the save carries a name written by this mod.
     bool HasCustomName() const;

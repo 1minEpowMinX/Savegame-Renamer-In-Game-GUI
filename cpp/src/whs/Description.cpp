@@ -138,6 +138,11 @@ std::string Description::DisplayName() const
     return XmlUnescape(UiFields()[static_cast<std::size_t>(UiField::Quest)]);
 }
 
+std::string Description::ObjectiveName() const
+{
+    return XmlUnescape(UiFields()[static_cast<std::size_t>(UiField::Objective)]);
+}
+
 bool Description::HasCustomName() const
 {
     return !Attribute(kStashAttribute).empty();

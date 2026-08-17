@@ -4,6 +4,7 @@
 #include <ShlObj.h>
 
 #include "REL.h"
+#include "framework/C_LocalizedString.h"
 #include "framework/C_SaveGameDescription.h"
 #include "framework/C_SaveGameManager.h"
 
@@ -34,6 +35,25 @@ void HookedUpdateDescriptions(C_SaveGameManager* self)
         SR_LOG("save manager captured at %p", static_cast<void*>(self));
     }
     g_originalUpdate(self);
+}
+
+/// Returns `text` with localization markup resolved.
+///
+/// A save the mod has not renamed carries "@qname_..." keys; a save it has
+/// renamed carries the player's own words. Localize resolves the first and,
+/// per its contract, returns the second untouched.
+///
+/// @param text Authored string from the header.
+/// @return The readable text.
+std::string Localize(const std::string& text)
+{
+    if (text.empty())
+        return text;
+
+    CryStringT<char> output;
+    if (!wh::framework::C_LocalizedString::Localize(CryStringT<char>(text.c_str()), output))
+        return text;
+    return output.c_str();
 }
 
 /// Returns <Saved Games>\kingdomcome2\saves, or an empty path.
@@ -127,7 +147,14 @@ std::vector<SaveEntry> List()
             const auto header = whs::Description::Read(entry.file);
             if (!header.has_value())
                 continue;
-            entry.displayName = header->DisplayName();
+
+            // The line as the load list renders it, so the dialog can offer it
+            // for editing and a custom name can be built on top of the original.
+            entry.displayName = Localize(header->DisplayName());
+            const std::string objective = Localize(header->ObjectiveName());
+            if (!objective.empty())
+                entry.displayName += " - " + objective;
+
             out.push_back(std::move(entry));
         }
     }

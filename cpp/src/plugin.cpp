@@ -131,10 +131,12 @@ bool OpenFor(int saveId)
 
     const auto header = whs::Description::Read(entry->file);
     const bool canReset = header.has_value() && header->HasCustomName();
-    const std::string shown = canReset ? entry->displayName : std::string{};
 
+    // The field opens on the line the list currently shows, localized, so a
+    // player who only wants to mark the original can type around it instead of
+    // retyping it. Clearing the field resets, same as the button.
     g_pendingSaveId = saveId;
-    if (RenameDialog::Show(shown, canReset)) {
+    if (RenameDialog::Show(entry->displayName, canReset)) {
         return true;
     }
     g_pendingSaveId = -1;
