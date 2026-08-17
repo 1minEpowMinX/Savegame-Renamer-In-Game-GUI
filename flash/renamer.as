@@ -47,6 +47,9 @@ var COLOR_TEXT = 0xCFC2A0;
 var COLOR_HINT = 0xA2957A;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
+// The key plate is a light cap, so its letter is dark, matching the prompts the
+// game prints along the bottom of the screen.
+var COLOR_KEYCAP = 0x2A2118;
 
 // The backing dims while the field is idle and comes up to full while it holds
 // the caret: in this menu whatever is active is always the brighter thing.
@@ -110,7 +113,7 @@ function setText(tf, value) {
 // A key cap with its label beside it, the pairing the game uses for every
 // prompt it prints. `spanW` is how wide the pair came out, so a row of them can
 // be centred; `hit` is the clickable area over the whole pair.
-function mkKeyHint(parent, name, depth, key, label) {
+function mkKeyHint(parent, name, depth, key, label, action) {
     var clip = parent.createEmptyMovieClip(name, depth);
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
@@ -120,7 +123,7 @@ function mkKeyHint(parent, name, depth, key, label) {
     cap._height = ROW_KEY;
 
     var keyText = mkText(clip, "key", 2, 0, 1, KEY_W, ROW_KEY, 12,
-                         COLOR_TITLE, FONT_REGULAR, "center");
+                         COLOR_KEYCAP, FONT_REGULAR, "center");
     setText(keyText, key);
 
     var labelText = mkText(clip, "label", 3, KEY_W + KEY_GAP, 1, 200, ROW_KEY, 13,
@@ -130,6 +133,8 @@ function mkKeyHint(parent, name, depth, key, label) {
 
     clip.spanW = KEY_W + KEY_GAP + labelText.textWidth + 4;
     clip.labelText = labelText;
+    clip.labelValue = label;
+    clip.action = action;
 
     clip.beginFill(0xFFFFFF, 0);
     clip.moveTo(0, 0);
@@ -137,6 +142,20 @@ function mkKeyHint(parent, name, depth, key, label) {
     clip.lineTo(clip.spanW, ROW_KEY);
     clip.lineTo(0, ROW_KEY);
     clip.endFill();
+
+    clip.onRollOver = function () {
+        this.labelText.styleFmt.color = COLOR_HOVER;
+        setText(this.labelText, this.labelValue);
+    };
+
+    clip.onRollOut = function () {
+        this.labelText.styleFmt.color = COLOR_HINT;
+        setText(this.labelText, this.labelValue);
+    };
+
+    clip.onRelease = function () {
+        fc_setInput(this.action);
+    };
 
     return clip;
 }
@@ -147,16 +166,23 @@ var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 25,
                    COLOR_TITLE, FONT_DISPLAY, "center");
 setText(title, "Rename savegame");
 
-// The field's backing goes on before the field itself: a TextField background
-// has no alpha, and a flat fill would cover the panel's damask.
-var fieldPlate = box.attachMovie("RenamerField", "fieldPlate", 3);
-fieldPlate._x = IN_X;
-fieldPlate._y = Y_INPUT;
-fieldPlate._width = IN_W;
-fieldPlate._height = ROW_INPUT;
-fieldPlate._alpha = FIELD_ALPHA;
+// The field is bounded by a rule above and below rather than filled. A fill
+// would either hide the panel's damask (TextField backgrounds have no alpha) or
+// stretch out of shape: the item plate is a clipped bitmap, so widening it past
+// its own size leaves only its edges behind.
+var ruleTop = box.attachMovie("RenamerRule", "ruleTop", 3);
+ruleTop._x = IN_X;
+ruleTop._y = Y_INPUT - 2;
+ruleTop._width = IN_W;
+ruleTop._alpha = FIELD_ALPHA;
 
-var input = box.createTextField("input", 4, IN_X, Y_INPUT + 4, IN_W, ROW_INPUT);
+var ruleBottom = box.attachMovie("RenamerRule", "ruleBottom", 10);
+ruleBottom._x = IN_X;
+ruleBottom._y = Y_INPUT + ROW_INPUT;
+ruleBottom._width = IN_W;
+ruleBottom._alpha = FIELD_ALPHA;
+
+var input = box.createTextField("input", 4, IN_X, Y_INPUT + 2, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
@@ -185,9 +211,9 @@ footRule._alpha = 40;
 // Three prompts of the same shape. Reset is one of them rather than a button:
 // in this game an action is a key and a word, and making it anything else is
 // what put three different languages in one row.
-var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", "accept");
-var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", "cancel");
-var keyReset = mkKeyHint(box, "keyReset", 9, "Del", "reset");
+var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", "accept", "accept");
+var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", "cancel", "cancel");
+var keyReset = mkKeyHint(box, "keyReset", 9, "Del", "reset", "reset");
 
 function layoutKeys(withReset) {
     var total = keyAccept.spanW + PAIR_GAP + keyCancel.spanW;
@@ -237,25 +263,13 @@ input.onChanged = function () {
 };
 
 input.onSetFocus = function () {
-    fieldPlate._alpha = FIELD_ALPHA_FOCUS;
+    ruleTop._alpha = FIELD_ALPHA_FOCUS;
+    ruleBottom._alpha = FIELD_ALPHA_FOCUS;
 };
 
 input.onKillFocus = function () {
-    fieldPlate._alpha = FIELD_ALPHA;
-};
-
-keyReset.onRollOver = function () {
-    keyReset.labelText.styleFmt.color = COLOR_HOVER;
-    setText(keyReset.labelText, "reset");
-};
-
-keyReset.onRollOut = function () {
-    keyReset.labelText.styleFmt.color = COLOR_HINT;
-    setText(keyReset.labelText, "reset");
-};
-
-keyReset.onRelease = function () {
-    fc_setInput("reset");
+    ruleTop._alpha = FIELD_ALPHA;
+    ruleBottom._alpha = FIELD_ALPHA;
 };
 
 // ------------------------------------------------------------ engine calls --
