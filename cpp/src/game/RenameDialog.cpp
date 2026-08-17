@@ -84,6 +84,23 @@ void SetMenuBusy(bool busy)
     Call(MenuElement(), "SetBusyProtection", "fc_setBusyProtection", args);
 }
 
+/// Takes the dialog off screen after the movie has already hidden itself.
+///
+/// The movie clears its own artwork before emitting the event, but the element
+/// stays visible as far as the engine is concerned until this runs.
+void Dismiss()
+{
+    auto* env = SSystemGlobalEnvironment::GetInstance();
+    if (env && env->pFlashUI) {
+        _smart_ptr<IUIElement> el;
+        env->pFlashUI->GetUIElement(el, "SavegameRenamer");
+        if (el)
+            el->SetVisible(false);
+    }
+    g_open = false;
+    SetMenuBusy(false);
+}
+
 class Listener : public Offsets::IUIElementEventListener {
     void OnUIEvent(IUIElement*, const SUIEventDesc& ev, const SUIArguments& args, void*) override
     {
@@ -94,20 +111,17 @@ class Listener : public Offsets::IUIElementEventListener {
         if (_stricmp(name, "onRenameAccept") == 0) {
             const std::string typed =
                 args.GetArgCount() > 0 ? args.GetArg(0).AsString().c_str() : "";
-            g_open = false;
-            SetMenuBusy(false);
+            Dismiss();
             SR_LOG("dialog accepted with '%s'", typed.c_str());
             if (g_onAccept)
                 g_onAccept(typed);
         } else if (_stricmp(name, "onRenameCancel") == 0) {
-            g_open = false;
-            SetMenuBusy(false);
+            Dismiss();
             SR_LOG("dialog cancelled");
             if (g_onCancel)
                 g_onCancel();
         } else if (_stricmp(name, "onRenameReset") == 0) {
-            g_open = false;
-            SetMenuBusy(false);
+            Dismiss();
             SR_LOG("dialog reset");
             if (g_onReset)
                 g_onReset();
@@ -144,12 +158,22 @@ bool IsOpen()
 
 bool Show(const std::string& currentName, bool canReset)
 {
+    IUIElement* el = Element();
+    if (!el)
+        return false;
+
+    // The element has to be visible before anything is called into it: while it
+    // is hidden the engine does not render the movie, and a call lands in a
+    // frame that was never drawn.
+    el->SetVisible(true);
+
     SUIArguments args;
     args.AddArgument(currentName.c_str());
     args.AddArgument(canReset);
-
-    if (!Call(Element(), "Open", "fc_open", args))
+    if (!Call(el, "Open", "fc_open", args)) {
+        el->SetVisible(false);
         return false;
+    }
 
     g_open = true;
     SetMenuBusy(true);
@@ -158,7 +182,10 @@ bool Show(const std::string& currentName, bool canReset)
 
 void Hide()
 {
-    Call(Element(), "Close", "fc_close", SUIArguments());
+    if (IUIElement* el = Element()) {
+        Call(el, "Close", "fc_close", SUIArguments());
+        el->SetVisible(false);
+    }
     g_open = false;
     SetMenuBusy(false);
 }
