@@ -81,6 +81,34 @@ std::shared_ptr<Offsets::IFlashPlayer> MenuPlayer()
     return menu->GetFlashPlayer();
 }
 
+/// Reads a flash value as an integer whatever numeric type it carries.
+///
+/// The getters on SFlashVarValue assert the exact type and then read that
+/// member of the union outright. With asserts compiled out, GetInt() on a
+/// double returns the low half of its bit pattern, which is zero for every
+/// small whole number. ActionScript hands out doubles for plain numbers, so
+/// this conversion is not optional.
+///
+/// @param v Value to read.
+/// @param out Receives the number.
+/// @return True when the value held a number.
+bool ToInt(const SFlashVarValue& v, int& out)
+{
+    if (v.IsInt())
+        out = v.GetInt();
+    else if (v.IsUInt())
+        out = static_cast<int>(v.GetUInt());
+    else if (v.IsDouble())
+        out = static_cast<int>(v.GetDouble());
+    else if (v.IsFloat())
+        out = static_cast<int>(v.GetFloat());
+    else if (v.IsString())
+        out = std::atoi(v.GetConstStrPtr());
+    else
+        return false;
+    return true;
+}
+
 /// Owns an IFlashVariableObject and releases it.
 ///
 /// Every getter that hands one back allocates, so the traversal below would leak
@@ -122,12 +150,17 @@ void SelectedButton(VarObj& out)
     if (!player)
         return;
 
-    SFlashVarValue container = SFlashVarValue::CreateUndefined();
-    SFlashVarValue index = SFlashVarValue::CreateUndefined();
-    if (!player->GetVariable("_root.g_selectContainer", container)
-        || !player->GetVariable("_root.g_selectButton", index))
+    SFlashVarValue containerValue = SFlashVarValue::CreateUndefined();
+    SFlashVarValue indexValue = SFlashVarValue::CreateUndefined();
+    if (!player->GetVariable("_root.g_selectContainer", containerValue)
+        || !player->GetVariable("_root.g_selectButton", indexValue))
         return;
-    if (container.IsUndefined() || index.IsUndefined())
+
+    int container = 0;
+    int index = 0;
+    if (!ToInt(containerValue, container) || !ToInt(indexValue, index))
+        return;
+    if (container < 0 || index < 0)
         return;
 
     VarObj array;
@@ -135,10 +168,10 @@ void SelectedButton(VarObj& out)
         return;
 
     VarObj row;
-    if (!array.Get()->GetElement(static_cast<unsigned>(container.GetInt()), *row.Receive()) || !row)
+    if (!array.Get()->GetElement(static_cast<unsigned>(container), *row.Receive()) || !row)
         return;
 
-    if (!row.Get()->GetElement(static_cast<unsigned>(index.GetInt()), *out.Receive()))
+    if (!row.Get()->GetElement(static_cast<unsigned>(index), *out.Receive()))
         out.Reset();
 }
 
@@ -146,14 +179,16 @@ void SelectedButton(VarObj& out)
 std::string Describe(const SFlashVarValue& v)
 {
     char buf[128];
-    if (v.IsInt() || v.IsUInt())
+    if (v.IsInt())
         std::snprintf(buf, sizeof(buf), "int %d", v.GetInt());
+    else if (v.IsUInt())
+        std::snprintf(buf, sizeof(buf), "uint %u", v.GetUInt());
     else if (v.IsDouble())
         std::snprintf(buf, sizeof(buf), "double %.3f", v.GetDouble());
     else if (v.IsString())
         std::snprintf(buf, sizeof(buf), "string '%s'", v.GetConstStrPtr());
     else if (v.IsBool())
-        std::snprintf(buf, sizeof(buf), "bool %d", v.GetInt());
+        std::snprintf(buf, sizeof(buf), "bool %d", v.GetBool() ? 1 : 0);
     else if (v.IsNull())
         std::snprintf(buf, sizeof(buf), "null");
     else
@@ -179,6 +214,41 @@ void ProbeSelection()
            haveC, Describe(container).c_str(), haveI, Describe(index).c_str());
     if (!haveC || !haveI)
         return;
+
+    // Dump the shape of the array itself: the indices above are live, yet every
+    // index has so far produced the same row, so the structure is not what the
+    // menu script implied.
+    VarObj array;
+    if (!player->GetVariable("_root.MenuManagerArray", *array.Receive()) || !array) {
+        SR_LOG("probe: MenuManagerArray unreadable");
+        return;
+    }
+    SR_LOG("probe: MenuManagerArray isArray=%d size=%u",
+           array.Get()->IsArray(), array.Get()->GetArraySize());
+
+    for (unsigned c = 0; c < array.Get()->GetArraySize() && c < 4; ++c) {
+        VarObj row;
+        if (!array.Get()->GetElement(c, *row.Receive()) || !row) {
+            SR_LOG("probe:   [%u] unreadable", c);
+            continue;
+        }
+        const unsigned count = row.Get()->GetArraySize();
+        SR_LOG("probe:   [%u] isArray=%d size=%u", c, row.Get()->IsArray(), count);
+
+        for (unsigned b = 0; b < count && b < 6; ++b) {
+            VarObj btn;
+            if (!row.Get()->GetElement(b, *btn.Receive()) || !btn) {
+                SR_LOG("probe:     [%u][%u] unreadable", c, b);
+                continue;
+            }
+            SFlashVarValue name = SFlashVarValue::CreateUndefined();
+            SFlashVarValue type = SFlashVarValue::CreateUndefined();
+            btn.Get()->GetMember("_name", name);
+            btn.Get()->GetMember("type", type);
+            SR_LOG("probe:     [%u][%u] name=%s type=%s",
+                   c, b, Describe(name).c_str(), Describe(type).c_str());
+        }
+    }
 
     VarObj button;
     SelectedButton(button);
