@@ -26,6 +26,7 @@ var MAX_CHARS = 120;
 
 var COLOR_TEXT = 0xCFC2A0;
 var COLOR_WARN = 0xC08040;
+var COLOR_HOVER = 0xFFF0C8;
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -94,12 +95,26 @@ var counter = mkText(box, "counter", 4, BOX_X + PAD,
                      BOX_Y + PAD + TITLE_H + INPUT_H + 6, 200, 22, 16,
                      COLOR_TEXT, FONT_REGULAR);
 
-var resetBtn = mkText(box, "resetBtn", 5, BOX_X + BOX_W - PAD - 220,
-                      BOX_Y + PAD + TITLE_H + INPUT_H + 6, 220, 22, 16,
+// A TextField has no onRelease in AS2, so the button is a clip with an
+// invisible hit area and the label parented inside it.
+var RESET_W = 220;
+var RESET_H = 24;
+
+var resetClip = box.createEmptyMovieClip("resetClip", 5);
+resetClip._x = BOX_X + BOX_W - PAD - RESET_W;
+resetClip._y = BOX_Y + PAD + TITLE_H + INPUT_H + 6;
+resetClip._visible = false;
+
+resetClip.beginFill(0xFFFFFF, 0);
+resetClip.moveTo(0, 0);
+resetClip.lineTo(RESET_W, 0);
+resetClip.lineTo(RESET_W, RESET_H);
+resetClip.lineTo(0, RESET_H);
+resetClip.endFill();
+
+var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, RESET_H, 16,
                       COLOR_TEXT, FONT_REGULAR);
-resetBtn.selectable = true;
 setText(resetBtn, "Reset to original");
-resetBtn._visible = false;
 
 var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - 26,
                   BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_REGULAR);
@@ -130,7 +145,17 @@ input.onChanged = function () {
     updateCounter();
 };
 
-resetBtn.onRelease = function () {
+resetClip.onRollOver = function () {
+    resetBtn.styleFmt.color = COLOR_HOVER;
+    setText(resetBtn, "Reset to original");
+};
+
+resetClip.onRollOut = function () {
+    resetBtn.styleFmt.color = COLOR_TEXT;
+    setText(resetBtn, "Reset to original");
+};
+
+resetClip.onRelease = function () {
     box._visible = false;
     Selection.setFocus(null);
     fscommand("onRenameReset", "");
@@ -142,7 +167,7 @@ function fc_open(currentName, canReset) {
     box._visible = true;
     input.text = currentName;
     input.setTextFormat(inputFmt);
-    resetBtn._visible = canReset;
+    resetClip._visible = canReset;
     updateCounter();
     Selection.setFocus(input);
     Selection.setSelection(input.text.length, input.text.length);
