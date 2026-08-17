@@ -18,22 +18,12 @@ import shutil
 import subprocess
 import sys
 
-import external_image
-
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FLASH_DIR = os.path.join(PROJECT_ROOT, "flash")
 OUTPUT = os.path.join(PROJECT_ROOT, "src", "Data", "Libs", "UI", "renamer.gfx")
 SCRATCH = os.path.join(PROJECT_ROOT, "build", "flash")
 
 FFDEC = r"D:\Computer tech. programs\FFDec\ffdec-cli.exe"
-
-# The game's own modal-window frame. The engine loads it from Libs/UI itself, so
-# the texture is referenced rather than shipped. Ids continue after the fonts
-# base.xml claims.
-FRAME_IMAGES = [
-    (200, "Textures/Apse/modal_dialog_simple",
-     "Textures/Apse/modal_dialog_simple.dds", 1024, 512),
-]
 
 
 def run(*args):
@@ -81,10 +71,6 @@ def build():
         compiled = f.read()
     if "fc_open" not in compiled:
         raise RuntimeError("renamer.as did not compile into the container")
-
-    # Last, because FFDec rewrites the whole file on every operation and does not
-    # carry GFX-specific tags across.
-    external_image.inject(OUTPUT, FRAME_IMAGES)
 
     return OUTPUT
 

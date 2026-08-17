@@ -14,13 +14,11 @@
 // no ternary, no chained assignments.
 
 // ------------------------------------------------------- layout constants --
-// The frame texture is 1024x512, so the window keeps a 2:1 ratio and its
-// ornament is never stretched out of shape.
-var BOX_X = 140;
-var BOX_Y = 95;
-var BOX_W = 520;
-var BOX_H = 260;
-var PAD = 54;
+var BOX_X = 150;
+var BOX_Y = 150;
+var BOX_W = 500;
+var BOX_H = 150;
+var PAD = 20;
 var TITLE_H = 30;
 var INPUT_H = 34;
 var SOFT_LIMIT = 40;
@@ -34,21 +32,12 @@ var COLOR_HOVER = 0xFFF0C8;
 var box = _root.createEmptyMovieClip("box", 1);
 box._visible = false;
 
-// The game's own modal frame, declared as an external image by the build and
-// loaded by the engine from Libs/UI. A plain panel is drawn underneath so the
-// dialog stays readable if the texture is ever missing.
 box.beginFill(0x000000, 85);
 box.moveTo(BOX_X, BOX_Y);
 box.lineTo(BOX_X + BOX_W, BOX_Y);
 box.lineTo(BOX_X + BOX_W, BOX_Y + BOX_H);
 box.lineTo(BOX_X, BOX_Y + BOX_H);
 box.endFill();
-
-var frame = box.attachMovie("Textures/Apse/modal_dialog_simple", "frame", 1);
-frame._x = BOX_X;
-frame._y = BOX_Y;
-frame._width = BOX_W;
-frame._height = BOX_H;
 
 // ---------------------------------------------------------------- helpers --
 
@@ -83,7 +72,7 @@ function setText(tf, value) {
 var FONT_REGULAR = "DefaultFont";
 var FONT_BOLD = "DefaultFontBold";
 
-var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD,
+var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD - 6,
                    BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT, FONT_BOLD);
 setText(title, "Rename savegame");
 
@@ -127,7 +116,7 @@ var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, RESET_H, 16,
                       COLOR_TEXT, FONT_REGULAR);
 setText(resetBtn, "Reset to original");
 
-var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - PAD - 4,
+var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - 26,
                   BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_REGULAR);
 setText(hint, "Enter - accept, Esc - cancel");
 
