@@ -47,6 +47,15 @@
       </names>
     </item>
 
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="gfxfontlib.gfx">
+      <tags>
+        <item>103</item>
+      </tags>
+      <names>
+        <item>DefaultFontItalic</item>
+      </names>
+    </item>
+
     <!-- The window frame is the game's own modal-dialog texture. ApseModalDialog.gfx
          exports it as a symbol, so it is imported exactly the way the fonts above
          are: a tag FFDec writes itself, with nothing patched into the binary

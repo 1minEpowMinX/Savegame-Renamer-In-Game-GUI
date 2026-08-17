@@ -97,6 +97,10 @@ var FONT_REGULAR = "DefaultFont";
 var FONT_BOLD = "DefaultFontBold";
 // The face the game sets its own screen headings in.
 var FONT_DISPLAY = "DisplayFont";
+// The face of the line the game prints under the save list, which the rename
+// prompt sits directly above and has to match.
+var FONT_ITALIC = "DefaultFontItalic";
+var COLOR_PROMPT = 0xC9A44C;
 
 // Derived, so a change above moves everything together.
 var IN_X = BOX_X + IN_L;
@@ -314,7 +318,13 @@ var HINT_CENTRE_X = 612;
 var HINT_Y = 386;
 var HINT_SCALE = 82;
 
-var hint = mkKeyHint(_root, "hint", 2, "F2", "rename", "");
+var hint = mkKeyHint(_root, "hint", 2, "F2", "rename save", "");
+
+// The prompt belongs to the game's own line below it, not to the dialog, so its
+// label takes that line's italic face and gold rather than the dialog's.
+hint.labelText.styleFmt.font = FONT_ITALIC;
+hint.labelText.styleFmt.color = COLOR_PROMPT;
+setText(hint.labelText, "rename save");
 hint._xscale = HINT_SCALE;
 hint._yscale = HINT_SCALE;
 hint._x = HINT_CENTRE_X - hint.spanW * HINT_SCALE / 200;
