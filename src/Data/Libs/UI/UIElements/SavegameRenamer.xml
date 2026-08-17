@@ -1,0 +1,43 @@
+<UIElements name="Menus">
+
+  <UIElement name="SavegameRenamer" mouseevents="1" cursor="1" keyevents="1" controller_input="1" events_exclusive="1">
+
+    <GFx file="renamer.gfx" layer="47">
+      <Constraints>
+        <Align mode="fullscreen" scale="1" />
+      </Constraints>
+    </GFx>
+
+    <!-- Layer 47 sits one above MCM's so the two dialogs do not fight when both
+         mods are installed. -->
+
+    <functions>
+
+      <function name="Open" funcname="fc_open" desc="shows the dialog with the current name prefilled">
+        <param name="currentName" desc="name the load list shows for this save right now" type="string" />
+        <param name="canReset" desc="1 when the save carries a stashed original name" type="bool" />
+      </function>
+
+      <function name="Close" funcname="fc_close" desc="hides the dialog without emitting an event" />
+
+      <function name="SetInput" funcname="fc_setInput" desc="key feed from the plugin's input listener: the engine delivers typed characters to the movie but not Enter or Esc">
+        <param name="action" desc="accept | cancel" type="string" />
+      </function>
+
+    </functions>
+
+    <events>
+
+      <event name="OnAccept" fscommand="onRenameAccept" desc="the player confirmed a name">
+        <param name="name" desc="text as typed" type="string" />
+      </event>
+
+      <event name="OnCancel" fscommand="onRenameCancel" desc="the player dismissed the dialog" />
+
+      <event name="OnReset" fscommand="onRenameReset" desc="the player asked for the original name back" />
+
+    </events>
+
+  </UIElement>
+
+</UIElements>

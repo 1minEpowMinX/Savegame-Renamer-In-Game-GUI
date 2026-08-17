@@ -15,6 +15,7 @@
 #include <string>
 
 #include "Log.h"
+#include "game/RenameDialog.h"
 #include "game/SaveCatalog.h"
 #include "game/SaveLoadHook.h"
 #include "whs/Description.h"
@@ -83,6 +84,19 @@ void CmdSet(IConsoleCmdArgs* args)
            redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
+// Temporary, replaced by the F2 hook: toggles the dialog so the element can be
+// checked before it is wired to the save list.
+void CmdDialog(IConsoleCmdArgs* args)
+{
+    if (RenameDialog::IsOpen()) {
+        RenameDialog::Hide();
+        return;
+    }
+    const char* name = args->GetArgCount() > 1 ? args->GetArg(1) : "test name";
+    if (!RenameDialog::Show(name, true))
+        SR_LOG("could not show the dialog");
+}
+
 void RegisterCommands()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
@@ -95,6 +109,12 @@ void RegisterCommands()
     env->pConsole->AddCommand("renamer_set", &CmdSet, VF_NULL,
                               "renamer_set <id> [name] -- renames a savegame, or resets it "
                               "to its quest name when no name is given.");
+    env->pConsole->AddCommand("renamer_dialog", &CmdDialog, VF_NULL,
+                              "renamer_dialog [name] -- shows or hides the rename dialog.");
+
+    // The flash element only exists once the UI has loaded, so this cannot run
+    // from KCSEPlugin_Load.
+    RenameDialog::Install();
 }
 
 void OnKcseMessage(KCSE::Message* msg)
