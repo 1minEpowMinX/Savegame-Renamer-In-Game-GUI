@@ -53,9 +53,13 @@ var KEY_BOLD_SPREAD = 1.12;   // how much wider to cut the cap
 var KEY_BOLD_DRIFT = 0.12;    // how far the drawn centre sits right of measured
 
 // What is left over after that correction does not scale with the word: names
-// of every length lean the same way. It is the cap itself -- the plate is drawn
-// in perspective with an uneven bevel, so the centre of its lit face is not the
-// centre of its box. A fixed shift, not a proportional one.
+// of every length lean the same way, so it is corrected by a fixed shift.
+//
+// Its cause is not established. The cap was the suspect and was cleared: the
+// lit face of key_long.dds spans columns 6..121 of 128 and centres exactly on
+// the plate, so the plate is symmetric. Letting the field auto-size onto the
+// run the player laid out was tried instead of this arithmetic and came out
+// visibly worse. Treat the number as measured off the screen, not derived.
 var KEY_FACE_OFFSET = 2;
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
