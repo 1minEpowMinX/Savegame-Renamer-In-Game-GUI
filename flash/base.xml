@@ -38,6 +38,71 @@
       </names>
     </item>
 
+    <!-- The window frame is the game's own modal-dialog texture. ApseModalDialog.gfx
+         exports it as a symbol, so it is imported exactly the way the fonts above
+         are: a tag FFDec writes itself, with nothing patched into the binary
+         afterwards. The engine loads it from Libs/UI, so no game asset ships with
+         the mod.
+
+         An imported texture is a bitmap character and cannot be attached as a
+         movie clip; every vanilla screen uses one as a shape fill instead. So a
+         shape fills itself with it, a sprite wraps the shape, and ActionScript
+         attaches the sprite.
+
+         Geometry is in twips, 20 per pixel: the shape is 520x260 px and the fill
+         matrix maps the 1024x512 texture onto it (20 * 520 / 1024). -->
+
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="ApseModalDialog.gfx">
+      <tags>
+        <item>200</item>
+      </tags>
+      <names>
+        <item>Textures/Apse/modal_dialog_simple</item>
+      </names>
+    </item>
+
+    <item type="DefineShapeTag" forceWriteAsLong="true" shapeId="201">
+      <shapeBounds type="RECT" Xmax="10400" Xmin="0" Ymax="5200" Ymin="0" nbits="16"/>
+      <shapes type="SHAPEWITHSTYLE" numFillBits="1" numLineBits="0">
+        <fillStyles type="FILLSTYLEARRAY">
+          <fillStyles>
+            <item type="FILLSTYLE" bitmapId="200" fillStyleType="65">
+              <bitmapMatrix type="MATRIX" hasRotate="false" hasScale="true" nRotateBits="0" nScaleBits="22" nTranslateBits="0" scaleX="10.15625" scaleY="10.15625" translateX="0" translateY="0"/>
+            </item>
+          </fillStyles>
+        </fillStyles>
+        <lineStyles type="LINESTYLEARRAY">
+          <lineStyles/>
+        </lineStyles>
+        <shapeRecords>
+          <item type="StyleChangeRecord" fillStyle1="1" moveBits="16" moveDeltaX="10400" moveDeltaY="5200" stateFillStyle0="false" stateFillStyle1="true" stateLineStyle="false" stateMoveTo="true" stateNewStyles="false"/>
+          <item type="StraightEdgeRecord" deltaX="-10400" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="-5200" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="StraightEdgeRecord" deltaX="10400" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="5200" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="EndShapeRecord" endOfShape="0"/>
+        </shapeRecords>
+      </shapes>
+    </item>
+
+    <item type="DefineSpriteTag" forceWriteAsLong="true" frameCount="1" hasEndTag="true" spriteId="202">
+      <subTags>
+        <item type="PlaceObject2Tag" characterId="201" clipDepth="0" depth="1" forceWriteAsLong="true" placeFlagHasCharacter="true" placeFlagHasClipActions="false" placeFlagHasClipDepth="false" placeFlagHasColorTransform="false" placeFlagHasMatrix="true" placeFlagHasName="false" placeFlagHasRatio="false" placeFlagMove="false" ratio="0">
+          <matrix type="MATRIX" hasRotate="false" hasScale="false" nRotateBits="0" nScaleBits="0" nTranslateBits="0" rotateSkew0="0.0" rotateSkew1="0.0" scaleX="0.0" scaleY="0.0" translateX="0" translateY="0"/>
+        </item>
+        <item type="ShowFrameTag" forceWriteAsLong="false"/>
+      </subTags>
+    </item>
+
+    <item type="ExportAssetsTag" forceWriteAsLong="true">
+      <tags>
+        <item>202</item>
+      </tags>
+      <names>
+        <item>RenamerFrame</item>
+      </names>
+    </item>
+
     <!-- "0700" is stop() followed by the end-of-actions byte. The build replaces
          the whole tag with the compiled renamer.as. -->
     <item type="DoActionTag" actionBytes="0700" forceWriteAsLong="false"/>
