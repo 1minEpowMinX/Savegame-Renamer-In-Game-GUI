@@ -6,7 +6,7 @@
 
 **Architecture:** Нативный плагин под KCSE плюс собственный элемент Scaleform поверх меню. Четыре модуля: `whs::Description` (чтение и запись заголовка `.whs`, чистый C++ без зависимостей), `SaveCatalog` (мост к `C_SaveGameManager`), `RenameDialog` (собственный `.gfx`), `SaveLoadHook` (склейка, хук на `C_UISaveLoad`). Ванильные файлы игры не подменяются.
 
-**Tech Stack:** C++20, CMake, vcpkg, Catch2, KCSE + libKCD2, ActionScript 2 (Flash 8, Scaleform GFx), JPEXS FFDec, Python 3 для упаковки.
+**Tech Stack:** C++17, CMake, Ninja, vcpkg, Catch2, KCSE + libKCD2, ActionScript 2 (Flash 8, Scaleform GFx), JPEXS FFDec, Python 3 для упаковки.
 
 Спецификация: [2026-08-17-savegame-renamer-design.md](2026-08-17-savegame-renamer-design.md).
 
@@ -24,6 +24,23 @@
 - Клавиши: F2 открывает диалог, Enter принимает, Esc отменяет. Сброс к оригиналу — кнопка в диалоге.
 - ActionScript пишется под парсер FFDec: одно объявление на `var`, без объектных литералов, без тернарного оператора, без цепочек присваивания.
 - Корень проекта: `D:\Games\Self-Mods\KCD2\savegame_renamer`. Все пути ниже относительны ему.
+- Лицензия **GPLv3**: KCSE распространяется под ней, мод линкуется с `kcd_re` и публикуется с исходниками.
+- Стандарт **C++17**: тот же, что у `kcd_re`, иначе ABI статической библиотеки не сойдётся.
+- XML элементов интерфейса кладётся в `Libs/UI/UIElements/<Name>.xml` внутри собственного pak мода.
+- Модель правит заголовок точечными строковыми заменами, а не пересериализацией через pugixml: всё, что мод не трогает, обязано остаться в файле байт в байт.
+
+### Окружение, проверено на машине
+
+| Компонент | Путь или состояние |
+|---|---|
+| MSVC | `D:\IDE\Microsoft Visual Studio\18\Community`, toolset 14.51.36231 |
+| vcvars | `D:\IDE\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat` |
+| cmake, ninja | `...\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\{CMake\bin,Ninja}` |
+| libKCD2 | склонирован в `D:\Games\Self-Mods\KCD2\_deps\libKCD2` |
+| KCSE | установлен, `<игра>\Bin\Win64MasterMasterSteamPGO\dinput8.dll` |
+| Address Library | установлена, `<игра>\KCSE\addresslib\kcd_addresslib_steam_release_1_5-15693.bin` совпадает со сборкой игры |
+| vcpkg | отсутствует, поднимается в задаче 1 |
+| JPEXS FFDec | отсутствует, нужен начиная с задачи 8 |
 
 ---
 
@@ -54,72 +71,148 @@
 ## Task 1: Каркас проекта и работающий плагин
 
 **Files:**
-- Create: `cpp/CMakeLists.txt`, `cpp/vcpkg.json`, `cpp/CMakePresets.json`, `cpp/src/plugin.cpp`, `src/mod.manifest`, `.gitignore`
-- Reference: клон libKCD2, файлы `.buildenv/CMakeLists.txt`, `.buildenv/vcpkg.json`, `include/KCSE/KCSEAPI.h`
+- Create: `cpp/.buildenv/CMakeLists.txt`, `cpp/src/plugin.cpp`, `src/mod.manifest`, `LICENSE`
+- Modify: `_deps/libKCD2/.buildenv/vcpkg.json` (добавить Catch2), `_deps/libKCD2/.buildenv/CMakePresets.json` (путь к ninja)
+- Reference: `_deps/libKCD2/Projects/MCM/.buildenv/CMakeLists.txt`, `_deps/libKCD2/include/KCSE/KCSEAPI.h`
 
 **Interfaces:**
 - Consumes: ничего
-- Produces: собранная `savegame_renamer.dll`, которую KCSE подхватывает из `mods/savegame_renamer/KCSE/Plugins/`
+- Produces: собранная `SavegameRenamer.dll`, которую KCSE подхватывает из `Mods/savegame_renamer/KCSE/Plugins/`
 
-- [ ] **Step 1: Завести репозиторий и структуру**
+Сборка идёт по схеме libKCD2: его корневой `CMakeLists.txt` сам находит подпроекты по маске `Projects/*/.buildenv/CMakeLists.txt` и линкует их со статической библиотекой `kcd_re`. Исходники остаются в нашем репозитории, а внутрь клона заводится junction.
 
-План опирается на коммит после каждой задачи, поэтому проект версионируется, в отличие от `better_arm_of_beowulf`.
+Шаги 1 и 2 (репозиторий, структура, клон libKCD2) выполнены заранее, коммит `e853c1e`.
 
-```bash
-cd "D:/Games/Self-Mods/KCD2/savegame_renamer"
-git init
-mkdir -p cpp/include/whs cpp/src/whs cpp/src/game cpp/tests flash src/KCSE/Plugins src/Data releases
-```
-
-`.gitignore`:
-
-```
-build/
-vcpkg_installed/
-releases/*.zip
-*.user
-```
-
-- [ ] **Step 2: Клонировать libKCD2 и прочитать эталонную сборку**
+- [ ] **Step 3: Поднять vcpkg**
 
 ```bash
-git clone https://github.com/JerryYOJ/libKCD2.git "D:/Games/Self-Mods/KCD2/_deps/libKCD2"
+git clone https://github.com/microsoft/vcpkg.git "D:/Games/Self-Mods/KCD2/_deps/vcpkg"
+"D:/Games/Self-Mods/KCD2/_deps/vcpkg/bootstrap-vcpkg.bat" -disableMetrics
 ```
 
-Прочитать три файла и выписать: имя пакета KCSE в vcpkg, требуемый стандарт C++, флаги компоновки, макросы точки входа.
+Задать `VCPKG_ROOT=D:\Games\Self-Mods\KCD2\_deps\vcpkg` в окружении пользователя: корневой `CMakeLists.txt` libKCD2 читает именно эту переменную.
 
-- `_deps/libKCD2/.buildenv/CMakeLists.txt`
-- `_deps/libKCD2/.buildenv/vcpkg.json`
-- `_deps/libKCD2/include/KCSE/KCSEAPI.h`
+- [ ] **Step 4: Добавить Catch2 в манифест зависимостей**
 
-Цель шага — не изобретать сборку, а повторить ту, которой собираются работающие плагины из `Projects/`.
+В `_deps/libKCD2/.buildenv/vcpkg.json` дописать `"catch2"` в `dependencies`. Остальные пакеты (`spdlog`, `boost-container`, `boost-optional`, `boost-smart-ptr`, `minhook`, `pugixml`, `xbyak`) уже там.
 
-- [ ] **Step 3: Написать точку входа**
+- [ ] **Step 5: Завести junction и CMake подпроекта**
+
+```bash
+cmd //c mklink //J "D:\Games\Self-Mods\KCD2\_deps\libKCD2\Projects\SavegameRenamer" "D:\Games\Self-Mods\KCD2\savegame_renamer\cpp"
+```
+
+`cpp/.buildenv/CMakeLists.txt`, по образцу MCM:
+
+```cmake
+project(SavegameRenamer LANGUAGES CXX)
+
+find_package(minhook CONFIG REQUIRED)
+
+file(GLOB_RECURSE PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp")
+
+add_library(SavegameRenamer SHARED ${PLUGIN_SOURCES})
+
+target_precompile_headers(SavegameRenamer PRIVATE "${RE_BUILDENV}/PCH.h")
+
+target_compile_definitions(SavegameRenamer PRIVATE
+    _ITERATOR_DEBUG_LEVEL=0 WIN32_LEAN_AND_MEAN NOMINMAX)
+
+target_compile_options(SavegameRenamer PRIVATE /utf-8 /W4 /wd4819 /wd4100)
+
+target_include_directories(SavegameRenamer PRIVATE
+    ${RE_ROOT}/include ${RE_ROOT}/include/CryEngine/CryCommon
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+target_link_libraries(SavegameRenamer PRIVATE kcd_re minhook::minhook)
+
+# Тесты модели собираются отдельной целью: whs:: не зависит ни от игры, ни от kcd_re,
+# поэтому тестам не нужен ни один заголовок libKCD2.
+find_package(Catch2 CONFIG REQUIRED)
+enable_testing()
+file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../tests/*.cpp")
+add_executable(SavegameRenamerTests ${TEST_SOURCES}
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/whs/Description.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../src/whs/Sanitise.cpp")
+target_include_directories(SavegameRenamerTests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/../tests)
+target_compile_options(SavegameRenamerTests PRIVATE /utf-8 /W4)
+target_link_libraries(SavegameRenamerTests PRIVATE Catch2::Catch2WithMain)
+include(Catch)
+catch_discover_tests(SavegameRenamerTests)
+```
+
+Цель тестов сознательно не тянет `kcd_re` и PCH: модель обязана собираться и проверяться в отрыве от игры.
+
+- [ ] **Step 6: Поправить пресет под установленную Visual Studio**
+
+В `_deps/libKCD2/.buildenv/CMakePresets.json` заменить `CMAKE_MAKE_PROGRAM` на путь установленной VS:
+
+```
+D:/IDE/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe
+```
+
+Пресет в апстриме прибит к `18/Community` на диске C, у нас установка на D.
+
+- [ ] **Step 7: Написать точку входа**
+
+`cpp/src/plugin.cpp`:
+
+`cpp/src/Log.h` повторяет приём MCM: `gEnv` на момент загрузки плагина может быть ещё не готов, поэтому каждый вызов проверяет его сам.
+
+```cpp
+#pragma once
+
+#include "crysystem/SSystemGlobalEnvironment.h"
+
+#define SR_LOG(fmt, ...)                                                       \
+    do {                                                                       \
+        if (auto* _env = SSystemGlobalEnvironment::GetInstance(); _env && _env->pLog) \
+            _env->pLog->LogAlways("[SavegameRenamer] " fmt, ##__VA_ARGS__);    \
+    } while (0)
+```
 
 `cpp/src/plugin.cpp`:
 
 ```cpp
 #include "KCSE/KCSEAPI.h"
+#include "Log.h"
 
-KCSE_PLUGIN_INFO("savegame_renamer", "Lefxxx", 1);
+KCSE_PLUGIN_INFO("SavegameRenamer", "Lefxxx", 1);
+
+namespace {
+
+void OnKcseMessage(KCSE::Message* msg)
+{
+    if (msg && msg->type == KCSE::IMessagingInterface::kMessage_DataLoaded)
+        SR_LOG("data loaded");
+}
+
+}  // namespace
 
 KCSE_PLUGIN_LOAD(kcse)
 {
-    KCSE::Log("savegame_renamer: plugin loaded");
+    SR_LOG("loaded, KCSE v%u, game build %u",
+           kcse->GetKCSEVersion(), kcse->GetGameVersion());
+    if (auto* messaging = kcse->GetMessagingInterface())
+        messaging->RegisterListener(&OnKcseMessage);
+    return true;
 }
 ```
 
-Если сигнатура логирования в `KCSEAPI.h` отличается, взять ту, что там объявлена.
+`KCSE_PLUGIN_LOAD` разворачивается в функцию, возвращающую `bool`; без `return true` загрузчик отбросит плагин с сообщением «returned false from KCSEPlugin_Load». Слушатель `DataLoaded` нужен как страховка проверки: если на момент загрузки `gEnv->pLog` ещё не создан, первая строка в лог не попадёт, а вторая попадёт гарантированно.
 
-- [ ] **Step 4: Собрать**
+- [ ] **Step 8: Собрать**
+
+Сборка запускается из корня libKCD2, из окружения `vcvars64`:
 
 ```bash
-cmake --preset windows-release -S cpp && cmake --build cpp/build --config Release
+cmd //c ""D:\IDE\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat" && cmake --preset release -S "D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv" && cmake --build "D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv\build-release" --target SavegameRenamer SavegameRenamerTests"
 ```
 
-Ожидается: `savegame_renamer.dll` в выходном каталоге.
+Ожидается: `SavegameRenamer.dll` и `SavegameRenamerTests.exe` в каталоге сборки. Первый прогон долгий: vcpkg соберёт boost и spdlog.
 
-- [ ] **Step 5: Развернуть и проверить загрузку**
+- [ ] **Step 9: Развернуть и проверить загрузку**
 
 Скопировать DLL в `<игра>/Mods/savegame_renamer/KCSE/Plugins/`, положить `src/mod.manifest`:
 
@@ -139,11 +232,23 @@ cmake --preset windows-release -S cpp && cmake --build cpp/build --config Releas
 </kcd_mod>
 ```
 
-Запустить игру, найти в логе KCSE строку `savegame_renamer: plugin loaded`.
+Запустить игру, найти в `kcd.log` строку `[SavegameRenamer] loaded`.
 
-Ожидается: строка есть. Если её нет, дальше идти нельзя: вся остальная работа опирается на то, что плагин грузится.
+Ожидается: строка есть. Если её нет, дальше идти нельзя: вся остальная работа опирается на то, что плагин грузится. Проверить при отказе: экспортируются ли `KCSEPlugin_Version` и `KCSEPlugin_Load` (`dumpbin /exports`), совпадает ли ожидаемая версия KCSE.
 
-- [ ] **Step 6: Коммит**
+- [ ] **Step 10: Положить лицензию**
+
+Файл `LICENSE` с текстом GNU GPL v3: KCSE распространяется под GPLv3, мод линкуется с `kcd_re` и публикуется с исходниками.
+
+- [ ] **Step 11: Прогнать пустые тесты**
+
+```bash
+ctest --test-dir "D:/Games/Self-Mods/KCD2/_deps/libKCD2/.buildenv/build-release" --output-on-failure
+```
+
+Ожидается: цель тестов собралась и запустилась. Тестов пока нет, это проверка того, что Catch2 подключён.
+
+- [ ] **Step 12: Коммит**
 
 ```bash
 git add -A && git commit -m "chore: scaffold KCSE plugin project"
@@ -1344,7 +1449,7 @@ stop();
 
 - [ ] **Step 3: Разложить ресурсы в pak-дерево**
 
-`renamer.gfx`, `renamer.xml` и шрифтовые библиотеки складываются в `src/Data/Libs/UI/`. Точный подкаталог сверить с тем, как это делает MCM в своём `.buildenv/CMakeLists.txt`.
+Описание элемента кладётся в `src/Data/Libs/UI/UIElements/SavegameRenamer.xml`, `renamer.gfx` и шрифтовые библиотеки — в `src/Data/Libs/UI/`. Путь взят из шапки `Projects/MCM/src/plugin.cpp`: «Libs/UI/UIElements/MCM.xml + mcm.gfx, shipped in Mods/MCM/Data/MCM.pak».
 
 - [ ] **Step 4: Реализовать владение элементом**
 
@@ -1473,9 +1578,10 @@ git add flash cpp && git commit -m "feat(ui): accept typed names in the dialog"
 
 Проверить по порядку и остановиться на первом сработавшем:
 
-1. Хук на `BuildLoadGamePage`: запомнить порядок, в котором строки уходят во flash, и сопоставить его с индексом, который приходит от movie при наведении.
-2. Чтение переменной курсора из ванильного movie `Menu` через интерфейс UI-элемента.
-3. Если ни то ни другое не выходит, деградировать до пункта, который открывает диалог по `OnLoadButton` с подтверждением «переименовать или загрузить».
+1. Повторить приём MCM: он ставит MinHook на построитель страницы меню, дописывает кнопку сырым flash-вызовом `AddBasicButton` и **слушает события кнопок на ванильном элементе `Menu`** через `IUIElementEventListener` (`Projects/MCM/src/listener/MenuElementListener.h`, шапка `plugin.cpp`). Тем же слушателем ловится и событие выделения строки, если оно есть.
+2. Хук на `BuildLoadGamePage`: запомнить порядок, в котором строки уходят во flash, и сопоставить его с индексом, приходящим от movie при наведении.
+3. Чтение переменной курсора из ванильного movie `Menu` через `IUIElement::GetVariable`.
+4. Если ничего не выходит, деградировать до пункта, который открывает диалог по `OnLoadButton` с подтверждением «переименовать или загрузить».
 
 Записать выбранный способ комментарием в `SaveLoadHook.cpp`.
 
@@ -1580,7 +1686,7 @@ python tools/build.py --release
 
 - [ ] **Step 5: Написать описание для Nexus**
 
-В `docs/nexus-description.bbcode.txt`: что делает мод, требование KCSE, установка, клавиша F2, отличие от `Rename Your Savegame` (интерфейс вместо консоли и обновление списка на месте), совместимость.
+В `docs/nexus-description.bbcode.txt`: что делает мод, требование KCSE и Address Library, установка, клавиша F2, отличие от `Rename Your Savegame` (интерфейс вместо консоли и обновление списка на месте), совместимость, лицензия GPLv3 со ссылкой на исходники.
 
 - [ ] **Step 6: Коммит**
 

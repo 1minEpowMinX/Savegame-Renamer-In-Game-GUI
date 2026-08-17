@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<kcd_mod xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <info>
+    <name>Savegame Renamer - In-Game GUI</name>
+    <description>Rename an existing savegame from the in-game load menu. Press F2 on the highlighted save, type a name, and the list updates on the spot. No console, no external tools. Requires KCSE.</description>
+    <author>Lefxxx</author>
+    <version>1.0</version>
+    <created_on>2026-08-17</created_on>
+    <modid>savegame_renamer</modid>
+    <modifies_level>false</modifies_level>
+  </info>
+  <supports />
+</kcd_mod>
