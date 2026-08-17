@@ -23,7 +23,6 @@ std::function<void(const std::string&)> g_onAccept;
 std::function<void()> g_onCancel;
 std::function<void()> g_onReset;
 bool g_open = false;
-bool g_hintShown = false;
 
 /// Returns the dialog element, or null when the mod's pak is not installed.
 IUIElement* Element()
@@ -271,7 +270,6 @@ void ShowHint(bool visible)
 
     if (!visible)
         el->SetVisible(false);
-    g_hintShown = visible;
 }
 
 bool SendInput(const char* action)
