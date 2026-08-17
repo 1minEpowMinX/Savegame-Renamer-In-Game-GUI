@@ -22,18 +22,17 @@ var BOX_H = 220;
 var BOX_X = 180;
 var BOX_Y = 115;
 
-// The frame's ornament eats into the window, so content is laid out inside
-// these insets rather than against the outer edge.
 // Measured off the frame on screen: the ornament band across the top is far
 // deeper than the sides, and the bottom rail is the shallowest edge.
 var IN_L = 36;
 var IN_R = 36;
 var IN_T = 52;
-var IN_B = 18;
+var IN_B = 16;
 
 var ROW_TITLE = 30;
 var ROW_INPUT = 30;
 var ROW_META = 20;
+var ROW_KEY = 18;
 var GAP = 10;
 
 var SOFT_LIMIT = 40;
@@ -44,6 +43,16 @@ var COLOR_TEXT = 0xCFC2A0;
 var COLOR_HINT = 0xA2957A;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
+
+// The field is a recess in the panel, the way inventory slots are, and it
+// lightens while it holds the caret: in this menu whatever is active is always
+// the lighter thing on screen.
+var FIELD_BG = 0x142A3D;
+var FIELD_BG_FOCUS = 0x20405C;
+var FIELD_LINE = 0x6B5B3A;
+var FIELD_LINE_FOCUS = 0xA8945F;
+
+var RULE_COLOR = 0x8A7645;
 
 // The ImportAssets2 symbol names from base.xml.
 var FONT_REGULAR = "DefaultFont";
@@ -56,8 +65,9 @@ var IN_X = BOX_X + IN_L;
 var IN_W = BOX_W - IN_L - IN_R;
 var Y_TITLE = BOX_Y + IN_T;
 var Y_INPUT = Y_TITLE + ROW_TITLE + GAP;
-var Y_META = Y_INPUT + ROW_INPUT + 6;
-var Y_HINT = BOX_Y + BOX_H - IN_B - ROW_META;
+var Y_META = Y_INPUT + ROW_INPUT + 8;
+var Y_KEYS = BOX_Y + BOX_H - IN_B - ROW_KEY;
+var Y_RULE = Y_KEYS - 10;
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -98,6 +108,38 @@ function setText(tf, value) {
     tf.setTextFormat(tf.styleFmt);
 }
 
+function strokeRect(clip, x, y, w, h, color) {
+    clip.lineStyle(1, color, 100);
+    clip.moveTo(x, y);
+    clip.lineTo(x + w, y);
+    clip.lineTo(x + w, y + h);
+    clip.lineTo(x, y + h);
+    clip.lineTo(x, y);
+}
+
+// A key name in a box followed by what it does, the way the game labels its own
+// prompts along the bottom of the screen. Returns the clip; its `spanW` is how
+// wide the pair came out, so a row of them can be centred.
+function mkKeyHint(parent, name, depth, key, label) {
+    var clip = parent.createEmptyMovieClip(name, depth);
+
+    var keyText = mkText(clip, "key", 1, 5, 1, 120, ROW_KEY, 13,
+                         COLOR_TITLE, FONT_REGULAR, "left");
+    setText(keyText, key);
+    var keyW = keyText.textWidth + 4;
+    keyText._width = keyW;
+
+    strokeRect(clip, 0, 0, keyW + 10, ROW_KEY, RULE_COLOR);
+
+    var labelText = mkText(clip, "label", 2, keyW + 16, 1, 200, ROW_KEY, 13,
+                           COLOR_HINT, FONT_REGULAR, "left");
+    setText(labelText, label);
+    labelText._width = labelText.textWidth + 4;
+
+    clip.spanW = keyW + 16 + labelText.textWidth + 4;
+    return clip;
+}
+
 // ----------------------------------------------------------------- fields --
 
 var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 25,
@@ -108,15 +150,17 @@ var input = box.createTextField("input", 3, IN_X, Y_INPUT, IN_W, ROW_INPUT);
 input.type = "input";
 input.selectable = true;
 input.embedFonts = true;
+input.background = true;
+input.backgroundColor = FIELD_BG;
 input.border = true;
-input.borderColor = 0x6B5B3A;
+input.borderColor = FIELD_LINE;
 input.maxChars = MAX_CHARS;
 
 var inputFmt = new TextFormat();
 inputFmt.font = FONT_REGULAR;
 inputFmt.size = 18;
 inputFmt.color = COLOR_TEXT;
-inputFmt.leftMargin = 6;
+inputFmt.leftMargin = 8;
 input.setNewTextFormat(inputFmt);
 
 // The counter sits at the right of the row under the field and the reset
@@ -125,28 +169,41 @@ input.setNewTextFormat(inputFmt);
 var counter = mkText(box, "counter", 4, IN_X, Y_META, IN_W, ROW_META, 14,
                      COLOR_HINT, FONT_REGULAR, "right");
 
-var RESET_W = 190;
+// Reset is bordered like a key prompt so it reads as something to press rather
+// than as another line of text.
 var resetClip = box.createEmptyMovieClip("resetClip", 5);
 resetClip._x = IN_X;
-resetClip._y = Y_META;
+resetClip._y = Y_META - 2;
 resetClip._visible = false;
 
-// A TextField has no onRelease in AS2, so the control is a clip with an
-// invisible hit area and the label parented inside it.
+var resetBtn = mkText(resetClip, "label", 1, 8, 1, 180, ROW_KEY, 13,
+                      COLOR_TEXT, FONT_REGULAR, "left");
+setText(resetBtn, "Reset to original");
+var resetW = resetBtn.textWidth + 4;
+resetBtn._width = resetW;
+
 resetClip.beginFill(0xFFFFFF, 0);
 resetClip.moveTo(0, 0);
-resetClip.lineTo(RESET_W, 0);
-resetClip.lineTo(RESET_W, ROW_META);
-resetClip.lineTo(0, ROW_META);
+resetClip.lineTo(resetW + 16, 0);
+resetClip.lineTo(resetW + 16, ROW_KEY);
+resetClip.lineTo(0, ROW_KEY);
 resetClip.endFill();
+strokeRect(resetClip, 0, 0, resetW + 16, ROW_KEY, RULE_COLOR);
 
-var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, ROW_META, 14,
-                      COLOR_TEXT, FONT_REGULAR, "left");
-setText(resetBtn, "Reset to original name");
+// A hairline above the prompts, separating them from the field the way the
+// game separates its own bottom prompt bar.
+box.lineStyle(1, RULE_COLOR, 55);
+box.moveTo(IN_X, Y_RULE);
+box.lineTo(IN_X + IN_W, Y_RULE);
 
-var hint = mkText(box, "hint", 6, IN_X, Y_HINT, IN_W, ROW_META, 14,
-                  COLOR_HINT, FONT_REGULAR, "center");
-setText(hint, "Enter accepts, Esc cancels, an empty name resets");
+var keyAccept = mkKeyHint(box, "keyAccept", 6, "Enter", "accept");
+var keyCancel = mkKeyHint(box, "keyCancel", 7, "Esc", "cancel");
+
+var keysW = keyAccept.spanW + 26 + keyCancel.spanW;
+keyAccept._x = IN_X + (IN_W - keysW) / 2;
+keyAccept._y = Y_KEYS;
+keyCancel._x = keyAccept._x + keyAccept.spanW + 26;
+keyCancel._y = Y_KEYS;
 
 // -------------------------------------------------------------- behaviour --
 
@@ -173,14 +230,24 @@ input.onChanged = function () {
     updateCounter();
 };
 
+input.onSetFocus = function () {
+    input.backgroundColor = FIELD_BG_FOCUS;
+    input.borderColor = FIELD_LINE_FOCUS;
+};
+
+input.onKillFocus = function () {
+    input.backgroundColor = FIELD_BG;
+    input.borderColor = FIELD_LINE;
+};
+
 resetClip.onRollOver = function () {
     resetBtn.styleFmt.color = COLOR_HOVER;
-    setText(resetBtn, "Reset to original name");
+    setText(resetBtn, "Reset to original");
 };
 
 resetClip.onRollOut = function () {
     resetBtn.styleFmt.color = COLOR_TEXT;
-    setText(resetBtn, "Reset to original name");
+    setText(resetBtn, "Reset to original");
 };
 
 resetClip.onRelease = function () {
