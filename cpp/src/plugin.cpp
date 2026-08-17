@@ -11,8 +11,12 @@
 #include "Offsets/vtables/IConsole.h"
 #include "crysystem/SSystemGlobalEnvironment.h"
 
+#include <cstdlib>
+#include <string>
+
 #include "Log.h"
 #include "game/SaveCatalog.h"
+#include "whs/Description.h"
 
 KCSE_PLUGIN_INFO("SavegameRenamer", "Lefxxx", 1);
 
@@ -33,6 +37,46 @@ void CmdList(IConsoleCmdArgs*)
                s.id, s.type, s.displayName.c_str(), s.file.string().c_str());
 }
 
+// Temporary, replaced by the F2 dialog: renames one savegame by id. Everything
+// after the id becomes the name, spaces included; passing no name resets the
+// save to the quest name it had before the first rename.
+void CmdSet(IConsoleCmdArgs* args)
+{
+    if (args->GetArgCount() < 2) {
+        SR_LOG("usage: renamer_set <id> [name]");
+        return;
+    }
+
+    const int id = std::atoi(args->GetArg(1));
+    const auto entry = SaveCatalog::Find(id);
+    if (!entry.has_value()) {
+        SR_LOG("no savegame with id %d", id);
+        return;
+    }
+
+    std::string name;
+    for (int i = 2; i < args->GetArgCount(); ++i) {
+        if (!name.empty())
+            name += ' ';
+        name += args->GetArg(i);
+    }
+
+    auto header = whs::Description::Read(entry->file);
+    if (!header.has_value()) {
+        SR_LOG("could not read %s", entry->file.string().c_str());
+        return;
+    }
+
+    header->SetDisplayName(name);
+    if (!header->Write()) {
+        SR_LOG("could not write %s", entry->file.string().c_str());
+        return;
+    }
+
+    SaveCatalog::Refresh();
+    SR_LOG("%d is now '%s'", id, header->DisplayName().c_str());
+}
+
 void RegisterCommands()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
@@ -42,6 +86,9 @@ void RegisterCommands()
     }
     env->pConsole->AddCommand("renamer_list", &CmdList, VF_NULL,
                               "Lists every savegame the renamer can see.");
+    env->pConsole->AddCommand("renamer_set", &CmdSet, VF_NULL,
+                              "renamer_set <id> [name] -- renames a savegame, or resets it "
+                              "to its quest name when no name is given.");
 }
 
 void OnKcseMessage(KCSE::Message* msg)
