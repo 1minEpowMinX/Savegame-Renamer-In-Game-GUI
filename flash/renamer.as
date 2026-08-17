@@ -34,9 +34,10 @@ var ROW_TITLE = 30;
 var ROW_INPUT = 30;
 var ROW_META = 20;
 var ROW_KEY = 18;
-var KEY_W = 46;
-var KEY_GAP = 8;
-var PAIR_GAP = 24;
+var KEY_PAD = 14;   // padding around the key name inside its cap
+var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
+var KEY_GAP = 6;    // cap to its own label
+var PAIR_GAP = 40;  // pair to the next pair
 
 // The rows total 98 of the 152 units between the frame's rails. The surplus is
 // split evenly between the three joints rather than pooled above the prompts,
@@ -85,6 +86,16 @@ box._visible = false;
 // Nothing is drawn behind the frame: the texture is transparent around its
 // ornament, so a filled rectangle the size of the window shows up as black
 // corners around it.
+var SHADOW_SPREAD_X = 60;
+var SHADOW_SPREAD_Y = 50;
+
+var shadow = box.attachMovie("RenamerShadow", "shadow", 0);
+shadow._x = BOX_X - SHADOW_SPREAD_X;
+shadow._y = BOX_Y - SHADOW_SPREAD_Y;
+shadow._width = BOX_W + SHADOW_SPREAD_X * 2;
+shadow._height = BOX_H + SHADOW_SPREAD_Y * 2;
+shadow._alpha = 80;
+
 var frame = box.attachMovie("RenamerFrame", "frame", 1);
 frame._x = BOX_X;
 frame._y = BOX_Y;
@@ -123,23 +134,31 @@ function setText(tf, value) {
 function mkKeyHint(parent, name, depth, key, label, action) {
     var clip = parent.createEmptyMovieClip(name, depth);
 
+    // The cap is measured to its key name rather than fixed, so "Enter" and
+    // "Del" are not forced to the same width. The game itself ships three cap
+    // widths for the same reason.
+    var keyText = mkText(clip, "key", 2, 0, 2, 120, ROW_KEY, 12,
+                         COLOR_KEYCAP, FONT_BOLD, "center");
+    setText(keyText, key);
+    var capW = keyText.textWidth + KEY_PAD;
+    if (capW < KEY_MIN) {
+        capW = KEY_MIN;
+    }
+    keyText._width = capW;
+
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
     cap._y = 0;
-    cap._width = KEY_W;
+    cap._width = capW;
     cap._height = ROW_KEY;
-    cap._alpha = 82;
+    cap._alpha = 88;
 
-    var keyText = mkText(clip, "key", 2, 0, 1, KEY_W, ROW_KEY, 12,
-                         COLOR_KEYCAP, FONT_REGULAR, "center");
-    setText(keyText, key);
-
-    var labelText = mkText(clip, "label", 3, KEY_W + KEY_GAP, 1, 200, ROW_KEY, 13,
+    var labelText = mkText(clip, "label", 3, capW + KEY_GAP, 2, 200, ROW_KEY, 13,
                            COLOR_HINT, FONT_REGULAR, "left");
     setText(labelText, label);
     labelText._width = labelText.textWidth + 4;
 
-    clip.spanW = KEY_W + KEY_GAP + labelText.textWidth + 4;
+    clip.spanW = capW + KEY_GAP + labelText.textWidth + 4;
     clip.labelText = labelText;
     clip.labelValue = label;
     clip.action = action;

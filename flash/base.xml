@@ -270,6 +270,60 @@
       </names>
     </item>
 
+    <!-- The drop shadow the game lays under its own modal windows, 256x256,
+         drawn at 560x320 so it spreads past the frame on every side. -->
+
+    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="ApseModalDialog.gfx">
+      <tags>
+        <item>212</item>
+      </tags>
+      <names>
+        <item>Textures/Apse/modal_dialog_shadow</item>
+      </names>
+    </item>
+
+    <item type="DefineShapeTag" forceWriteAsLong="true" shapeId="213">
+      <shapeBounds type="RECT" Xmax="11200" Xmin="0" Ymax="6400" Ymin="0" nbits="16"/>
+      <shapes type="SHAPEWITHSTYLE" numFillBits="1" numLineBits="0">
+        <fillStyles type="FILLSTYLEARRAY">
+          <fillStyles>
+            <item type="FILLSTYLE" bitmapId="212" fillStyleType="65">
+              <bitmapMatrix type="MATRIX" hasRotate="false" hasScale="true" nRotateBits="0" nScaleBits="22" nTranslateBits="0" scaleX="43.75" scaleY="25.0" translateX="0" translateY="0"/>
+            </item>
+          </fillStyles>
+        </fillStyles>
+        <lineStyles type="LINESTYLEARRAY">
+          <lineStyles/>
+        </lineStyles>
+        <shapeRecords>
+          <item type="StyleChangeRecord" fillStyle1="1" moveBits="16" moveDeltaX="11200" moveDeltaY="6400" stateFillStyle0="false" stateFillStyle1="true" stateLineStyle="false" stateMoveTo="true" stateNewStyles="false"/>
+          <item type="StraightEdgeRecord" deltaX="-11200" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="-6400" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="StraightEdgeRecord" deltaX="11200" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
+          <item type="StraightEdgeRecord" deltaY="6400" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
+          <item type="EndShapeRecord" endOfShape="0"/>
+        </shapeRecords>
+      </shapes>
+    </item>
+
+    <item type="DefineSpriteTag" forceWriteAsLong="true" frameCount="1" hasEndTag="true" spriteId="214">
+      <subTags>
+        <item type="PlaceObject2Tag" characterId="213" clipDepth="0" depth="1" forceWriteAsLong="true" placeFlagHasCharacter="true" placeFlagHasClipActions="false" placeFlagHasClipDepth="false" placeFlagHasColorTransform="false" placeFlagHasMatrix="true" placeFlagHasName="false" placeFlagHasRatio="false" placeFlagMove="false" ratio="0">
+          <matrix type="MATRIX" hasRotate="false" hasScale="false" nRotateBits="0" nScaleBits="0" nTranslateBits="0" rotateSkew0="0.0" rotateSkew1="0.0" scaleX="0.0" scaleY="0.0" translateX="0" translateY="0"/>
+        </item>
+        <item type="ShowFrameTag" forceWriteAsLong="false"/>
+      </subTags>
+    </item>
+
+    <item type="ExportAssetsTag" forceWriteAsLong="true">
+      <tags>
+        <item>214</item>
+      </tags>
+      <names>
+        <item>RenamerShadow</item>
+      </names>
+    </item>
+
     <!-- "0700" is stop() followed by the end-of-actions byte. The build replaces
          the whole tag with the compiled renamer.as. -->
     <item type="DoActionTag" actionBytes="0700" forceWriteAsLong="false"/>
