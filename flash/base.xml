@@ -4,9 +4,10 @@
 
      The dialog draws itself from ActionScript, so the only thing that cannot be
      expressed there is the font: a text field renders nothing unless the movie
-     imports a font from the game's shared library. Both weights the vanilla
-     menu uses are imported here, under the same character ids the game's own
-     Menu.gfx assigns them.
+     imports a font from the game's shared library. The faces the vanilla menu
+     uses are imported here, under the same character ids the game's own
+     Menu.gfx assigns them. Key names are not among them: those are drawn by the
+     button library, which brings its own.
 
      Stage is 800x450 px (16000x9000 twips), matching the coordinate space
      renamer.as lays out in. -->
@@ -26,15 +27,6 @@
       </tags>
       <names>
         <item>DefaultFont</item>
-      </names>
-    </item>
-
-    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="gfxfontlib.gfx">
-      <tags>
-        <item>101</item>
-      </tags>
-      <names>
-        <item>DefaultFontBold</item>
       </names>
     </item>
 
@@ -223,59 +215,18 @@
       </subTags>
     </item>
 
-    <!-- The keyboard key plate the game prints its own prompts on, taken from
-         the shared button library. 128x64, drawn at 46x18. -->
-
-    <item type="ImportAssets2Tag" downloadNow="1" forceWriteAsLong="true" hasDigest="0" url="buttons.gfx">
-      <tags>
-        <item>209</item>
-      </tags>
-      <names>
-        <item>Textures/buttons/key_long</item>
-      </names>
-    </item>
-
-    <item type="DefineShapeTag" forceWriteAsLong="true" shapeId="210">
-      <shapeBounds type="RECT" Xmax="920" Xmin="0" Ymax="360" Ymin="0" nbits="16"/>
-      <shapes type="SHAPEWITHSTYLE" numFillBits="1" numLineBits="0">
-        <fillStyles type="FILLSTYLEARRAY">
-          <fillStyles>
-            <item type="FILLSTYLE" bitmapId="209" fillStyleType="65">
-              <bitmapMatrix type="MATRIX" hasRotate="false" hasScale="true" nRotateBits="0" nScaleBits="22" nTranslateBits="0" scaleX="7.1875" scaleY="5.625" translateX="0" translateY="0"/>
-            </item>
-          </fillStyles>
-        </fillStyles>
-        <lineStyles type="LINESTYLEARRAY">
-          <lineStyles/>
-        </lineStyles>
-        <shapeRecords>
-          <item type="StyleChangeRecord" fillStyle1="1" moveBits="16" moveDeltaX="920" moveDeltaY="360" stateFillStyle0="false" stateFillStyle1="true" stateLineStyle="false" stateMoveTo="true" stateNewStyles="false"/>
-          <item type="StraightEdgeRecord" deltaX="-920" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
-          <item type="StraightEdgeRecord" deltaY="-360" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
-          <item type="StraightEdgeRecord" deltaX="920" generalLineFlag="false" numBits="16" vertLineFlag="false"/>
-          <item type="StraightEdgeRecord" deltaY="360" generalLineFlag="false" numBits="16" vertLineFlag="true"/>
-          <item type="EndShapeRecord" endOfShape="0"/>
-        </shapeRecords>
-      </shapes>
-    </item>
-
-    <item type="DefineSpriteTag" forceWriteAsLong="true" frameCount="1" hasEndTag="true" spriteId="211">
-      <subTags>
-        <item type="PlaceObject2Tag" characterId="210" clipDepth="0" depth="1" forceWriteAsLong="true" placeFlagHasCharacter="true" placeFlagHasClipActions="false" placeFlagHasClipDepth="false" placeFlagHasColorTransform="false" placeFlagHasMatrix="true" placeFlagHasName="false" placeFlagHasRatio="false" placeFlagMove="false" ratio="0">
-          <matrix type="MATRIX" hasRotate="false" hasScale="false" nRotateBits="0" nScaleBits="0" nTranslateBits="0" rotateSkew0="0.0" rotateSkew1="0.0" scaleX="0.0" scaleY="0.0" translateX="0" translateY="0"/>
-        </item>
-        <item type="ShowFrameTag" forceWriteAsLong="false"/>
-      </subTags>
-    </item>
+    <!-- No key plate is imported here. The game draws its own prompts by loading
+         buttons.gfx whole and stopping its mc_button sprite on the frame that
+         matches the key's width, and renamer.as does the same: the plate, the
+         label's face, colour and centring then come from Warhorse's own
+         authoring rather than from arithmetic here. -->
 
     <item type="ExportAssetsTag" forceWriteAsLong="true">
       <tags>
         <item>208</item>
-        <item>211</item>
       </tags>
       <names>
         <item>RenamerField</item>
-        <item>RenamerKey</item>
       </names>
     </item>
 

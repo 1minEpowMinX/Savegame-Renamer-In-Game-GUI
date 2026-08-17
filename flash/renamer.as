@@ -34,46 +34,44 @@ var IN_B = 16;
 var ROW_TITLE = 30;
 var ROW_INPUT = 30;
 var ROW_META = 20;
-var ROW_KEY = 18;
-// The cap is drawn in perspective, with a thicker rail along its bottom edge,
-// so its optical centre sits above its geometric one and the key name has to
-// ride high to look centred.
-var KEY_RISE = 2;
-var KEY_PAD = 20;   // padding around the key name inside its cap
-// DefaultFontBold maps to the same typeface as DefaultFont (see the font
-// mappings the game logs at startup), so the weight is synthesised by the
-// player after the text has been measured: the glyphs render wider than
-// textWidth reports, and grow rightwards.
-//
-// That costs two separate corrections, and they are separate constants because
-// they are not the same number: the cap has to be wide enough to hold the drawn
-// run, while the field has to move left by however far the run's centre drifted.
-// Tying both to one figure means neither can be adjusted without disturbing the
-// other.
-var KEY_BOLD_SPREAD = 1.12;   // how much wider to cut the cap
-var KEY_BOLD_DRIFT = 0.12;    // how far the drawn centre sits right of measured
 
-// What is left over after that correction does not scale with the word: names
-// of every length lean the same way, so it is corrected by a fixed shift.
-//
-// Its cause is not established. The cap was the suspect and was cleared: the
-// lit face of key_long.dds spans columns 6..121 of 128 and centres exactly on
-// the plate, so the plate is symmetric. Letting the field auto-size onto the
-// run the player laid out was tried instead of this arithmetic and came out
-// visibly worse. Treat the number as measured off the screen, not derived.
-var KEY_FACE_OFFSET = 1;
-var KEY_BOX = 120;  // width the key name is measured and centred in
-var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
+// The key plates come out of the game's own button library: buttons.gfx holds a
+// sprite named mc_button whose frames are the three plate widths, each already
+// carrying a centred, black, bold text field for the key name. Loading it is
+// what the game does for every prompt it prints, so a plate built here matches
+// the ones on the same screen down to the pixel.
+var CAP_LIBRARY = "buttons.swf";   // the loader maps .swf to the shipped .gfx
+var CAP_NATIVE_H = 64;             // height the sprite is authored at
+
+// Frame names, which describe the plate rather than the key: ControlsEnum puts
+// Esc on the medium plate and Delete on the wide one alongside Enter, while F2
+// and every other function key get the small square.
+var CAP_SMALL = "key";
+var CAP_MEDIUM = "escape";
+var CAP_WIDE = "enter";
+
+// What each plate advances by at native height, from ControlsEnum's E_WIDTH_n.
+// It is narrower than the plate is drawn: the artwork carries transparent margin
+// that the next word is allowed to sit over.
+var CAP_SPAN_SMALL = 52;
+var CAP_SPAN_MEDIUM = 83;
+var CAP_SPAN_WIDE = 106;
+
+// TextExtension.ButtonsScale: the game sizes an inline plate at one and a half
+// times the height of the line it interrupts, and centres it on that line.
+var CAP_SCALE = 1.5;
+
 var KEY_GAP = 6;    // cap to its own label
 var PAIR_GAP = 40;  // pair to the next pair
 
-// The rows total 98 of the 152 units between the frame's rails. The surplus is
-// split evenly between the three joints rather than pooled above the prompts,
-// which is what left a hole in the middle of the window.
+// The rows total 104 of the 152 units between the frame's rails: the prompt row
+// is as tall as its plates, which are one and a half lines each. The surplus is
+// split between the joints rather than pooled above the prompts, which is what
+// left a hole in the middle of the window.
 var GAP_TITLE = 16;
 var GAP_COUNTER = 4;
 var GAP_RULE = 16;
-var GAP_KEYS = 14;
+var GAP_KEYS = 12;
 
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
@@ -83,9 +81,6 @@ var COLOR_TEXT = 0xCFC2A0;
 var COLOR_HINT = 0xC0B190;
 var COLOR_WARN = 0xC8842E;
 var COLOR_HOVER = 0xFFF0C8;
-// The key plate is a light cap, so its letter is dark, matching the prompts the
-// game prints along the bottom of the screen.
-var COLOR_KEYCAP = 0x2A2118;
 
 // The backing dims while the field is idle and comes up to full while it holds
 // the caret: in this menu whatever is active is always the brighter thing.
@@ -94,7 +89,6 @@ var FIELD_ALPHA_FOCUS = 100;
 
 // The ImportAssets2 symbol names from base.xml.
 var FONT_REGULAR = "DefaultFont";
-var FONT_BOLD = "DefaultFontBold";
 // The face the game sets its own screen headings in.
 var FONT_DISPLAY = "DisplayFont";
 // The face of the line the game prints under the save list, which the rename
@@ -104,13 +98,6 @@ var FONT_ITALIC = "DefaultFontItalic";
 // the line the prompt sits above is set at size 15.
 var COLOR_PROMPT = 0xF6E890;
 var PROMPT_SIZE = 15;
-var PROMPT_KEY_SIZE = 11;
-var PROMPT_KEY_PAD = 12;
-// The row has to clear the type, while the cap sits lower than the line it
-// labels, the way the game's own E and X do. Tying the two together is what
-// pushed the wording down onto the rule below.
-var PROMPT_ROW = 22;
-var PROMPT_CAP_H = 16;
 
 // Derived, so a change above moves everything together.
 var IN_X = BOX_X + IN_L;
@@ -172,52 +159,62 @@ function setText(tf, value) {
 
 // A key cap with its label beside it, the pairing the game uses for every
 // prompt it prints. `spanW` is how wide the pair came out, so a row of them can
-// be centred; `hit` is the clickable area over the whole pair.
-function mkKeyHint(parent, name, depth, key, label, action,
-                   rowH, capH, keySize, capPad, labelSize, labelFont, labelColor) {
+// be centred, and `rowH` how tall.
+function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
+                   labelSize, labelFont, labelColor) {
     var clip = parent.createEmptyMovieClip(name, depth);
 
-    // The cap is measured to its key name rather than fixed, so "Enter" and
-    // "Del" are not forced to the same width. The game itself ships three cap
-    // widths for the same reason.
-    var capY = (rowH - capH) / 2;
-    var keyText = mkText(clip, "key", 2, 0, capY + 2 - KEY_RISE, KEY_BOX, capH, keySize,
-                         COLOR_KEYCAP, FONT_BOLD, "center");
-    setText(keyText, key);
-    var capW = keyText.textWidth * KEY_BOLD_SPREAD + capPad;
-    if (capW < KEY_MIN) {
-        capW = KEY_MIN;
-    }
-    // The field keeps the width it was measured in and is slid so that its
-    // centre meets the cap's: resizing a TextField after the fact moves the
-    // text inside it.
-    //
-    // The synthesised weight is corrected for here as well. The player centres
-    // the run by its measured advances, then thickens each glyph rightwards, so
-    // the drawn run keeps its left edge and gains all its extra width on the
-    // right: its centre ends up half that gain to the right of the cap's.
-    // Widening the cap cannot fix that -- only moving the field can.
-    var drift = keyText.textWidth * KEY_BOLD_DRIFT;
-    keyText._x = capW / 2 - KEY_BOX / 2 - drift / 2 - KEY_FACE_OFFSET;
-
-    var cap = clip.attachMovie("RenamerKey", "cap", 1);
-    cap._x = 0;
-    cap._y = capY;
-    cap._width = capW;
-    cap._height = capH;
-    cap._alpha = 88;
-
-    // The label is centred on the cap, not hung from the top of the row: the
-    // game's own prompts put the middle of the key level with the middle of the
-    // words, and hanging both from a shared top left ours sitting on the cap's
-    // lower edge. A text field starts its line two units in, and the glyphs of a
-    // size-S face occupy about 0.6 S below that start.
-    var labelY = capY + capH / 2 - 2 - labelSize * 0.6;
-    var labelText = mkText(clip, "label", 3, capW + KEY_GAP, labelY, 200, rowH, labelSize,
+    // The label is laid out first because the plate is sized from it: a plate
+    // is one and a half lines tall and centred on the line, so the line has to
+    // be measured before either can be placed.
+    var labelText = mkText(clip, "label", 3, 0, 0, 400, labelSize * 3, labelSize,
                            labelColor, labelFont, "left");
     setText(labelText, label);
+
+    var metrics = labelText.getLineMetrics(0);
+    var capH = metrics.height * CAP_SCALE;
+    var capW = capSpan * capH / CAP_NATIVE_H;
+    var rowH = capH;
+
+    // A text field starts its first line two units below its own top edge, so
+    // the field is hung high enough that the line's middle meets the plate's.
+    labelText._x = capW + KEY_GAP;
+    labelText._y = rowH / 2 - 2 - metrics.height / 2;
     labelText._width = labelText.textWidth + 4;
 
+    // The plate is drawn from its left edge and centred on its own origin
+    // vertically, which is why the holder sits on the row's centre line and not
+    // at its top. Loading is asynchronous, so everything the listener needs is
+    // parked on the holder rather than closed over.
+    var holder = clip.createEmptyMovieClip("cap", 1);
+    holder._x = 0;
+    holder._y = rowH / 2;
+    holder.capFrame = capFrame;
+    holder.capKey = key;
+    holder.capScale = capH / CAP_NATIVE_H * 100;
+
+    var loader = new MovieClipLoader();
+    var watcher = new Object();
+    loader.addListener(watcher);
+    watcher.onLoadInit = function (target) {
+        target.mc_button.gotoAndStop(target.capFrame);
+        target.mc_button.tField.textAutoSize = "shrink";
+        target.mc_button.tField.text = target.capKey;
+        target.mc_button._xscale = target.capScale;
+        target.mc_button._yscale = target.capScale;
+        // Both belong to the hold prompts, which none of these keys are, and
+        // the frames carry them regardless.
+        target.mc_button.mc_holdIcon._visible = false;
+        target.mc_button.mc_holdIndicator._visible = false;
+    };
+    loader.loadClip(CAP_LIBRARY, holder);
+
+    // The loader is collected once nothing refers to it, taking the pending
+    // load with it.
+    clip.capLoader = loader;
+    clip.capWatcher = watcher;
+
+    clip.rowH = rowH;
     clip.spanW = capW + KEY_GAP + labelText.textWidth + 4;
     clip.labelText = labelText;
     clip.labelValue = label;
@@ -299,12 +296,12 @@ footRule._alpha = 35;
 // Three prompts of the same shape. Reset is one of them rather than a button:
 // in this game an action is a key and a word, and making it anything else is
 // what put three different languages in one row.
-var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", "accept", "accept",
-                          ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
-var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", "cancel", "cancel",
-                          ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
-var keyReset = mkKeyHint(box, "keyReset", 9, "Del", "reset", "reset",
-                         ROW_KEY, ROW_KEY, 12, KEY_PAD, 13, FONT_REGULAR, COLOR_HINT);
+var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", CAP_WIDE, CAP_SPAN_WIDE,
+                          "accept", "accept", 13, FONT_REGULAR, COLOR_HINT);
+var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", CAP_MEDIUM, CAP_SPAN_MEDIUM,
+                          "cancel", "cancel", 13, FONT_REGULAR, COLOR_HINT);
+var keyReset = mkKeyHint(box, "keyReset", 9, "Del", CAP_WIDE, CAP_SPAN_WIDE,
+                         "reset", "reset", 13, FONT_REGULAR, COLOR_HINT);
 
 function layoutKeys(withReset) {
     var total = keyAccept.spanW + PAIR_GAP + keyCancel.spanW;
@@ -337,15 +334,15 @@ layoutKeys(false);
 // floating beside it. Positioned by its centre, so the prompt stays put when
 // its wording changes length.
 var HINT_CENTRE_X = 612;
-var HINT_Y = 378;
+var HINT_CENTRE_Y = 389;
 
 // The prompt belongs to the game's own line below it, not to the dialog, so it
-// is built at that line's size, face and colour rather than the dialog's.
-var hint = mkKeyHint(_root, "hint", 2, "F2", "rename save", "",
-                     PROMPT_ROW, PROMPT_CAP_H, PROMPT_KEY_SIZE, PROMPT_KEY_PAD,
-                     PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
+// is built at that line's size, face and colour rather than the dialog's. F2 is
+// a function key, which the game puts on the small square plate.
+var hint = mkKeyHint(_root, "hint", 2, "F2", CAP_SMALL, CAP_SPAN_SMALL,
+                     "rename save", "", PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
 hint._x = HINT_CENTRE_X - hint.spanW / 2;
-hint._y = HINT_Y;
+hint._y = HINT_CENTRE_Y - hint.rowH / 2;
 hint._visible = false;
 hint.onRollOver = null;
 hint.onRollOut = null;
