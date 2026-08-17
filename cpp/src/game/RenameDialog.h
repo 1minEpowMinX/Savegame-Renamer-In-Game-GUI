@@ -28,6 +28,14 @@ bool Show(const std::string& currentName, bool canReset);
 /// Hides the dialog without emitting an event.
 void Hide();
 
+/// Shows or hides the prompt that advertises the rename key.
+///
+/// It is drawn over the save list, not inside the dialog: a player who has
+/// never opened the dialog is exactly the one who needs telling.
+///
+/// @param visible Whether the prompt should be on screen.
+void ShowHint(bool visible);
+
 /// Forwards a key the engine does not deliver to the movie.
 ///
 /// @param action Either "accept" or "cancel".

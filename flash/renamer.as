@@ -3,6 +3,7 @@
 // Engine API (inbound, on _root -- see UIElements/SavegameRenamer.xml):
 //   fc_open(currentName, canReset)   show the dialog, prefilled
 //   fc_close()                       hide it without emitting an event
+//   fc_showHint(visible)             show the F2 prompt over the save list
 //   fc_setInput(action)              "accept" | "cancel" | "reset", fed by the
 //                                    plugin's input listener because the engine
 //                                    delivers typed characters to the movie but
@@ -301,6 +302,20 @@ function layoutKeys(withReset) {
 
 layoutKeys(false);
 
+// The prompt that tells the player the key exists at all, sitting over the save
+// list rather than inside the dialog. It is placed against the same bottom-right
+// corner the game puts its own load and delete prompts in.
+var HINT_X = 470;
+var HINT_Y = 408;
+
+var hint = mkKeyHint(_root, "hint", 2, "F2", "rename", "");
+hint._x = HINT_X;
+hint._y = HINT_Y;
+hint._visible = false;
+hint.onRollOver = null;
+hint.onRollOut = null;
+hint.onRelease = null;
+
 // -------------------------------------------------------------- behaviour --
 
 function updateCounter() {
@@ -346,6 +361,10 @@ function fc_open(currentName, canReset) {
     updateCounter();
     Selection.setFocus(input);
     Selection.setSelection(input.text.length, input.text.length);
+}
+
+function fc_showHint(visible) {
+    hint._visible = visible;
 }
 
 function fc_close() {

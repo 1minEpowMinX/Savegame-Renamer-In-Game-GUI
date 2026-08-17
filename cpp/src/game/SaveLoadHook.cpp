@@ -17,6 +17,7 @@
 #include "guimodule/C_UISaveLoad.h"
 
 #include "Log.h"
+#include "RenameDialog.h"
 
 using wh::guimodule::C_UISaveLoad;
 
@@ -28,12 +29,22 @@ namespace {
 // reachable any other way; also re-invoked to redraw the list after a rename.
 constexpr std::uint64_t kBuildLoadGamePageId = 94;
 
+// The pages either side of the save list. Building one of them means the list is
+// gone, which is when the rename prompt has to go with it: our element draws
+// over the whole screen and would otherwise stay up into the game.
+constexpr std::uint64_t kBuildPlaylineLoadPageId = 96;
+constexpr std::uint64_t kBuildPlaylineNewPageId = 97;
+
 using BuildLoadGamePageFn = void(*)(C_UISaveLoad*, int);
+using BuildPlaylinePageFn = void(*)(C_UISaveLoad*, char);
+using BuildPlaylineNewPageFn = void(*)(C_UISaveLoad*);
 
 C_UISaveLoad* g_saveLoad = nullptr;
 int g_playline = -1;
 bool g_inRebuild = false;
 REL::Relocation<BuildLoadGamePageFn> g_originalBuild;
+REL::Relocation<BuildPlaylinePageFn> g_originalPlaylineLoad;
+REL::Relocation<BuildPlaylineNewPageFn> g_originalPlaylineNew;
 
 void HookedBuildLoadGamePage(C_UISaveLoad* self, int playline)
 {
@@ -44,6 +55,19 @@ void HookedBuildLoadGamePage(C_UISaveLoad* self, int playline)
         g_playline = playline;
     }
     g_originalBuild(self, playline);
+    RenameDialog::ShowHint(true);
+}
+
+void HookedBuildPlaylineLoadPage(C_UISaveLoad* self, char a2)
+{
+    RenameDialog::ShowHint(false);
+    g_originalPlaylineLoad(self, a2);
+}
+
+void HookedBuildPlaylineNewPage(C_UISaveLoad* self)
+{
+    RenameDialog::ShowHint(false);
+    g_originalPlaylineNew(self);
 }
 
 }  // namespace
@@ -57,6 +81,20 @@ bool Install()
     if (MH_EnableHook(target) != MH_OK)
         return false;
     g_originalBuild = REL::Relocation<BuildLoadGamePageFn>(reinterpret_cast<std::uintptr_t>(original));
+
+    void* playlineLoad = reinterpret_cast<void*>(REL::ID(kBuildPlaylineLoadPageId).address());
+    if (MH_CreateHook(playlineLoad, reinterpret_cast<void*>(&HookedBuildPlaylineLoadPage), &original) == MH_OK
+        && MH_EnableHook(playlineLoad) == MH_OK) {
+        g_originalPlaylineLoad =
+            REL::Relocation<BuildPlaylinePageFn>(reinterpret_cast<std::uintptr_t>(original));
+    }
+
+    void* playlineNew = reinterpret_cast<void*>(REL::ID(kBuildPlaylineNewPageId).address());
+    if (MH_CreateHook(playlineNew, reinterpret_cast<void*>(&HookedBuildPlaylineNewPage), &original) == MH_OK
+        && MH_EnableHook(playlineNew) == MH_OK) {
+        g_originalPlaylineNew =
+            REL::Relocation<BuildPlaylineNewPageFn>(reinterpret_cast<std::uintptr_t>(original));
+    }
     return true;
 }
 

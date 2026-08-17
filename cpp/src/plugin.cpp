@@ -221,6 +221,10 @@ void RegisterCommands()
 
 void OnKcseMessage(KCSE::Message* msg)
 {
+    // Leaving the menu for the world takes the prompt with it.
+    if (msg && msg->type == KCSE::IMessagingInterface::kMessage_LoadGame)
+        RenameDialog::ShowHint(false);
+
     if (msg && msg->type == KCSE::IMessagingInterface::kMessage_DataLoaded)
         RegisterCommands();
 }

@@ -23,6 +23,7 @@ std::function<void(const std::string&)> g_onAccept;
 std::function<void()> g_onCancel;
 std::function<void()> g_onReset;
 bool g_open = false;
+bool g_hintShown = false;
 
 /// Returns the dialog element, or null when the mod's pak is not installed.
 IUIElement* Element()
@@ -136,7 +137,7 @@ KeyListener g_keyListener;
 void Dismiss()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (env && env->pFlashUI) {
+    if (env && env->pFlashUI && !g_hintShown) {
         _smart_ptr<IUIElement> el;
         env->pFlashUI->GetUIElement(el, "SavegameRenamer");
         if (el)
@@ -235,6 +236,26 @@ void Hide()
     if (IUIElement* el = Element())
         Call(el, "Close", "fc_close", SUIArguments());
     Dismiss();
+}
+
+void ShowHint(bool visible)
+{
+    IUIElement* el = Element();
+    if (!el)
+        return;
+
+    // The element has to be on screen for the prompt to draw, and the dialog's
+    // own visibility is the same switch, so it stays up while either is wanted.
+    if (visible)
+        el->SetVisible(true);
+
+    SUIArguments args;
+    args.AddArgument(visible);
+    Call(el, "ShowHint", "fc_showHint", args);
+
+    if (!visible && !g_open)
+        el->SetVisible(false);
+    g_hintShown = visible;
 }
 
 bool SendInput(const char* action)
