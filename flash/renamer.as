@@ -305,17 +305,20 @@ layoutKeys(false);
 // The prompt that tells the player the key exists at all, sitting over the save
 // list rather than inside the dialog. It is placed against the same bottom-right
 // corner the game puts its own load and delete prompts in.
-// Sits under the game's own load and delete prompts, on their column, so the
-// three read as one block instead of the mod's prompt floating loose.
-var HINT_X = 424;
-var HINT_Y = 396;
+// The game keeps its own prompts in a column on the right: a gold rule with the
+// "you can load this with E" line under it. The rename prompt goes directly
+// above that rule and on its centre line, so it joins that block instead of
+// floating beside it. Positioned by its centre, so the prompt stays put when
+// its wording changes length.
+var HINT_CENTRE_X = 612;
+var HINT_Y = 386;
 var HINT_SCALE = 82;
 
 var hint = mkKeyHint(_root, "hint", 2, "F2", "rename", "");
-hint._x = HINT_X;
-hint._y = HINT_Y;
 hint._xscale = HINT_SCALE;
 hint._yscale = HINT_SCALE;
+hint._x = HINT_CENTRE_X - hint.spanW * HINT_SCALE / 200;
+hint._y = HINT_Y;
 hint._visible = false;
 hint.onRollOver = null;
 hint.onRollOut = null;
