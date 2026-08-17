@@ -50,13 +50,11 @@ var KEY_PAD = 20;   // padding around the key name inside its cap
 // Tying both to one figure means neither can be adjusted without disturbing the
 // other.
 var KEY_BOLD_SPREAD = 1.12;   // how much wider to cut the cap
-var KEY_BOLD_DRIFT = 0.12;    // how far the drawn centre sits right of measured
 
-// What is left over after that correction does not scale with the word: names
-// of every length lean the same way. It is the cap itself -- the plate is drawn
-// in perspective with an uneven bevel, so the centre of its lit face is not the
-// centre of its box. A fixed shift, not a proportional one.
-var KEY_FACE_OFFSET = 2;
+// The cap plate itself is symmetric: measured off key_long.dds, its lit face
+// spans columns 6..121 of 128 and centres exactly on the texture's middle. So
+// the lean is the text's, not the plate's, and the field is centred by what it
+// actually laid out rather than by arithmetic over the measured advances.
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
@@ -167,17 +165,12 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     if (capW < KEY_MIN) {
         capW = KEY_MIN;
     }
-    // The field keeps the width it was measured in and is slid so that its
-    // centre meets the cap's: resizing a TextField after the fact moves the
-    // text inside it.
-    //
-    // The synthesised weight is corrected for here as well. The player centres
-    // the run by its measured advances, then thickens each glyph rightwards, so
-    // the drawn run keeps its left edge and gains all its extra width on the
-    // right: its centre ends up half that gain to the right of the cap's.
-    // Widening the cap cannot fix that -- only moving the field can.
-    var drift = keyText.textWidth * KEY_BOLD_DRIFT;
-    keyText._x = capW / 2 - KEY_BOX / 2 - drift / 2 - KEY_FACE_OFFSET;
+    // Let the field shrink onto the run the player actually laid out, then
+    // centre it on the cap by that width. Arithmetic over textWidth cannot get
+    // this right: the weight is synthesised after measuring, so the drawn run is
+    // wider than the numbers say and no fixed factor fits every word.
+    keyText.autoSize = "left";
+    keyText._x = (capW - keyText._width) / 2;
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
