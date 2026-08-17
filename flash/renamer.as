@@ -61,7 +61,7 @@ var KEY_BOLD_DRIFT = 0.12;    // how far the drawn centre sits right of measured
 // the plate, so the plate is symmetric. Letting the field auto-size onto the
 // run the player laid out was tried instead of this arithmetic and came out
 // visibly worse. Treat the number as measured off the screen, not derived.
-var KEY_FACE_OFFSET = 2;
+var KEY_FACE_OFFSET = 1;
 var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
@@ -305,12 +305,17 @@ layoutKeys(false);
 // The prompt that tells the player the key exists at all, sitting over the save
 // list rather than inside the dialog. It is placed against the same bottom-right
 // corner the game puts its own load and delete prompts in.
-var HINT_X = 470;
-var HINT_Y = 408;
+// Sits under the game's own load and delete prompts, on their column, so the
+// three read as one block instead of the mod's prompt floating loose.
+var HINT_X = 424;
+var HINT_Y = 396;
+var HINT_SCALE = 82;
 
 var hint = mkKeyHint(_root, "hint", 2, "F2", "rename", "");
 hint._x = HINT_X;
 hint._y = HINT_Y;
+hint._xscale = HINT_SCALE;
+hint._yscale = HINT_SCALE;
 hint._visible = false;
 hint.onRollOver = null;
 hint.onRollOut = null;

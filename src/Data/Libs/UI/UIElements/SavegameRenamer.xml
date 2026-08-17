@@ -44,4 +44,25 @@
 
   </UIElement>
 
+  <!-- The same movie declared a second time, for the prompt drawn over the save
+       list. It has to be its own element because the dialog's element takes the
+       mouse across the whole screen: leaving that one visible to carry the
+       prompt stole clicks and the wheel from the list underneath. This one
+       touches no input at all. -->
+  <UIElement name="SavegameRenamerHint" mouseevents="0" cursor="0" keyevents="0" controller_input="0" events_exclusive="0">
+
+    <GFx file="renamer.gfx" layer="45">
+      <Constraints>
+        <Align mode="fullscreen" scale="1" />
+      </Constraints>
+    </GFx>
+
+    <functions>
+      <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt">
+        <param name="visible" desc="" type="bool" />
+      </function>
+    </functions>
+
+  </UIElement>
+
 </UIElements>

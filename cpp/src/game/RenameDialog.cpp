@@ -42,6 +42,24 @@ IUIElement* Element()
     return el.get();
 }
 
+/// Returns the element that carries the prompt over the save list.
+///
+/// It is a second declaration of the same movie, with every input attribute
+/// off: the dialog's element grabs the mouse across the whole screen, so
+/// keeping that one visible for the prompt took clicks and the wheel away from
+/// the list underneath.
+IUIElement* HintElement()
+{
+    auto* env = SSystemGlobalEnvironment::GetInstance();
+    if (!env || !env->pFlashUI)
+        return nullptr;
+
+    static _smart_ptr<IUIElement> el;
+    if (!el)
+        env->pFlashUI->GetUIElement(el, "SavegameRenamerHint");
+    return el.get();
+}
+
 /// Returns the vanilla menu element, used to silence it while the dialog is up.
 IUIElement* MenuElement()
 {
@@ -137,7 +155,7 @@ KeyListener g_keyListener;
 void Dismiss()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (env && env->pFlashUI && !g_hintShown) {
+    if (env && env->pFlashUI) {
         _smart_ptr<IUIElement> el;
         env->pFlashUI->GetUIElement(el, "SavegameRenamer");
         if (el)
@@ -240,12 +258,10 @@ void Hide()
 
 void ShowHint(bool visible)
 {
-    IUIElement* el = Element();
+    IUIElement* el = HintElement();
     if (!el)
         return;
 
-    // The element has to be on screen for the prompt to draw, and the dialog's
-    // own visibility is the same switch, so it stays up while either is wanted.
     if (visible)
         el->SetVisible(true);
 
@@ -253,7 +269,7 @@ void ShowHint(bool visible)
     args.AddArgument(visible);
     Call(el, "ShowHint", "fc_showHint", args);
 
-    if (!visible && !g_open)
+    if (!visible)
         el->SetVisible(false);
     g_hintShown = visible;
 }
