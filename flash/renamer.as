@@ -156,8 +156,15 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     }
     // The field keeps the width it was measured in and is slid so that its
     // centre meets the cap's: resizing a TextField after the fact moves the
-    // text inside it, which is what pushed "Enter" off its cap.
-    keyText._x = capW / 2 - KEY_BOX / 2;
+    // text inside it.
+    //
+    // The synthesised weight is corrected for here as well. The player centres
+    // the run by its measured advances, then thickens each glyph rightwards, so
+    // the drawn run keeps its left edge and gains all its extra width on the
+    // right: its centre ends up half that gain to the right of the cap's.
+    // Widening the cap cannot fix that -- only moving the field can.
+    var boldGain = keyText.textWidth * (KEY_BOLD_SPREAD - 1);
+    keyText._x = capW / 2 - KEY_BOX / 2 - boldGain / 2;
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
