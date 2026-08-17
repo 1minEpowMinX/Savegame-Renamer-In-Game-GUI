@@ -163,6 +163,46 @@ void Description::SetDisplayName(std::string_view name)
     SetUiFields(fields);
 }
 
+bool Description::Write() const
+{
+    const auto current = Read(m_path);
+    if (!current.has_value() || current->SaveId() != m_saveId)
+        return false;
+
+    const auto temp = m_path.parent_path() / (m_path.filename().string() + ".renamer-tmp");
+
+    {
+        std::ifstream src(m_path, std::ios::binary);
+        std::ofstream dst(temp, std::ios::binary | std::ios::trunc);
+        if (!src || !dst)
+            return false;
+
+        const std::uint32_t magic = kMagic;
+        const std::int32_t length = static_cast<std::int32_t>(m_xml.size() + 1);
+        dst.write(reinterpret_cast<const char*>(&magic), 4);
+        dst.write(reinterpret_cast<const char*>(&length), 4);
+        dst.write(m_xml.data(), static_cast<std::streamsize>(m_xml.size()));
+        dst.put('\0');
+
+        src.seekg(static_cast<std::streamoff>(m_payloadOffset));
+        std::vector<char> buffer(1u << 20);
+        while (src) {
+            src.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+            dst.write(buffer.data(), src.gcount());
+        }
+        if (!dst)
+            return false;
+    }
+
+    std::error_code ec;
+    std::filesystem::rename(temp, m_path, ec);
+    if (ec) {
+        std::filesystem::remove(temp, ec);
+        return false;
+    }
+    return true;
+}
+
 void Description::ResetName()
 {
     const std::string stash = Attribute(kStashAttribute);

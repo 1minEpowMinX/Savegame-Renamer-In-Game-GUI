@@ -63,6 +63,16 @@ public:
     /// Returns the current header XML.
     const std::string& Xml() const { return m_xml; }
 
+    /// Writes the header back, copying the payload through unchanged.
+    ///
+    /// Refuses when the file on disk no longer holds the save this object was
+    /// read from, so a slot the game reused or deleted while a rename dialog
+    /// was open is left alone. The new file is built beside the original and
+    /// replaces it only once complete.
+    ///
+    /// @return True when the file was replaced.
+    bool Write() const;
+
 private:
     std::filesystem::path m_path;
     std::string m_xml;                 ///< Header XML, without the terminating NUL.
