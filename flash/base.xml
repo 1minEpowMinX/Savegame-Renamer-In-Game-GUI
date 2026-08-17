@@ -10,7 +10,7 @@
 
      Stage is 800x450 px (16000x9000 twips), matching the coordinate space
      renamer.as lays out in. -->
-<swf _xmlExportMajor="2" _xmlExportMinor="2" type="SWF" charset="UTF-8" compression="ZLIB" encrypted="false" frameCount="1" frameRate="30.0" gfx="false" hasEndTag="true" version="8">
+<swf _xmlExportMajor="2" _xmlExportMinor="2" type="SWF" charset="UTF-8" compression="NONE" encrypted="false" frameCount="1" frameRate="30.0" gfx="false" hasEndTag="true" version="8">
   <displayRect type="RECT" Xmax="16000" Xmin="0" Ymax="9000" Ymin="0" nbits="14"/>
   <tags>
 
