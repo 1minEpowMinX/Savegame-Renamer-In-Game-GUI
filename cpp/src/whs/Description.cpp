@@ -3,11 +3,16 @@
 #include <fstream>
 #include <regex>
 
+#include "whs/Sanitise.h"
+
 namespace whs {
 namespace {
 
 constexpr std::uint32_t kMagic = 0xFFFFFFFFu;
 constexpr std::size_t kPrefixSize = 8;
+
+/// Root attribute holding the quest and objective a rename replaced.
+constexpr const char* kStashAttribute = "RenamerOriginal";
 
 /// Returns true when `text` parses as a decimal integer, storing it in `out`.
 bool ParseInt(const std::string& text, int& out)
@@ -97,9 +102,81 @@ std::vector<std::string> Description::UiFields() const
     return out;
 }
 
+void Description::SetAttribute(const std::string& name, const std::string& value)
+{
+    const std::regex re(name + "=\"[^\"]*\"");
+    if (std::regex_search(m_xml, re)) {
+        m_xml = std::regex_replace(m_xml, re, name + "=\"" + value + "\"",
+                                   std::regex_constants::format_first_only);
+        return;
+    }
+    // A new attribute goes last on the root element, just before its closing
+    // bracket. An unknown attribute is tolerated by the game's parser; an
+    // unknown child element is not.
+    m_xml.insert(m_xml.find('>'), " " + name + "=\"" + value + "\"");
+}
+
+void Description::RemoveAttribute(const std::string& name)
+{
+    const std::regex re(" " + name + "=\"[^\"]*\"");
+    m_xml = std::regex_replace(m_xml, re, "", std::regex_constants::format_first_only);
+}
+
+void Description::SetUiFields(const std::vector<std::string>& fields)
+{
+    std::string packed;
+    for (std::size_t i = 0; i < fields.size(); ++i) {
+        if (i)
+            packed += '|';
+        packed += fields[i];
+    }
+    SetAttribute("UIDescription", packed);
+}
+
 std::string Description::DisplayName() const
 {
-    return UiFields()[static_cast<std::size_t>(UiField::Quest)];
+    return XmlUnescape(UiFields()[static_cast<std::size_t>(UiField::Quest)]);
+}
+
+bool Description::HasCustomName() const
+{
+    return !Attribute(kStashAttribute).empty();
+}
+
+void Description::SetDisplayName(std::string_view name)
+{
+    const std::string clean = SanitiseName(name);
+    if (clean.empty()) {
+        ResetName();
+        return;
+    }
+
+    auto fields = UiFields();
+    auto& quest = fields[static_cast<std::size_t>(UiField::Quest)];
+    auto& objective = fields[static_cast<std::size_t>(UiField::Objective)];
+
+    if (!HasCustomName())
+        SetAttribute(kStashAttribute, quest + "|" + objective);
+
+    quest = XmlEscape(clean);
+    objective.clear();
+    SetUiFields(fields);
+}
+
+void Description::ResetName()
+{
+    const std::string stash = Attribute(kStashAttribute);
+    if (stash.empty())
+        return;
+
+    const std::size_t bar = stash.find('|');
+    auto fields = UiFields();
+    fields[static_cast<std::size_t>(UiField::Quest)] = stash.substr(0, bar);
+    fields[static_cast<std::size_t>(UiField::Objective)] =
+        bar == std::string::npos ? std::string{} : stash.substr(bar + 1);
+
+    SetUiFields(fields);
+    RemoveAttribute(kStashAttribute);
 }
 
 }  // namespace whs

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace whs {
@@ -42,6 +43,23 @@ public:
     /// Returns the name the load list shows for this save.
     std::string DisplayName() const;
 
+    /// Returns true when the save carries a name written by this mod.
+    bool HasCustomName() const;
+
+    /// Replaces the displayed name, stashing the original quest and objective
+    /// on the first call.
+    ///
+    /// An input that sanitises to nothing resets instead, so that clearing the
+    /// field in the dialog restores the quest name rather than blanking the
+    /// entry in the load list.
+    ///
+    /// @param name Text as typed by the player.
+    void SetDisplayName(std::string_view name);
+
+    /// Restores the quest and objective stashed by the first SetDisplayName
+    /// call, and drops the stash. Does nothing when there is no stash.
+    void ResetName();
+
     /// Returns the current header XML.
     const std::string& Xml() const { return m_xml; }
 
@@ -53,6 +71,9 @@ private:
 
     std::string Attribute(const std::string& name) const;
     std::vector<std::string> UiFields() const;
+    void SetAttribute(const std::string& name, const std::string& value);
+    void RemoveAttribute(const std::string& name);
+    void SetUiFields(const std::vector<std::string>& fields);
 };
 
 }  // namespace whs
