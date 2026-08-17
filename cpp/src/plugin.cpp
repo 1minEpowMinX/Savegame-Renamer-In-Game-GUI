@@ -16,6 +16,7 @@
 
 #include "Log.h"
 #include "game/SaveCatalog.h"
+#include "game/SaveLoadHook.h"
 #include "whs/Description.h"
 
 KCSE_PLUGIN_INFO("SavegameRenamer", "Lefxxx", 1);
@@ -73,8 +74,13 @@ void CmdSet(IConsoleCmdArgs* args)
         return;
     }
 
+    // The file is current, the manager's descriptions are not, and the page
+    // that is already on screen is built from those descriptions.
     SaveCatalog::Refresh();
-    SR_LOG("%d is now '%s'", id, header->DisplayName().c_str());
+    const bool redrawn = SaveLoadHook::RebuildLoadPage();
+
+    SR_LOG("%d is now '%s'%s", id, header->DisplayName().c_str(),
+           redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
 void RegisterCommands()
@@ -110,6 +116,10 @@ KCSE_PLUGIN_LOAD(kcse)
     }
     if (!SaveCatalog::Install()) {
         SR_LOG("could not hook the savegame manager");
+        return false;
+    }
+    if (!SaveLoadHook::Install()) {
+        SR_LOG("could not hook the load menu");
         return false;
     }
 
