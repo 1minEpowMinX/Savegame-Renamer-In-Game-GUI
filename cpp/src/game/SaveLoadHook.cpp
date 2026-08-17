@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
+#include <string>
 
 #include "Offsets/vtables/IFlashPlayer.h"
 #include "Offsets/vtables/IFlashUI.h"
@@ -63,54 +65,182 @@ bool Ready()
     return g_saveLoad != nullptr && g_playline >= 0;
 }
 
-int SelectedSaveId()
+namespace {
+
+/// Returns the menu movie's Scaleform player, or null.
+std::shared_ptr<Offsets::IFlashPlayer> MenuPlayer()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
     if (!env || !env->pFlashUI)
-        return -1;
+        return nullptr;
 
     _smart_ptr<Offsets::IUIElement> menu;
     env->pFlashUI->GetUIElement(menu, "Menu");
     if (!menu)
-        return -1;
+        return nullptr;
+    return menu->GetFlashPlayer();
+}
 
-    auto player = menu->GetFlashPlayer();
+/// Owns an IFlashVariableObject and releases it.
+///
+/// Every getter that hands one back allocates, so the traversal below would leak
+/// one object per key press without this.
+class VarObj {
+public:
+    VarObj() = default;
+    explicit VarObj(Offsets::IFlashVariableObject* obj) : m_obj(obj) {}
+    VarObj(const VarObj&) = delete;
+    VarObj& operator=(const VarObj&) = delete;
+    ~VarObj() { Reset(); }
+
+    void Reset()
+    {
+        if (m_obj) {
+            m_obj->Release();
+            m_obj = nullptr;
+        }
+    }
+
+    Offsets::IFlashVariableObject* Get() const { return m_obj; }
+    Offsets::IFlashVariableObject** Receive() { Reset(); return &m_obj; }
+    explicit operator bool() const { return m_obj != nullptr; }
+
+private:
+    Offsets::IFlashVariableObject* m_obj = nullptr;
+};
+
+/// Returns the highlighted button of the menu movie, or an empty holder.
+///
+/// The two selection indices address MenuManagerArray, which has to be walked
+/// with GetElement: a dotted path such as "MenuManagerArray.0.3" resolves the
+/// container but silently ignores the second index and yields the first row.
+void SelectedButton(VarObj& out)
+{
+    out.Reset();
+
+    auto player = MenuPlayer();
     if (!player)
-        return -1;
+        return;
 
-    // Menu.gfx keeps the highlighted button as MenuManagerArray[container][index];
-    // selectBtn() maintains the two indices for both mouse hover and arrow keys.
     SFlashVarValue container = SFlashVarValue::CreateUndefined();
     SFlashVarValue index = SFlashVarValue::CreateUndefined();
     if (!player->GetVariable("_root.g_selectContainer", container)
         || !player->GetVariable("_root.g_selectButton", index))
-        return -1;
-    if (!container.IsInt() && !container.IsDouble())
+        return;
+    if (container.IsUndefined() || index.IsUndefined())
+        return;
+
+    VarObj array;
+    if (!player->GetVariable("_root.MenuManagerArray", *array.Receive()) || !array)
+        return;
+
+    VarObj row;
+    if (!array.Get()->GetElement(static_cast<unsigned>(container.GetInt()), *row.Receive()) || !row)
+        return;
+
+    if (!row.Get()->GetElement(static_cast<unsigned>(index.GetInt()), *out.Receive()))
+        out.Reset();
+}
+
+/// Renders a flash value as text for the log.
+std::string Describe(const SFlashVarValue& v)
+{
+    char buf[128];
+    if (v.IsInt() || v.IsUInt())
+        std::snprintf(buf, sizeof(buf), "int %d", v.GetInt());
+    else if (v.IsDouble())
+        std::snprintf(buf, sizeof(buf), "double %.3f", v.GetDouble());
+    else if (v.IsString())
+        std::snprintf(buf, sizeof(buf), "string '%s'", v.GetConstStrPtr());
+    else if (v.IsBool())
+        std::snprintf(buf, sizeof(buf), "bool %d", v.GetInt());
+    else if (v.IsNull())
+        std::snprintf(buf, sizeof(buf), "null");
+    else
+        std::snprintf(buf, sizeof(buf), "undefined");
+    return buf;
+}
+
+}  // namespace
+
+void ProbeSelection()
+{
+    auto player = MenuPlayer();
+    if (!player) {
+        SR_LOG("probe: no menu player");
+        return;
+    }
+
+    SFlashVarValue container = SFlashVarValue::CreateUndefined();
+    SFlashVarValue index = SFlashVarValue::CreateUndefined();
+    const bool haveC = player->GetVariable("_root.g_selectContainer", container);
+    const bool haveI = player->GetVariable("_root.g_selectButton", index);
+    SR_LOG("probe: g_selectContainer read=%d %s, g_selectButton read=%d %s",
+           haveC, Describe(container).c_str(), haveI, Describe(index).c_str());
+    if (!haveC || !haveI)
+        return;
+
+    VarObj button;
+    SelectedButton(button);
+    if (!button) {
+        SR_LOG("probe: no highlighted button");
+        return;
+    }
+
+    static const char* kMembers[] = {"type", "saveId", "playlineId", "_name", "timestamp"};
+    for (const char* member : kMembers) {
+        SFlashVarValue value = SFlashVarValue::CreateUndefined();
+        const bool ok = button.Get()->GetMember(member, value);
+        SR_LOG("probe: %-12s read=%d %s", member, ok, Describe(value).c_str());
+    }
+
+    VarObj head;
+    if (button.Get()->GetMember("tfHead", *head.Receive()) && head) {
+        SFlashVarValue text = SFlashVarValue::CreateUndefined();
+        const bool ok = head.Get()->GetMember("text", text);
+        SR_LOG("probe: %-12s read=%d %s", "tfHead.text", ok, Describe(text).c_str());
+    }
+
+    SR_LOG("probe: SelectedSaveId() -> %d", SelectedSaveId());
+}
+
+int SelectedSaveId()
+{
+    VarObj button;
+    SelectedButton(button);
+    if (!button)
         return -1;
 
-    char path[192];
-    std::snprintf(path, sizeof(path), "_root.MenuManagerArray.%d.%d.type",
-                  container.GetInt(), index.GetInt());
-
+    // Every row of the save list carries this type; playline buttons and plain
+    // menu entries do not, which is what keeps the rename key inert elsewhere.
     SFlashVarValue type = SFlashVarValue::CreateUndefined();
-    if (!player->GetVariable(path, type) || !type.IsString())
+    if (!button.Get()->GetMember("type", type) || !type.IsString())
         return -1;
-    // Every row of the save list carries this type; the playline buttons and the
-    // plain menu entries do not.
     if (std::strcmp(type.GetConstStrPtr(), "LoadButton") != 0)
         return -1;
 
-    std::snprintf(path, sizeof(path), "_root.MenuManagerArray.%d.%d.saveId",
-                  container.GetInt(), index.GetInt());
-
-    SFlashVarValue saveId = SFlashVarValue::CreateUndefined();
-    if (!player->GetVariable(path, saveId))
+    // The row's own saveId member is the menu's internal slot index, not the
+    // number the player sees: row "4317." carries saveId 101. The visible number
+    // is UIDescription field 1, which the row prints as the "<id>. " prefix of
+    // its heading, and that is the id the rest of the mod keys on.
+    VarObj head;
+    if (!button.Get()->GetMember("tfHead", *head.Receive()) || !head)
         return -1;
-    if (saveId.IsInt() || saveId.IsDouble())
-        return saveId.GetInt();
-    if (saveId.IsString())
-        return std::atoi(saveId.GetConstStrPtr());
-    return -1;
+
+    SFlashVarValue text = SFlashVarValue::CreateUndefined();
+    if (!head.Get()->GetMember("text", text) || !text.IsString())
+        return -1;
+
+    const char* s = text.GetConstStrPtr();
+    int id = 0;
+    std::size_t digits = 0;
+    while (s[digits] >= '0' && s[digits] <= '9') {
+        id = id * 10 + (s[digits] - '0');
+        ++digits;
+    }
+    if (digits == 0 || s[digits] != '.')
+        return -1;
+    return id;
 }
 
 bool RebuildLoadPage()

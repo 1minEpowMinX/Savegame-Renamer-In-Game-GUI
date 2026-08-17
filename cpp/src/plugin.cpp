@@ -202,6 +202,9 @@ void RegisterCommands()
                               "to its quest name when no name is given.");
     env->pConsole->AddCommand("renamer_dialog", &CmdDialog, VF_NULL,
                               "renamer_dialog [name] -- shows or hides the rename dialog.");
+    env->pConsole->AddCommand("renamer_probe", [](IConsoleCmdArgs*) { SaveLoadHook::ProbeSelection(); },
+                              VF_NULL,
+                              "renamer_probe -- logs the properties of the highlighted menu row.");
 
     // The flash element only exists once the UI has loaded, so this cannot run
     // from KCSEPlugin_Load.

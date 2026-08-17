@@ -32,4 +32,10 @@ bool RebuildLoadPage();
 /// inert everywhere except the save list.
 int SelectedSaveId();
 
+/// Writes every readable property of the highlighted menu row to the log.
+///
+/// Diagnostic aid for working out which of the row's fields carries the id the
+/// rest of the mod uses.
+void ProbeSelection();
+
 }  // namespace SaveLoadHook
