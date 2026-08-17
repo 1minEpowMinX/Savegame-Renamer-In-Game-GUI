@@ -24,12 +24,14 @@ var BOX_Y = 115;
 
 // The frame's ornament eats into the window, so content is laid out inside
 // these insets rather than against the outer edge.
-var IN_L = 38;
-var IN_R = 38;
-var IN_T = 30;
-var IN_B = 22;
+// Measured off the frame on screen: the ornament band across the top is far
+// deeper than the sides, and the bottom rail is the shallowest edge.
+var IN_L = 36;
+var IN_R = 36;
+var IN_T = 52;
+var IN_B = 18;
 
-var ROW_TITLE = 26;
+var ROW_TITLE = 30;
 var ROW_INPUT = 30;
 var ROW_META = 20;
 var GAP = 10;
@@ -46,6 +48,8 @@ var COLOR_HOVER = 0xFFF0C8;
 // The ImportAssets2 symbol names from base.xml.
 var FONT_REGULAR = "DefaultFont";
 var FONT_BOLD = "DefaultFontBold";
+// The face the game sets its own screen headings in.
+var FONT_DISPLAY = "DisplayFont";
 
 // Derived, so a change above moves everything together.
 var IN_X = BOX_X + IN_L;
@@ -59,15 +63,9 @@ var Y_HINT = BOX_Y + BOX_H - IN_B - ROW_META;
 var box = _root.createEmptyMovieClip("box", 1);
 box._visible = false;
 
-// A plain panel first, so the dialog stays readable if the frame ever fails to
-// load, then the game's own modal frame over it.
-box.beginFill(0x000000, 85);
-box.moveTo(BOX_X, BOX_Y);
-box.lineTo(BOX_X + BOX_W, BOX_Y);
-box.lineTo(BOX_X + BOX_W, BOX_Y + BOX_H);
-box.lineTo(BOX_X, BOX_Y + BOX_H);
-box.endFill();
-
+// Nothing is drawn behind the frame: the texture is transparent around its
+// ornament, so a filled rectangle the size of the window shows up as black
+// corners around it.
 var frame = box.attachMovie("RenamerFrame", "frame", 1);
 frame._x = BOX_X;
 frame._y = BOX_Y;
@@ -102,8 +100,8 @@ function setText(tf, value) {
 
 // ----------------------------------------------------------------- fields --
 
-var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 21,
-                   COLOR_TITLE, FONT_BOLD, "center");
+var title = mkText(box, "title", 2, IN_X, Y_TITLE, IN_W, ROW_TITLE, 25,
+                   COLOR_TITLE, FONT_DISPLAY, "center");
 setText(title, "Rename savegame");
 
 var input = box.createTextField("input", 3, IN_X, Y_INPUT, IN_W, ROW_INPUT);
