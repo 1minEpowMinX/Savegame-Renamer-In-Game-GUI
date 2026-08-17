@@ -7,8 +7,11 @@
 
 #include <MinHook.h>
 
+#include "CryEngine/CryCommon/SInputEvent.h"
 #include "KCSE/KCSEAPI.h"
 #include "Offsets/vtables/IConsole.h"
+#include "Offsets/vtables/IInput.h"
+#include "Offsets/vtables/IInputEventListener.h"
 #include "crysystem/SSystemGlobalEnvironment.h"
 
 #include <cstdlib>
@@ -144,6 +147,33 @@ bool OpenFor(int saveId)
     return false;
 }
 
+/// Opens the rename dialog on the highlighted save list row.
+///
+/// Self-gating: SelectedSaveId returns -1 unless a savegame row is highlighted,
+/// so the key does nothing anywhere else in the menu.
+class RenameKeyListener : public Offsets::IInputEventListener {
+    bool OnInputEvent(const Offsets::SInputEvent& ev) override
+    {
+        if (ev.keyId != Offsets::eKI_F2 || !(ev.state & Offsets::eIS_Pressed))
+            return false;
+        if (RenameDialog::IsOpen())
+            return false;
+
+        const int saveId = SaveLoadHook::SelectedSaveId();
+        if (saveId < 0)
+            return false;
+
+        OpenFor(saveId);
+        return true;
+    }
+
+    bool OnInputEventUI(const void*) override { return false; }
+    int GetPriority() const override { return 0; }
+    bool _vf3(const void*) override { return false; }
+};
+
+RenameKeyListener g_renameKey;
+
 // Temporary, replaced by the F2 hook: opens the dialog for a save chosen by id.
 void CmdDialog(IConsoleCmdArgs* args)
 {
@@ -179,6 +209,11 @@ void RegisterCommands()
     RenameDialog::SetAcceptHandler(&ApplyRename);
     RenameDialog::SetResetHandler([] { ApplyRename(""); });
     RenameDialog::SetCancelHandler([] { g_pendingSaveId = -1; });
+
+    if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput) {
+        env->pInput->AddEventListener(&g_renameKey);
+        SR_LOG("F2 armed");
+    }
 }
 
 void OnKcseMessage(KCSE::Message* msg)

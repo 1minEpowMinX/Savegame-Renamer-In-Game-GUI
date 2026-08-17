@@ -3,8 +3,15 @@
 #include <MinHook.h>
 
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
+#include "Offsets/vtables/IFlashPlayer.h"
+#include "Offsets/vtables/IFlashUI.h"
+#include "Offsets/vtables/IUIElement.h"
 #include "REL.h"
+#include "crysystem/SSystemGlobalEnvironment.h"
 #include "guimodule/C_UISaveLoad.h"
 
 #include "Log.h"
@@ -54,6 +61,56 @@ bool Install()
 bool Ready()
 {
     return g_saveLoad != nullptr && g_playline >= 0;
+}
+
+int SelectedSaveId()
+{
+    auto* env = SSystemGlobalEnvironment::GetInstance();
+    if (!env || !env->pFlashUI)
+        return -1;
+
+    _smart_ptr<Offsets::IUIElement> menu;
+    env->pFlashUI->GetUIElement(menu, "Menu");
+    if (!menu)
+        return -1;
+
+    auto player = menu->GetFlashPlayer();
+    if (!player)
+        return -1;
+
+    // Menu.gfx keeps the highlighted button as MenuManagerArray[container][index];
+    // selectBtn() maintains the two indices for both mouse hover and arrow keys.
+    SFlashVarValue container = SFlashVarValue::CreateUndefined();
+    SFlashVarValue index = SFlashVarValue::CreateUndefined();
+    if (!player->GetVariable("_root.g_selectContainer", container)
+        || !player->GetVariable("_root.g_selectButton", index))
+        return -1;
+    if (!container.IsInt() && !container.IsDouble())
+        return -1;
+
+    char path[192];
+    std::snprintf(path, sizeof(path), "_root.MenuManagerArray.%d.%d.type",
+                  container.GetInt(), index.GetInt());
+
+    SFlashVarValue type = SFlashVarValue::CreateUndefined();
+    if (!player->GetVariable(path, type) || !type.IsString())
+        return -1;
+    // Every row of the save list carries this type; the playline buttons and the
+    // plain menu entries do not.
+    if (std::strcmp(type.GetConstStrPtr(), "LoadButton") != 0)
+        return -1;
+
+    std::snprintf(path, sizeof(path), "_root.MenuManagerArray.%d.%d.saveId",
+                  container.GetInt(), index.GetInt());
+
+    SFlashVarValue saveId = SFlashVarValue::CreateUndefined();
+    if (!player->GetVariable(path, saveId))
+        return -1;
+    if (saveId.IsInt() || saveId.IsDouble())
+        return saveId.GetInt();
+    if (saveId.IsString())
+        return std::atoi(saveId.GetConstStrPtr());
+    return -1;
 }
 
 bool RebuildLoadPage()

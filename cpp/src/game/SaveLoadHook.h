@@ -24,4 +24,12 @@ bool Ready();
 /// @return True when the page was rebuilt.
 bool RebuildLoadPage();
 
+/// Returns the id of the savegame row the player has highlighted.
+///
+/// Reads the menu movie's own selection state, so it follows the mouse and the
+/// arrow keys exactly as the vanilla delete action does. Returns -1 when the
+/// highlighted item is not a savegame row, which is what makes the rename key
+/// inert everywhere except the save list.
+int SelectedSaveId();
+
 }  // namespace SaveLoadHook
