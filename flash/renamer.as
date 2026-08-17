@@ -38,7 +38,8 @@ var ROW_KEY = 18;
 // so its optical centre sits above its geometric one and the key name has to
 // ride high to look centred.
 var KEY_RISE = 2;
-var KEY_PAD = 14;   // padding around the key name inside its cap
+var KEY_PAD = 18;   // padding around the key name inside its cap
+var KEY_BOX = 120;  // width the key name is measured and centred in
 var KEY_MIN = 30;   // narrowest cap, so "Del" does not become a square
 var KEY_GAP = 6;    // cap to its own label
 var PAIR_GAP = 40;  // pair to the next pair
@@ -141,14 +142,17 @@ function mkKeyHint(parent, name, depth, key, label, action) {
     // The cap is measured to its key name rather than fixed, so "Enter" and
     // "Del" are not forced to the same width. The game itself ships three cap
     // widths for the same reason.
-    var keyText = mkText(clip, "key", 2, 0, 2 - KEY_RISE, 120, ROW_KEY, 12,
+    var keyText = mkText(clip, "key", 2, 0, 2 - KEY_RISE, KEY_BOX, ROW_KEY, 12,
                          COLOR_KEYCAP, FONT_BOLD, "center");
     setText(keyText, key);
     var capW = keyText.textWidth + KEY_PAD;
     if (capW < KEY_MIN) {
         capW = KEY_MIN;
     }
-    keyText._width = capW;
+    // The field keeps the width it was measured in and is slid so that its
+    // centre meets the cap's: resizing a TextField after the fact moves the
+    // text inside it, which is what pushed "Enter" off its cap.
+    keyText._x = capW / 2 - KEY_BOX / 2;
 
     var cap = clip.attachMovie("RenamerKey", "cap", 1);
     cap._x = 0;
