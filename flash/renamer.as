@@ -14,13 +14,11 @@
 // no ternary, no chained assignments.
 
 // ------------------------------------------------------- layout constants --
-// The frame texture is 1024x512, and base.xml draws it at 520x260, so the
-// window keeps that size and its ornament is never stretched.
-var BOX_X = 140;
-var BOX_Y = 95;
-var BOX_W = 520;
-var BOX_H = 260;
-var PAD = 54;
+var BOX_X = 150;
+var BOX_Y = 150;
+var BOX_W = 500;
+var BOX_H = 150;
+var PAD = 20;
 var TITLE_H = 30;
 var INPUT_H = 34;
 var SOFT_LIMIT = 40;
@@ -34,20 +32,12 @@ var COLOR_HOVER = 0xFFF0C8;
 var box = _root.createEmptyMovieClip("box", 1);
 box._visible = false;
 
-// A plain panel first, so the dialog stays readable even if the frame is
-// missing, then the game's own modal frame on top of it. RenamerFrame is a
-// sprite wrapping a shape filled with the texture: a bitmap character cannot
-// be attached directly.
 box.beginFill(0x000000, 85);
 box.moveTo(BOX_X, BOX_Y);
 box.lineTo(BOX_X + BOX_W, BOX_Y);
 box.lineTo(BOX_X + BOX_W, BOX_Y + BOX_H);
 box.lineTo(BOX_X, BOX_Y + BOX_H);
 box.endFill();
-
-var frame = box.attachMovie("RenamerFrame", "frame", 1);
-frame._x = BOX_X;
-frame._y = BOX_Y;
 
 // ---------------------------------------------------------------- helpers --
 
@@ -82,7 +72,7 @@ function setText(tf, value) {
 var FONT_REGULAR = "DefaultFont";
 var FONT_BOLD = "DefaultFontBold";
 
-var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD,
+var title = mkText(box, "title", 2, BOX_X + PAD, BOX_Y + PAD - 6,
                    BOX_W - PAD * 2, TITLE_H, 22, COLOR_TEXT, FONT_BOLD);
 setText(title, "Rename savegame");
 
@@ -126,7 +116,7 @@ var resetBtn = mkText(resetClip, "label", 1, 0, 0, RESET_W, RESET_H, 16,
                       COLOR_TEXT, FONT_REGULAR);
 setText(resetBtn, "Reset to original");
 
-var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - PAD - 4,
+var hint = mkText(box, "hint", 6, BOX_X + PAD, BOX_Y + BOX_H - 26,
                   BOX_W - PAD * 2, 22, 15, COLOR_TEXT, FONT_REGULAR);
 setText(hint, "Enter - accept, Esc - cancel");
 
