@@ -37,25 +37,6 @@ void HookedUpdateDescriptions(C_SaveGameManager* self)
     g_originalUpdate(self);
 }
 
-/// Returns `text` with localization markup resolved.
-///
-/// A save the mod has not renamed carries "@qname_..." keys; a save it has
-/// renamed carries the player's own words. Localize resolves the first and,
-/// per its contract, returns the second untouched.
-///
-/// @param text Authored string from the header.
-/// @return The readable text.
-std::string Localize(const std::string& text)
-{
-    if (text.empty())
-        return text;
-
-    CryStringT<char> output;
-    if (!wh::framework::C_LocalizedString::Localize(CryStringT<char>(text.c_str()), output))
-        return text;
-    return output.c_str();
-}
-
 /// Returns <Saved Games>\kingdomcome2\saves, or an empty path.
 std::filesystem::path SavesRoot()
 {
@@ -106,6 +87,17 @@ std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
 }
 
 }  // namespace
+
+std::string Localize(const std::string& text)
+{
+    if (text.empty())
+        return text;
+
+    CryStringT<char> output;
+    if (!wh::framework::C_LocalizedString::Localize(CryStringT<char>(text.c_str()), output))
+        return text;
+    return output.c_str();
+}
 
 bool Install()
 {

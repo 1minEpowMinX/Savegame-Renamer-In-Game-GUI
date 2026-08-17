@@ -42,4 +42,13 @@ std::optional<SaveEntry> Find(int saveId);
 /// @return True when the call was made.
 bool Refresh();
 
+/// Returns `text` with localization markup resolved.
+///
+/// A quest name stored in a savegame is a "@key"; a name the player typed is
+/// its own text and comes back unchanged.
+///
+/// @param text Authored string from a savegame header.
+/// @return The readable text.
+std::string Localize(const std::string& text);
+
 }  // namespace SaveCatalog

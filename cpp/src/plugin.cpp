@@ -83,7 +83,7 @@ void CmdSet(IConsoleCmdArgs* args)
     SaveCatalog::Refresh();
     const bool redrawn = SaveLoadHook::RebuildLoadPage();
 
-    SR_LOG("%d is now '%s'%s", id, header->DisplayName().c_str(),
+    SR_LOG("%d is now '%s'%s", id, SaveCatalog::Localize(header->DisplayName()).c_str(),
            redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
@@ -117,7 +117,7 @@ void ApplyRename(const std::string& name)
 
     SaveCatalog::Refresh();
     SaveLoadHook::RebuildLoadPage();
-    SR_LOG("%d is now '%s'", entry->id, header->DisplayName().c_str());
+    SR_LOG("%d is now '%s'", entry->id, SaveCatalog::Localize(header->DisplayName()).c_str());
 }
 
 /// Opens the dialog for `saveId`.
