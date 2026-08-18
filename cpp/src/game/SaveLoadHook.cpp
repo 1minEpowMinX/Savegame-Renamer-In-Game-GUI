@@ -28,22 +28,23 @@ namespace {
 // reachable any other way; also re-invoked to redraw the list after a rename.
 constexpr std::uint64_t kBuildLoadGamePageId = 94;
 
-// The pages either side of the save list. Building one of them means the list is
-// gone, which is when the rename prompt has to go with it: our element draws
-// over the whole screen and would otherwise stay up into the game.
-constexpr std::uint64_t kBuildPlaylineLoadPageId = 96;
-constexpr std::uint64_t kBuildPlaylineNewPageId = 97;
+// C_UIMenu::PreparePage, which every page builder in the menu calls before it
+// lays anything out. Hooked to take the rename prompt down the moment the menu
+// moves off the save list: our element draws over the whole screen, and a prompt
+// left up follows the player into the settings and into the game.
+constexpr std::uint64_t kPreparePageId = 43;
+
+// wh::guimodule::E_MenuPage::LoadGame, the page the prompt belongs to.
+constexpr std::uint8_t kLoadGamePage = 8;
 
 using BuildLoadGamePageFn = void(*)(C_UISaveLoad*, int);
-using BuildPlaylinePageFn = void(*)(C_UISaveLoad*, char);
-using BuildPlaylineNewPageFn = void(*)(C_UISaveLoad*);
+using PreparePageFn = void(*)(void*, std::uint8_t);
 
 C_UISaveLoad* g_saveLoad = nullptr;
 int g_playline = -1;
 bool g_inRebuild = false;
 REL::Relocation<BuildLoadGamePageFn> g_originalBuild;
-REL::Relocation<BuildPlaylinePageFn> g_originalPlaylineLoad;
-REL::Relocation<BuildPlaylineNewPageFn> g_originalPlaylineNew;
+REL::Relocation<PreparePageFn> g_originalPreparePage;
 
 void HookedBuildLoadGamePage(C_UISaveLoad* self, int playline)
 {
@@ -57,16 +58,11 @@ void HookedBuildLoadGamePage(C_UISaveLoad* self, int playline)
     RenameDialog::ShowHint(true);
 }
 
-void HookedBuildPlaylineLoadPage(C_UISaveLoad* self, char a2)
+void HookedPreparePage(void* self, std::uint8_t page)
 {
-    RenameDialog::ShowHint(false);
-    g_originalPlaylineLoad(self, a2);
-}
-
-void HookedBuildPlaylineNewPage(C_UISaveLoad* self)
-{
-    RenameDialog::ShowHint(false);
-    g_originalPlaylineNew(self);
+    if (page != kLoadGamePage)
+        RenameDialog::ShowHint(false);
+    g_originalPreparePage(self, page);
 }
 
 }  // namespace
@@ -81,18 +77,11 @@ bool Install()
         return false;
     g_originalBuild = REL::Relocation<BuildLoadGamePageFn>(reinterpret_cast<std::uintptr_t>(original));
 
-    void* playlineLoad = reinterpret_cast<void*>(REL::ID(kBuildPlaylineLoadPageId).address());
-    if (MH_CreateHook(playlineLoad, reinterpret_cast<void*>(&HookedBuildPlaylineLoadPage), &original) == MH_OK
-        && MH_EnableHook(playlineLoad) == MH_OK) {
-        g_originalPlaylineLoad =
-            REL::Relocation<BuildPlaylinePageFn>(reinterpret_cast<std::uintptr_t>(original));
-    }
-
-    void* playlineNew = reinterpret_cast<void*>(REL::ID(kBuildPlaylineNewPageId).address());
-    if (MH_CreateHook(playlineNew, reinterpret_cast<void*>(&HookedBuildPlaylineNewPage), &original) == MH_OK
-        && MH_EnableHook(playlineNew) == MH_OK) {
-        g_originalPlaylineNew =
-            REL::Relocation<BuildPlaylineNewPageFn>(reinterpret_cast<std::uintptr_t>(original));
+    void* preparePage = reinterpret_cast<void*>(REL::ID(kPreparePageId).address());
+    if (MH_CreateHook(preparePage, reinterpret_cast<void*>(&HookedPreparePage), &original) == MH_OK
+        && MH_EnableHook(preparePage) == MH_OK) {
+        g_originalPreparePage =
+            REL::Relocation<PreparePageFn>(reinterpret_cast<std::uintptr_t>(original));
     }
     return true;
 }

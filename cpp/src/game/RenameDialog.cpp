@@ -273,9 +273,16 @@ bool Show(const std::string& currentName, bool canReset)
 
 void ShowHint(bool visible)
 {
+    // The menu asks for this on every page it prepares, so a request that
+    // changes nothing does not go into the movie.
+    static bool shown = false;
+    if (visible == shown)
+        return;
+
     IUIElement* el = HintElement();
     if (!el)
         return;
+    shown = visible;
 
     if (visible) {
         el->SetVisible(true);
