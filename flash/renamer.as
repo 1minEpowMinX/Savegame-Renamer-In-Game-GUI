@@ -3,7 +3,6 @@
 // Engine API (inbound, on _root -- see UIElements/SavegameRenamer.xml):
 //   fc_open(currentName, canReset)   show the dialog, prefilled
 //   fc_setLabels(...)                the five captions, already translated
-//   fc_close()                       hide it without emitting an event
 //   fc_showHint(visible)             show the F2 prompt over the save list
 //   fc_setInput(action)              "accept" | "cancel" | "reset", fed by the
 //                                    plugin's input listener because the engine
@@ -81,6 +80,9 @@ var GAP_COUNTER = 4;
 var GAP_RULE = 16;
 var GAP_KEYS = 16;
 
+// Where the counter turns amber, and where the field stops taking input. Both
+// are settled here: the plugin bounds a name nowhere, and the load list scrolls
+// one that runs long rather than clipping it.
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
 
@@ -454,11 +456,6 @@ function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
     setHintLabel(hint, hintText);
     layoutKeys(keyReset._visible);
     hint._x = HINT_CENTRE_X - hint.spanW / 2;
-}
-
-function fc_close() {
-    box._visible = false;
-    Selection.setFocus(null);
 }
 
 // The engine splits an event's arguments on a vertical bar, so a name carrying

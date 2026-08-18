@@ -26,14 +26,12 @@
         <param name="hint" desc="word beside the F2 key over the save list" type="string" />
       </function>
 
-      <function name="Close" funcname="fc_close" desc="hides the dialog without emitting an event" />
-
       <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt drawn over the save list">
         <param name="visible" desc="" type="bool" />
       </function>
 
       <function name="SetInput" funcname="fc_setInput" desc="key feed from the plugin's input listener: the engine delivers typed characters to the movie but not Enter or Esc">
-        <param name="action" desc="accept | cancel" type="string" />
+        <param name="action" desc="accept | cancel | reset" type="string" />
       </function>
 
     </functions>
