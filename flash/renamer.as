@@ -189,6 +189,9 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     // the field is hung high enough that the line's middle meets the plate's.
     labelText._x = capW + KEY_GAP;
     labelText._y = rowH / 2 - 2 - metrics.height / 2;
+    // Slack past the run, or the last glyph is clipped. It is not part of the
+    // span: counting padding as content pushes a centred pair off its axis by
+    // half of it.
     labelText._width = labelText.textWidth + 4;
 
     // The plate is drawn from its left edge and centred on its own origin
@@ -225,7 +228,7 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     clip.capWatcher = watcher;
 
     clip.rowH = rowH;
-    clip.spanW = capW + KEY_GAP + labelText.textWidth + 4;
+    clip.spanW = capW + KEY_GAP + labelText.textWidth;
     clip.labelText = labelText;
     clip.labelValue = label;
     clip.action = action;
@@ -343,7 +346,11 @@ layoutKeys(false);
 // above that rule and on its centre line, so it joins that block instead of
 // floating beside it. Positioned by its centre, so the prompt stays put when
 // its wording changes length.
-var HINT_CENTRE_X = 612;
+// The axis the menu centres its own headings, buttons and rules on. It is
+// measured against those rather than derived: the movie's coordinate space is
+// not the one the menu lays out in, so the middle of the stage is not the middle
+// of the screen.
+var HINT_CENTRE_X = 629;
 var HINT_CENTRE_Y = 389;
 
 // The prompt belongs to the game's own line below it, not to the dialog, so it
