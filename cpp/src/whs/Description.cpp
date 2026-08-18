@@ -31,6 +31,17 @@ bool ParseInt(const std::string& text, int& out)
     }
 }
 
+/// Returns the pattern matching `name` where it stands as an attribute.
+///
+/// The separator before the name is part of the match. Without it "SaveId"
+/// also matches the tail of an attribute called "AutoSaveId", and the header
+/// carries several names that are suffixes of one another, GameReleaseVersion
+/// inside NewGameReleaseVersion among them.
+std::regex AttributePattern(const std::string& name)
+{
+    return std::regex("\\s" + name + "=\"([^\"]*)\"");
+}
+
 }  // namespace
 
 std::optional<Description> Description::Read(const std::filesystem::path& path)
@@ -75,9 +86,8 @@ std::optional<Description> Description::Read(const std::filesystem::path& path)
 
 std::string Description::Attribute(const std::string& name) const
 {
-    const std::regex re(name + "=\"([^\"]*)\"");
     std::smatch m;
-    if (!std::regex_search(m_xml, m, re))
+    if (!std::regex_search(m_xml, m, AttributePattern(name)))
         return {};
     return m[1].str();
 }
@@ -104,22 +114,30 @@ std::vector<std::string> Description::UiFields() const
 
 void Description::SetAttribute(const std::string& name, const std::string& value)
 {
-    const std::regex re(name + "=\"[^\"]*\"");
-    if (std::regex_search(m_xml, re)) {
-        m_xml = std::regex_replace(m_xml, re, name + "=\"" + value + "\"",
-                                   std::regex_constants::format_first_only);
+    const std::string written = " " + name + "=\"" + value + "\"";
+
+    // Spliced rather than handed to regex_replace: the replacement argument is a
+    // format string, and the value carries whatever the player typed. A name
+    // holding "$&" would paste the matched attribute back into itself, quotes
+    // and all, and leave the header unparseable.
+    std::smatch m;
+    if (std::regex_search(m_xml, m, AttributePattern(name))) {
+        m_xml.replace(static_cast<std::size_t>(m.position(0)),
+                      static_cast<std::size_t>(m.length(0)), written);
         return;
     }
     // A new attribute goes last on the root element, just before its closing
     // bracket. An unknown attribute is tolerated by the game's parser; an
     // unknown child element is not.
-    m_xml.insert(m_xml.find('>'), " " + name + "=\"" + value + "\"");
+    m_xml.insert(m_xml.find('>'), written);
 }
 
 void Description::RemoveAttribute(const std::string& name)
 {
-    const std::regex re(" " + name + "=\"[^\"]*\"");
-    m_xml = std::regex_replace(m_xml, re, "", std::regex_constants::format_first_only);
+    std::smatch m;
+    if (std::regex_search(m_xml, m, AttributePattern(name)))
+        m_xml.erase(static_cast<std::size_t>(m.position(0)),
+                    static_cast<std::size_t>(m.length(0)));
 }
 
 void Description::SetUiFields(const std::vector<std::string>& fields)
@@ -170,17 +188,26 @@ void Description::SetDisplayName(std::string_view name)
 
 bool Description::Write() const
 {
+    // The file has to still hold the save this object was read from. The id
+    // alone does not settle that: the payload is copied from a byte offset
+    // measured at read time, so a header that has changed length since would
+    // have the copy start in the middle of something.
     const auto current = Read(m_path);
-    if (!current.has_value() || current->SaveId() != m_saveId)
+    if (!current.has_value() || current->SaveId() != m_saveId
+        || current->m_payloadOffset != m_payloadOffset)
         return false;
 
     const auto temp = m_path.parent_path() / (m_path.filename().string() + ".renamer-tmp");
+    std::error_code ec;
+    bool copied = false;
 
     {
         std::ifstream src(m_path, std::ios::binary);
         std::ofstream dst(temp, std::ios::binary | std::ios::trunc);
-        if (!src || !dst)
+        if (!src || !dst) {
+            std::filesystem::remove(temp, ec);
             return false;
+        }
 
         const std::uint32_t magic = kMagic;
         const std::int32_t length = static_cast<std::int32_t>(m_xml.size() + 1);
@@ -195,11 +222,17 @@ bool Description::Write() const
             src.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
             dst.write(buffer.data(), src.gcount());
         }
-        if (!dst)
-            return false;
+        dst.flush();
+        copied = dst.good() && !src.bad();
     }
 
-    std::error_code ec;
+    // A half-written temp file is not left beside the save: the game enumerates
+    // the directory, and the next write would find it in the way.
+    if (!copied) {
+        std::filesystem::remove(temp, ec);
+        return false;
+    }
+
     std::filesystem::rename(temp, m_path, ec);
     if (ec) {
         std::filesystem::remove(temp, ec);

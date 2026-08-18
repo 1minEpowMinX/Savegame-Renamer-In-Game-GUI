@@ -2,6 +2,7 @@
 
 #include "TestFixture.h"
 #include "whs/Description.h"
+#include "whs/Sanitise.h"
 
 namespace {
 
@@ -98,4 +99,28 @@ TEST_CASE("Renaming leaves the other header attributes alone", "[rename]")
     CHECK(d.Xml().find("BuildInfo=\"1.5.6-15693-release_1_5\"") != std::string::npos);
     CHECK(d.Xml().find("SaveType=\"PermanentSave\"") != std::string::npos);
     CHECK(d.Xml().find("<structwh::rpgmodule::S_LocationId>39a52acd") != std::string::npos);
+}
+
+TEST_CASE("A name holding regex replacement syntax is stored literally", "[rename]")
+{
+    // The value used to be handed to regex_replace as its replacement argument,
+    // where "$&" pastes the whole match back in, quotes included, and "$1" is
+    // dropped. The header came out unparseable and the save left the load list.
+    for (const std::string name : {"Cost 100$", "Save $1 here", "A $& B", "$$ pure"}) {
+        auto d = Load(SampleXml(), "rename_dollar.whs");
+        d.SetDisplayName(name);
+
+        CHECK(d.DisplayName() == name);
+        CHECK(d.Xml().find("|" + whs::XmlEscape(name) + "||location_suchdol|")
+              != std::string::npos);
+        // The pasted match brought a quote of its own, which ended the attribute
+        // early and left a second UIDescription in the element.
+        CHECK(d.Xml().find("UIDescription=") == d.Xml().rfind("UIDescription="));
+    }
+}
+
+TEST_CASE("An attribute whose name ends in another's is not mistaken for it", "[rename]")
+{
+    auto d = Load(SampleXml(3754, "@quest", "@objective", " AutoSaveId=\"9999\""), "rename_suffix.whs");
+    CHECK(d.SaveId() == 3754);
 }
