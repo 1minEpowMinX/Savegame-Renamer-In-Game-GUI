@@ -1,16 +1,9 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 
 namespace whs {
-
-/// Name length past which the dialog highlights its character counter.
-///
-/// Not a limit: a longer name is written and the load list scrolls it
-/// horizontally rather than clipping or wrapping.
-constexpr std::size_t kSoftNameLimit = 40;
 
 /// Returns `raw` with the UIDescription field separator and control characters
 /// removed, runs of spaces collapsed and the edges trimmed.

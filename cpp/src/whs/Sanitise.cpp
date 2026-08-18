@@ -1,5 +1,6 @@
 #include "whs/Sanitise.h"
 
+#include <cstddef>
 #include <utility>
 
 namespace whs {
@@ -46,7 +47,8 @@ std::string XmlEscape(std::string_view raw)
 
 std::string XmlUnescape(std::string_view raw)
 {
-    // &amp; comes last so that "&amp;lt;" decodes to "&lt;" and not to "<".
+    // No entity here is a prefix of another, so at most one matches at a given
+    // position and the order of the table does not matter.
     static constexpr std::pair<std::string_view, char> kEntities[] = {
         {"&lt;", '<'}, {"&gt;", '>'}, {"&quot;", '"'}, {"&amp;", '&'},
     };
