@@ -18,6 +18,15 @@ if not exist "%CMAKE%" (
     exit /b 1
 )
 
+rem VsDevCmd.bat, which vcvars64 calls, runs "vswhere.exe" bare after changing
+rem into the Installer folder. That resolves through the current directory, which
+rem cmd refuses to search when NoDefaultCurrentDirectoryInExePath is set -- and
+rem Visual Studio sets it for the processes it builds from, so every build inside
+rem the IDE printed the failure. Putting the folder on PATH answers the call
+rem without clearing a setting that is there on purpose.
+set "VS_INSTALLER=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
+if exist "%VS_INSTALLER%\vswhere.exe" set "PATH=%VS_INSTALLER%;%PATH%"
+
 call "%VS%\VC\Auxiliary\Build\vcvars64.bat" >nul
 if errorlevel 1 exit /b 1
 
