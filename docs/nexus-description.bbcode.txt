@@ -58,9 +58,9 @@ The mod does hook the load menu, so a mod that replaces the menu movie wholesale
 
 [size=6][b]Known limitations[/b][/size]
 [list]
+[*][b]Keyboard only.[/b] F2 opens the dialog, and the name is typed into it. The game's own menus carry no text field anywhere, so there is no on-screen keyboard a controller could reach even once the dialog is up. A pad still moves the highlight; naming the save needs a keyboard.[/*]
 [*][b]A name typed in one script may show as boxes under another language.[/b] The game loads only the glyphs its current interface needs — under a European language it carries no Chinese, Japanese or Korean glyphs at all, and under a Chinese one the Latin font is cut down to 48 characters. Your name is stored correctly either way and reads properly again once you switch back. A mod cannot fix this without shipping a font of its own.[/*]
 [*][b]Confirming a name you have not edited does nothing on purpose.[/b] A save you have never renamed holds a quest key rather than text, and the list translates it fresh in whatever language you play in. Writing that translation into the file would tie the save to one language, so the mod leaves it alone until you actually edit the name.[/*]
-[*][b]Keyboard only.[/b] F2 opens the dialog, and the name is typed into it. The game's own menus carry no text field anywhere, so there is no on-screen keyboard a controller could reach even once the dialog is up. A pad still moves the highlight; naming the save needs a keyboard.[/*]
 [*]The counter turns amber past 40 characters, and stays quiet while the field still holds the name it opened on. That is a hint rather than a limit: longer names are written and the list scrolls them. The field itself stops taking input at 120.[/*]
 [/list]
 [size=6][b]Permissions[/b][/size]
