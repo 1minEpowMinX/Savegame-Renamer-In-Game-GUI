@@ -1,64 +1,70 @@
-[size=4][b]Rename any savegame from the load menu, without leaving the game.[/b][/size]
+[size=6][b]Short description[/b][/size]
+Rename any savegame from the game's own load menu. Highlight a save, press F2, type a name. No console, no external tools, and the list updates on the spot.
 
-Highlight a save, press [b]F2[/b], type a name. The list updates on the spot.
+[size=6][b]The problem[/b][/size]
+Your saves are named after the quest that was running when you made them, and nothing else. Play one questline for an evening and the load list turns into six rows reading [i]On the Guild's Business[/i], separated only by a timestamp. There is no way to mark the one before the hard fight, the one you want to come back to, or the one you keep for a different ending.
 
-[img]PLACEHOLDER_dialog.png[/img]
+The information you want is already in the file. It just isn't yours to write.
 
-[size=3][b]How it works[/b][/size]
-
+[size=6][b]Main features[/b][/size]
 [list]
-[*][b]F2[/b] on a highlighted save opens the dialog. The key does nothing anywhere else in the menu.
-[*][b]Enter[/b] accepts, [b]Esc[/b] cancels, [b]Del[/b] restores the name the save had before you first renamed it. Every prompt is clickable as well.
-[*]Clearing the field and accepting also restores the original name.
-[*]Confirming a name you have not edited changes nothing, so an accidental Enter costs you nothing.
+[*][b]F2[/b] on the highlighted save opens a rename dialog. The key does nothing anywhere else in the menu[/*]
+[*][b]Enter[/b] accepts, [b]Esc[/b] cancels, [b]Del[/b] puts the original name back. Every prompt is clickable too[/*]
+[*]The load list redraws immediately, without leaving the page and coming back[/*]
+[*]The original quest name is kept inside the save, so a rename is never one-way[/*]
+[*]Built from the game's own artwork: the window frame, the key plates and the fonts all come out of the vanilla menus[/*]
+[*]Full localisation in all 16 languages the game ships with[/*]
+[*]Small footprint: a 5 KB pak and a plugin. No vanilla file is replaced[/*]
 [/list]
 
-The dialog is built from the game's own artwork: the frame, the key plates and the fonts all come out of the vanilla menus, so it looks like a screen Warhorse shipped rather than a mod window pasted on top.
+[size=6][b]What it writes[/b][/size]
+The name lives in the description header of the [i].whs[/i] file, in the field the load list reads. The original goes into an attribute of its own, which is what [b]Del[/b] reads back:
 
-[size=3][b]Requirements[/b][/size]
+[code]
+Before   UIDescription="…|@qname_predanivchramu_CiLb||…"
 
+After    RenamerOriginal="@qname_predanivchramu_CiLb|"
+         UIDescription="…|Before the hard fight||…"[/code]
+
+Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file and replaces the original only once complete, so an interrupted write cannot leave you with half a savegame.
+
+Uninstalling is safe. Renamed saves keep their names and load normally without the mod. If you want the original names back, reset them with [b]Del[/b] before uninstalling.
+
+The localisation covers Czech, English, French, German, Italian, Spanish, Portuguese, Polish, Russian, Ukrainian, Turkish, Japanese, Korean, Simplified and Traditional Chinese, and Vietnamese. Accept, cancel and reset are not translated by this mod at all: they are taken from the game's own strings, so they read exactly as they do everywhere else in your menu.
+
+[size=6][b]Requirements[/b][/size]
 [list]
-[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]Kingdom Come Script Extender (KCSE)[/url]
-[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url], matching your game build
+[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]Kingdom Come Script Extender[/url][/*]
+[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url], matching your game build[/*]
 [/list]
 
-The Address Library is what maps this plugin's code to your particular build of the game. [b]After a game patch, update it before playing[/b] — a plugin asking for an address the table does not cover fails hard rather than quietly.
+No new game required. Built and tested on 1.5.6. The Address Library is what maps the plugin to your particular build, so [b]update it after a game patch[/b]: a plugin asking for an address the table does not cover fails outright rather than quietly.
 
-[size=3][b]Installation[/b][/size]
-
-Any mod manager, or unzip into the game folder so that you end up with:
-
-[code]KingdomComeDeliverance2/Mods/savegame_renamer/mod.manifest
-KingdomComeDeliverance2/Mods/savegame_renamer/Data/savegame_renamer.pak
-KingdomComeDeliverance2/Mods/savegame_renamer/Localization/*.pak
-KingdomComeDeliverance2/Mods/savegame_renamer/KCSE/Plugins/SavegameRenamer.dll[/code]
-
-[size=3][b]Languages[/b][/size]
-
-All sixteen the game ships: English, Czech, German, French, Spanish, Italian, Portuguese, Polish, Russian, Ukrainian, Turkish, Vietnamese, Japanese, Korean, and both Chinese scripts.
-
-Accept, cancel and reset are not translated by this mod at all — they are taken from the game's own strings, so they read exactly as they do everywhere else in your menu.
-
-[size=3][b]What it does to your saves[/b][/size]
-
-The name lives in the description header of the [i].whs[/i] file, alongside the quest name that was there before it. Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file first and replaces the original only once complete, so a crash mid-save cannot leave you with half a savegame.
-
-Uninstalling is safe. Renamed saves keep their names and load normally without the mod: the game tolerates the extra attribute the mod leaves behind. If you want the original names back, reset them with [b]Del[/b] before uninstalling.
-
-[size=3][b]Known limitations[/b][/size]
-
-[list]
-[*][b]A name typed in one script may show as boxes under another language.[/b] The game loads only the glyphs its current interface needs — under a European language it carries no CJK glyphs at all, and under a Chinese one the Latin font is cut down to 48 characters. Your name is stored correctly either way and reads properly again once you switch back. A mod cannot fix this without shipping a font.
-[*][b]Confirming an untouched name is deliberately a no-op.[/b] A save you have never renamed carries a quest key, not text, and the list translates it fresh in whatever language you play in. Writing that translation into the file would fix the save to one language, so the mod leaves it alone unless you actually edit the name.
-[*]The character counter turns amber past 40 characters. That is a hint, not a limit — longer names are written, and the list scrolls them.
+[size=6][b]Installation[/b][/size]
+[list=1]
+[*]Extract into your [i]Kingdom Come Deliverance II/Mods[/i] folder (create it if it isn't there).[/*]
+[*]The result should look like [i]Mods/savegame_renamer/[/i] containing [i]Data/[/i], [i]Localization/[/i], [i]KCSE/[/i] and [i]mod.manifest[/i].[/*]
+[*]Launch the game. No further setup.[/*]
 [/list]
 
-[size=3][b]Compared to [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url][/b][/size]
+[size=6][b]Compatibility[/b][/size]
+No vanilla file is replaced. The dialog is its own interface element on its own layer, so it does not collide with menu or HUD mods. Nothing is written to a save until you rename one.
 
-That mod does the same job through console commands, and its own page notes that the list does not refresh until you leave the playline screen and come back. This one is a menu dialog with no console involved, the list redraws immediately, and the original name is recoverable afterwards. Do not run both.
+[b]Rename Your Savegame[/b] does the same job, so pick one rather than running both: two mods writing the same field of the same header will not agree about what the original was.
 
-[size=3][b]Source and licence[/b][/size]
+[size=6][b]Known limitations[/b][/size]
+[list]
+[*][b]A name typed in one script may show as boxes under another language.[/b] The game loads only the glyphs its current interface needs — under a European language it carries no Chinese, Japanese or Korean glyphs at all, and under a Chinese one the Latin font is cut down to 48 characters. Your name is stored correctly either way and reads properly again once you switch back. A mod cannot fix this without shipping a font of its own.[/*]
+[*][b]Confirming a name you have not edited does nothing on purpose.[/b] A save you have never renamed holds a quest key rather than text, and the list translates it fresh in whatever language you play in. Writing that translation into the file would tie the save to one language, so the mod leaves it alone until you actually edit the name.[/*]
+[*]The character counter turns amber past 40 characters. That is a hint, not a limit: longer names are written, and the list scrolls them.[/*]
+[/list]
 
-GPLv3. Sources: PLACEHOLDER_repository_url
+[size=6][b]Permissions[/b][/size]
+GPLv3, sources at PLACEHOLDER_repository_url. Translations, forks and derivative work need no permission from me, under the same licence: credit the original and link back, and that is all I ask. Collections and modpacks are welcome with credit and a link; if that means hosting the file itself somewhere else, ask me first.
 
-Built on [url=https://github.com/JerryYOJ/libKCD2]libKCD2[/url]. Thanks to the authors of KCSE and the Address Library, without which none of this is reachable.
+[size=6][b]Shout outs[/b][/size]
+Warhorse Studios.
+
+[b]thazer[/b], whose [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url] is the reason this one exists. It showed that the name in the header could be rewritten at all, and after using it I wanted the same thing without leaving the menu. This mod grew out of that idea.
+
+The authors of KCSE and the Address Library, and [url=https://github.com/JerryYOJ/libKCD2]JerryYOJ[/url] for libKCD2, without which none of the game's own machinery would be reachable.
