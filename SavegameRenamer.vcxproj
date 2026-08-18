@@ -10,9 +10,16 @@
      layout. -->
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- Release builds the plugin and nothing else, which is the loop while editing
+       C++. Deploy runs the whole pipeline afterwards: the flash, the localization
+       tables, the pak, and the copy into the game. -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Deploy|x64">
+      <Configuration>Deploy</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -46,8 +53,26 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NMakeBuildCommandLine>"$(MSBuildProjectDirectory)\tools\build_cpp.bat"</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>"$(MSBuildProjectDirectory)\tools\build_cpp.bat"</NMakeReBuildCommandLine>
+    <!-- Overridable for an interpreter that is not on PATH. -->
+    <PythonExe Condition="'$(PythonExe)' == ''">python</PythonExe>
+
+    <BuildCpp>"$(MSBuildProjectDirectory)\tools\build_cpp.bat"</BuildCpp>
+    <BuildMod>"$(PythonExe)" "$(MSBuildProjectDirectory)\tools\build.py" --deploy</BuildMod>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <NMakeBuildCommandLine>$(BuildCpp)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>$(BuildCpp)</NMakeReBuildCommandLine>
+  </PropertyGroup>
+
+  <!-- Sequenced rather than written on two lines: the pipeline copies the plugin
+       it has just built, so it must not run when the compile failed. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Deploy'">
+    <NMakeBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildMod)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildMod)</NMakeReBuildCommandLine>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- Clean is deliberately inert: the build directory is libKCD2's and holds
          every other plugin built from that tree. -->
     <NMakeCleanCommandLine>echo Clean is not wired: the build tree belongs to libKCD2.</NMakeCleanCommandLine>
@@ -110,6 +135,7 @@
 	<None Include="docs\2026-08-17-savegame-renamer-plan.md" />
     <None Include="docs\nexus-description.bbcode.txt" />
     <None Include="README.md" />
+	<None Include=".gitignore" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

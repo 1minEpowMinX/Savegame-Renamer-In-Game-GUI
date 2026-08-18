@@ -43,12 +43,23 @@ to the author's own: `FFDEC`, `KCD2_ROOT`, `KCD2_PLUGIN_DLL`.
 
 ### In Visual Studio
 
-Open `SavegameRenamer.sln`. It is a Makefile project: Build runs
-`tools\build_cpp.bat`, the same command as from a shell, and the real build stays
-with CMake and Ninja inside libKCD2's tree. What the project adds is what a batch
-file cannot tell the editor — the file tree, the include paths and defines
-IntelliSense needs, and F5 set to launch the game so breakpoints bind once KCSE
-has loaded the plugin.
+Open `SavegameRenamer.sln`. It is a Makefile project: the real build stays with
+CMake and Ninja inside libKCD2's tree, and Build hands off to the same commands a
+shell would run. What the project adds is what a batch file cannot tell the
+editor — the file tree, the include paths and defines IntelliSense needs, and F5
+set to launch the game so breakpoints bind once KCSE has loaded the plugin.
+
+Two configurations, both x64:
+
+| Configuration | Build runs |
+|---|---|
+| `Release` | `tools\build_cpp.bat` — the plugin alone, the loop while editing C++ |
+| `Deploy` | that, then `tools\build.py --deploy` — flash, localization, pak, install |
+
+The two are chained rather than independent: the pipeline copies the plugin it
+has just built, so it does not run when the compile failed. `Deploy` needs FFDec
+on the machine and the game closed, which is why the C++ loop is a configuration
+of its own.
 
 Configuring it as a CMake folder does not work: `cpp/.buildenv/CMakeLists.txt` is
 a fragment that expects `RE_ROOT`, `RE_BUILDENV` and the `kcd_re` target from the
