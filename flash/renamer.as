@@ -40,7 +40,11 @@ var ROW_META = 20;
 // carrying a centred, black, bold text field for the key name. Loading it is
 // what the game does for every prompt it prints, so a plate built here matches
 // the ones on the same screen down to the pixel.
-var CAP_LIBRARY = "buttons.swf";   // the loader maps .swf to the shipped .gfx
+// The game asks for it as buttons.swf, the name it was authored under. The
+// shipped name is what is asked for here instead: the log shows the file
+// opener is handed the string as written, so the authoring name reaches it
+// unrewritten and finds nothing.
+var CAP_LIBRARY = "buttons.gfx";
 var CAP_NATIVE_H = 64;             // height the sprite is authored at
 
 // Frame names, which describe the plate rather than the key: ControlsEnum puts
@@ -184,28 +188,29 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
 
     // The plate is drawn from its left edge and centred on its own origin
     // vertically, which is why the holder sits on the row's centre line and not
-    // at its top. Loading is asynchronous, so everything the listener needs is
-    // parked on the holder rather than closed over.
+    // at its top.
     var holder = clip.createEmptyMovieClip("cap", 1);
     holder._x = 0;
     holder._y = rowH / 2;
-    holder.capFrame = capFrame;
-    holder.capKey = key;
-    holder.capScale = capH / CAP_NATIVE_H * 100;
 
+    // Loading is asynchronous, and what the listener needs is held in this
+    // scope rather than on the holder: a clip loaded into keeps its name and
+    // its place but is rebuilt, so anything hung on it beforehand is gone by
+    // the time the load reports back.
+    var capScale = capH / CAP_NATIVE_H * 100;
     var loader = new MovieClipLoader();
     var watcher = new Object();
     loader.addListener(watcher);
-    watcher.onLoadInit = function (target) {
-        target.mc_button.gotoAndStop(target.capFrame);
-        target.mc_button.tField.textAutoSize = "shrink";
-        target.mc_button.tField.text = target.capKey;
-        target.mc_button._xscale = target.capScale;
-        target.mc_button._yscale = target.capScale;
+    watcher.onLoadInit = function () {
+        holder.mc_button.gotoAndStop(capFrame);
+        holder.mc_button.tField.textAutoSize = "shrink";
+        holder.mc_button.tField.text = key;
+        holder.mc_button._xscale = capScale;
+        holder.mc_button._yscale = capScale;
         // Both belong to the hold prompts, which none of these keys are, and
         // the frames carry them regardless.
-        target.mc_button.mc_holdIcon._visible = false;
-        target.mc_button.mc_holdIndicator._visible = false;
+        holder.mc_button.mc_holdIcon._visible = false;
+        holder.mc_button.mc_holdIndicator._visible = false;
     };
     loader.loadClip(CAP_LIBRARY, holder);
 
