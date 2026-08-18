@@ -349,8 +349,9 @@ layoutKeys(false);
 // The axis the menu centres its own headings, buttons and rules on. It is
 // measured against those rather than derived: the movie's coordinate space is
 // not the one the menu lays out in, so the middle of the stage is not the middle
-// of the screen.
-var HINT_CENTRE_X = 629;
+// of the screen. Two placements either side of it fixed the scale between the
+// two spaces, and this is where they put the axis.
+var HINT_CENTRE_X = 622;
 var HINT_CENTRE_Y = 389;
 
 // The prompt belongs to the game's own line below it, not to the dialog, so it
