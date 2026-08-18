@@ -191,11 +191,19 @@ void CmdDialog(IConsoleCmdArgs* args)
 
 void RegisterCommands()
 {
+    // kMessage_DataLoaded is not promised to arrive once. A second pass would
+    // add the element listener and the key listener again, and every rename
+    // would then be applied twice.
+    static bool registered = false;
+    if (registered)
+        return;
+
     auto* env = SSystemGlobalEnvironment::GetInstance();
     if (!env || !env->pConsole) {
         SR_LOG("console not available, commands not registered");
         return;
     }
+    registered = true;
     env->pConsole->AddCommand("renamer_list", &CmdList, VF_NULL,
                               "Lists every savegame the renamer can see.");
     env->pConsole->AddCommand("renamer_set", &CmdSet, VF_NULL,
