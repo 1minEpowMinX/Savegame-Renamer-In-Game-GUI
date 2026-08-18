@@ -67,17 +67,31 @@
     <LocalDebuggerWorkingDirectory>$(KCD2Root)\Bin\Win64MasterMasterSteamPGO</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 
-  <!-- Globs rather than a list: a file added to the tree appears here without a
-       second place needing to hear about it. -->
+  <!-- Wildcards and/or some other MSBuild constructs used in project item definitions are not supported in VC projects. -->
   <ItemGroup>
-    <ClCompile Include="cpp\src\**\*.cpp" />
-    <ClCompile Include="cpp\tests\**\*.cpp" />
+	<ClCompile Include="cpp\src\plugin.cpp" />
+    <ClCompile Include="cpp\src\game\RenameDialog.cpp" />
+	<ClCompile Include="cpp\src\game\SaveCatalog.cpp" />
+	<ClCompile Include="cpp\src\game\SaveLoadHook.cpp" />
+	<ClCompile Include="cpp\src\game\Strings.cpp" />
+	<ClCompile Include="cpp\src\whs\Description.cpp" />
+	<ClCompile Include="cpp\src\whs\Sanitise.cpp" />
+    <ClCompile Include="cpp\tests\DescriptionRead.cpp" />
+	<ClCompile Include="cpp\tests\DescriptionRename.cpp" />
+	<ClCompile Include="cpp\tests\DescriptionWrite.cpp" />
+	<ClCompile Include="cpp\tests\RealSave.cpp" />
+	<ClCompile Include="cpp\tests\Sanitise.cpp" />
   </ItemGroup>
 
   <ItemGroup>
-    <ClInclude Include="cpp\include\**\*.h" />
-    <ClInclude Include="cpp\src\**\*.h" />
-    <ClInclude Include="cpp\tests\**\*.h" />
+	<ClInclude Include="cpp\src\Log.h" />
+    <ClInclude Include="cpp\include\whs\Description.h" />
+	<ClInclude Include="cpp\include\whs\Sanitise.h" />
+    <ClInclude Include="cpp\src\game\RenameDialog.h" />
+	<ClInclude Include="cpp\src\game\SaveCatalog.h" />
+	<ClInclude Include="cpp\src\game\SaveLoadHook.h" />
+	<ClInclude Include="cpp\src\game\Strings.h" />
+    <ClInclude Include="cpp\tests\TestFixture.h" />
   </ItemGroup>
 
   <ItemGroup>
@@ -87,10 +101,14 @@
     <None Include="src\Data\Libs\UI\UIElements\SavegameRenamer.xml" />
     <None Include="src\mod.manifest" />
     <None Include="cpp\.buildenv\CMakeLists.txt" />
-    <None Include="tools\*.py" />
+    <None Include="tools\build.py" />
+	<None Include="tools\build_flash.py" />
+	<None Include="tools\build_localization.py" />
+	<None Include="tools\whs_header.py" />
     <None Include="tools\build_cpp.bat" />
-    <None Include="docs\*.md" />
-    <None Include="docs\*.txt" />
+    <None Include="docs\2026-08-17-savegame-renamer-design.md" />
+	<None Include="docs\2026-08-17-savegame-renamer-plan.md" />
+    <None Include="docs\nexus-description.bbcode.txt" />
     <None Include="README.md" />
   </ItemGroup>
 

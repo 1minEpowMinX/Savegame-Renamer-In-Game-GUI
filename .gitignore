@@ -12,6 +12,13 @@ out/
 CMakeUserPresets.json
 CppProperties.json
 
+# MSBuild's intermediate directory for the project, created next to it as
+# <project>/<platform>/<configuration> the first time it evaluates the build.
+/SavegameRenamer/
+[Xx]64/
+[Dd]ebug/
+[Rr]elease/
+
 # Language-server leftovers, should another editor be pointed at the tree.
 .cache/
 compile_commands.json
