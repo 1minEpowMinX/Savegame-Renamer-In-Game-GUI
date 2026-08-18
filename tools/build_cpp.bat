@@ -38,6 +38,8 @@ if not exist "%CMAKE%" (
     exit /b 1
 )
 
+rem Not named LINK: the MSVC linker reads a variable of that name as extra
+rem input and fails looking for SavegameRenamer.obj.
 rem libKCD2 finds its subprojects by globbing Projects/*/.buildenv/CMakeLists.txt,
 rem so it builds only what is linked in there. Unlinked, the configure succeeds,
 rem the other plugins build, and the run reports success having produced nothing
@@ -45,22 +47,22 @@ rem of ours -- which is why this is checked rather than left to be noticed.
 rem Normalised, so the message names a path worth copying rather than one
 rem with a ".." left in the middle of it.
 for %%I in ("%~dp0..\cpp") do set "CPP_DIR=%%~fI"
-set "LINK=%LIBKCD2_ROOT%\Projects\SavegameRenamer"
-if not exist "%LINK%\.buildenv\CMakeLists.txt" (
+set "PROJECT_LINK=%LIBKCD2_ROOT%\Projects\SavegameRenamer"
+if not exist "%PROJECT_LINK%\.buildenv\CMakeLists.txt" (
     echo This project is not linked into libKCD2's Projects folder.
     echo From an elevated prompt:
-    echo     mklink /J "%LINK%" "%CPP_DIR%"
+    echo     mklink /J "%PROJECT_LINK%" "%CPP_DIR%"
     exit /b 1
 )
 
 rem The link may also point at a different checkout, in which case that one is
 rem what would be built. Identical checkouts compare equal and are not worth
 rem separating, since either produces the same plugin.
-fc /b "%LINK%\.buildenv\CMakeLists.txt" "%CPP_DIR%\.buildenv\CMakeLists.txt" >nul 2>&1
+fc /b "%PROJECT_LINK%\.buildenv\CMakeLists.txt" "%CPP_DIR%\.buildenv\CMakeLists.txt" >nul 2>&1
 if errorlevel 1 (
-    echo "%LINK%" points at a different checkout of this project.
+    echo "%PROJECT_LINK%" points at a different checkout of this project.
     echo Repoint it before building:
-    echo     rmdir "%LINK%" ^&^& mklink /J "%LINK%" "%CPP_DIR%"
+    echo     rmdir "%PROJECT_LINK%" ^&^& mklink /J "%PROJECT_LINK%" "%CPP_DIR%"
     exit /b 1
 )
 
