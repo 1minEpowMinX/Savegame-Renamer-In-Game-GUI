@@ -19,7 +19,7 @@ The dialog is built from the game's own artwork: the frame, the key plates and t
 
 [list]
 [*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]Kingdom Come Script Extender (KCSE)[/url]
-[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3363]KCD2 Address Library[/url], matching your game build
+[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url], matching your game build
 [/list]
 
 The Address Library is what maps this plugin's code to your particular build of the game. [b]After a game patch, update it before playing[/b] — a plugin asking for an address the table does not cover fails hard rather than quietly.
