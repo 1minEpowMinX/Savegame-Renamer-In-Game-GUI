@@ -379,7 +379,7 @@ var HINT_CENTRE_Y = 389;
 // is built at that line's size, face and colour rather than the dialog's. F2 is
 // a function key, which the game puts on the small square plate.
 var hint = mkKeyHint(_root, "hint", 2, "F2", CAP_SMALL, CAP_SPAN_SMALL,
-                     "rename save", "", PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
+                     "Rename save", "", PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
 hint._x = HINT_CENTRE_X - hint.spanW / 2;
 hint._y = HINT_CENTRE_Y - hint.rowH / 2;
 hint._visible = false;

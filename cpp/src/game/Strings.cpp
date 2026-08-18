@@ -44,7 +44,7 @@ Labels Get()
     labels.accept = Resolve("@ui_accept", "Accept");
     labels.cancel = Resolve("@ui_invhint_cancel", "Cancel");
     labels.reset = Resolve("@ui_reset", "Reset");
-    labels.hint = Resolve("@ui_savegame_renamer_hint", "rename save");
+    labels.hint = Resolve("@ui_savegame_renamer_hint", "Rename save");
     return labels;
 }
 

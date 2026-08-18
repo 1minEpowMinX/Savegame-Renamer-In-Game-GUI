@@ -34,23 +34,25 @@
   </String>
 
   <!-- The prompt over the save list. It names the object as well as the action,
-       so a player who has never opened the dialog knows what would be renamed. -->
-  <String key="ui_savegame_renamer_hint" english="rename save">
+       so a player who has never opened the dialog knows what would be renamed.
+       It stands on its own line rather than inside a sentence, so it opens with
+       a capital in every script that has one. -->
+  <String key="ui_savegame_renamer_hint" english="Rename save">
     <text language="Chineses">重命名存档</text>
     <text language="Chineset">重新命名存檔</text>
-    <text language="Czech">přejmenovat pozici</text>
-    <text language="French">renommer la sauvegarde</text>
+    <text language="Czech">Přejmenovat pozici</text>
+    <text language="French">Renommer la sauvegarde</text>
     <text language="German">Speicherstand umbenennen</text>
-    <text language="Italian">rinomina salvataggio</text>
+    <text language="Italian">Rinomina salvataggio</text>
     <text language="Japanese">セーブデータ名を変更</text>
     <text language="Korean">세이브 이름 변경</text>
-    <text language="Polish">zmień nazwę zapisu</text>
-    <text language="Portuguese">renomear jogo salvo</text>
-    <text language="Russian">переименовать сохранение</text>
-    <text language="Spanish">renombrar partida</text>
-    <text language="Turkish">kaydı yeniden adlandır</text>
-    <text language="Ukrainian">перейменувати збереження</text>
-    <text language="Vietnamese">đổi tên bản lưu</text>
+    <text language="Polish">Zmień nazwę zapisu</text>
+    <text language="Portuguese">Renomear jogo salvo</text>
+    <text language="Russian">Переименовать сохранение</text>
+    <text language="Spanish">Renombrar partida</text>
+    <text language="Turkish">Kaydı yeniden adlandır</text>
+    <text language="Ukrainian">Перейменувати збереження</text>
+    <text language="Vietnamese">Đổi tên bản lưu</text>
   </String>
 
 </Strings>
