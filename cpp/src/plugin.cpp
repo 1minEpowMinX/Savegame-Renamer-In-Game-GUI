@@ -214,7 +214,7 @@ void RegisterCommands()
     RenameDialog::SetResetHandler([] { ApplyRename(""); });
     RenameDialog::SetCancelHandler([] { g_pendingSaveId = -1; });
 
-    if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput) {
+    if (env->pInput) {
         env->pInput->AddEventListener(&g_renameKey);
         SR_LOG("F2 armed");
     }
