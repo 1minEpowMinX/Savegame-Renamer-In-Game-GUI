@@ -62,20 +62,23 @@ var CAP_SPAN_MEDIUM = 83;
 var CAP_SPAN_WIDE = 106;
 
 // TextExtension.ButtonsScale: the game sizes an inline plate at one and a half
-// times the height of the line it interrupts, and centres it on that line.
+// times the type it interrupts, and centres it on that line. The measure is the
+// character box, not the line box, so it is taken from the size the face is set
+// at: a line carries leading on top of the type, and sizing the plate off the
+// line makes it half again as tall as the game's own.
 var CAP_SCALE = 1.5;
 
 var KEY_GAP = 6;    // cap to its own label
 var PAIR_GAP = 40;  // pair to the next pair
 
-// The rows total 104 of the 152 units between the frame's rails: the prompt row
-// is as tall as its plates, which are one and a half lines each. The surplus is
-// split between the joints rather than pooled above the prompts, which is what
-// left a hole in the middle of the window.
+// The rows total 100 of the 152 units between the frame's rails: the prompt row
+// is as tall as its plates, which are one and a half times the type. The surplus
+// is split between the joints rather than pooled above the prompts, which is
+// what left a hole in the middle of the window.
 var GAP_TITLE = 16;
 var GAP_COUNTER = 4;
 var GAP_RULE = 16;
-var GAP_KEYS = 12;
+var GAP_KEYS = 16;
 
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
@@ -101,7 +104,9 @@ var FONT_ITALIC = "DefaultFontItalic";
 // Sampled out of Menu.gfx: every gold caption in the menu is this colour, and
 // the line the prompt sits above is set at size 15.
 var COLOR_PROMPT = 0xF6E890;
-var PROMPT_SIZE = 15;
+// A step under the line it sits above: the prompt is an aside about the screen,
+// and set level with that line it read as the louder of the two.
+var PROMPT_SIZE = 13;
 
 // Derived, so a change above moves everything together.
 var IN_X = BOX_X + IN_L;
@@ -176,7 +181,7 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     setText(labelText, label);
 
     var metrics = labelText.getLineMetrics(0);
-    var capH = metrics.height * CAP_SCALE;
+    var capH = labelSize * CAP_SCALE;
     var capW = capSpan * capH / CAP_NATIVE_H;
     var rowH = capH;
 
