@@ -43,9 +43,8 @@ def pack(pak_path, src_dir):
     Files ending in .pak are skipped so an archive living inside its own source
     directory does not pack a copy of itself.
 
-    Entry timestamps are fixed rather than read off the files: the archive is
-    committed, and a stamp per build would rewrite it whether or not anything
-    inside it changed.
+    Entry timestamps are fixed rather than read off the files, so an unchanged
+    tree packs to the same bytes on every build.
 
     @param pak_path Archive to create, overwriting any existing file.
     @param src_dir Directory whose tree becomes the archive's root.
@@ -78,6 +77,9 @@ def check_archive(pak_path, src_dir, errors):
     with open(pak_path, "rb") as f:
         raw = f.read()
     eocd = raw.rfind(b"PK\x05\x06")
+    if eocd < 0:
+        errors.append("%s: no end-of-central-directory record" % pak_path)
+        return
     count = int.from_bytes(raw[eocd + 10:eocd + 12], "little")
     pos = int.from_bytes(raw[eocd + 16:eocd + 20], "little")
 
@@ -118,12 +120,15 @@ def version():
     return ET.parse(os.path.join(SRC_DIR, "mod.manifest")).findtext("info/version")
 
 
-def layout():
+def layout(require_plugin):
     """Return the mod folder's contents as (source, relative destination) pairs.
 
     Shared by --deploy and --release so an installed mod and a released one
     cannot come out differently arranged.
 
+    @param require_plugin Whether a missing plugin is an error rather than a
+        warning. A deploy without it leaves whatever was installed last in
+        place; a release without it is a mod that does nothing.
     @return List of pairs, the destinations relative to the mod folder.
     """
     pairs = [(os.path.join(SRC_DIR, "mod.manifest"), "mod.manifest"),
@@ -137,6 +142,10 @@ def layout():
                           PLUGIN_IN_BUILD)
     if os.path.isfile(plugin):
         pairs.append((plugin, "KCSE/Plugins/" + os.path.basename(plugin)))
+    elif require_plugin:
+        raise RuntimeError(
+            "%s is not built, and an archive without it installs a mod that does "
+            "nothing.\nRun tools%sbuild_cpp.bat first." % (plugin, os.sep))
     else:
         print("warning: %s not built" % plugin)
     return pairs
@@ -149,7 +158,7 @@ def deploy():
     """
     dest = os.path.join(buildenv.require("KCD2_ROOT", "the game installation"),
                         "Mods", MODID)
-    for source, relative in layout():
+    for source, relative in layout(require_plugin=False):
         target = os.path.join(dest, relative.replace("/", os.sep))
         os.makedirs(os.path.dirname(target), exist_ok=True)
         try:
@@ -174,7 +183,7 @@ def release():
     path = os.path.join(RELEASES_DIR, "%s-%s.zip" % (MODID, version()))
 
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for source, relative in layout():
+        for source, relative in layout(require_plugin=True):
             info = zipfile.ZipInfo(MODID + "/" + relative, build_localization.EPOCH)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o600 << 16
