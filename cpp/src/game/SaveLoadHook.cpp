@@ -42,7 +42,6 @@ using PreparePageFn = void(*)(void*, std::uint8_t);
 
 C_UISaveLoad* g_saveLoad = nullptr;
 int g_playline = -1;
-bool g_inRebuild = false;
 REL::Relocation<BuildLoadGamePageFn> g_originalBuild;
 REL::Relocation<PreparePageFn> g_originalPreparePage;
 
@@ -73,15 +72,24 @@ bool Install()
     void* original = nullptr;
     if (MH_CreateHook(target, reinterpret_cast<void*>(&HookedBuildLoadGamePage), &original) != MH_OK)
         return false;
-    if (MH_EnableHook(target) != MH_OK)
+    if (MH_EnableHook(target) != MH_OK) {
+        MH_RemoveHook(target);
         return false;
+    }
     g_originalBuild = REL::Relocation<BuildLoadGamePageFn>(reinterpret_cast<std::uintptr_t>(original));
 
+    // The rest of the mod stands without this one, so its failure is reported
+    // rather than fatal. What goes with it is the prompt coming down on the way
+    // out of the save list.
     void* preparePage = reinterpret_cast<void*>(REL::ID(kPreparePageId).address());
     if (MH_CreateHook(preparePage, reinterpret_cast<void*>(&HookedPreparePage), &original) == MH_OK
         && MH_EnableHook(preparePage) == MH_OK) {
         g_originalPreparePage =
             REL::Relocation<PreparePageFn>(reinterpret_cast<std::uintptr_t>(original));
+    } else {
+        MH_RemoveHook(preparePage);
+        SR_LOG("could not hook PreparePage; the rename prompt will stay up when the "
+               "menu leaves the save list");
     }
     return true;
 }
@@ -244,12 +252,12 @@ int SelectedSaveId()
 
 bool RebuildLoadPage()
 {
-    if (!Ready() || g_inRebuild)
+    if (!Ready())
         return false;
 
-    g_inRebuild = true;
+    // The trampoline, not the hooked address, so the capture and the prompt in
+    // HookedBuildLoadGamePage do not run a second time.
     g_originalBuild(g_saveLoad, g_playline);
-    g_inRebuild = false;
     return true;
 }
 

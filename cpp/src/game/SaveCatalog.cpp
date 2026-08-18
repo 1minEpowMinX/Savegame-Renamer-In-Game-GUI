@@ -26,7 +26,6 @@ using UpdateDescriptionsFn = void(*)(C_SaveGameManager*);
 
 C_SaveGameManager* g_manager = nullptr;
 REL::Relocation<UpdateDescriptionsFn> g_originalUpdate;
-bool g_inRefresh = false;
 
 void HookedUpdateDescriptions(C_SaveGameManager* self)
 {
@@ -67,7 +66,7 @@ std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
     std::error_code ec;
     std::filesystem::path found;
     for (const auto& dir : std::filesystem::directory_iterator(root, ec)) {
-        if (!dir.is_directory())
+        if (!dir.is_directory(ec))
             continue;
         const auto candidate = dir.path() / fileName;
         if (!std::filesystem::exists(candidate, ec))
@@ -94,8 +93,10 @@ bool Install()
     void* original = nullptr;
     if (MH_CreateHook(target, reinterpret_cast<void*>(&HookedUpdateDescriptions), &original) != MH_OK)
         return false;
-    if (MH_EnableHook(target) != MH_OK)
+    if (MH_EnableHook(target) != MH_OK) {
+        MH_RemoveHook(target);
         return false;
+    }
     g_originalUpdate = REL::Relocation<UpdateDescriptionsFn>(reinterpret_cast<std::uintptr_t>(original));
     return true;
 }
@@ -138,13 +139,12 @@ std::optional<SaveEntry> Find(int saveId)
 
 bool Refresh()
 {
-    if (!g_manager || g_inRefresh)
+    if (!g_manager)
         return false;
 
-    // The hook is still armed, so guard against re-entering our own thunk.
-    g_inRefresh = true;
+    // The trampoline, not the hooked address, so the capture in
+    // HookedUpdateDescriptions does not run a second time.
     g_originalUpdate(g_manager);
-    g_inRefresh = false;
     return true;
 }
 
