@@ -388,8 +388,13 @@ hint.onRelease = null;
 
 // -------------------------------------------------------------- behaviour --
 
+// The line the dialog was opened on. The counter stays quiet while the field
+// still holds it: an unedited name is not the player running long, and a resolved
+// quest name is over the mark often enough to light the warning on open.
+var openedWith = "";
+
 function updateCounter() {
-    if (input.text.length > SOFT_LIMIT) {
+    if (input.text.length > SOFT_LIMIT && input.text != openedWith) {
         counter.styleFmt.color = COLOR_WARN;
     } else {
         counter.styleFmt.color = COLOR_HINT;
@@ -425,6 +430,7 @@ input.onKillFocus = function () {
 
 function fc_open(currentName, canReset) {
     box._visible = true;
+    openedWith = currentName;
     input.text = currentName;
     input.setTextFormat(inputFmt);
     layoutKeys(canReset);

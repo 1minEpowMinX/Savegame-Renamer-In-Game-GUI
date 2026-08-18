@@ -88,9 +88,18 @@ void CmdSet(IConsoleCmdArgs* args)
            redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
-// The save the open dialog belongs to. Task 10 replaces the console argument
-// with the row highlighted in the load menu; everything downstream stays.
+// The save the open dialog belongs to.
 int g_pendingSaveId = -1;
+
+// The line the dialog was opened on, as the list renders it.
+//
+// A save that has never been renamed carries a localization key rather than
+// text, and the list resolves it afresh in whatever language the game is set
+// to. The dialog offers the resolved line for editing, so confirming it
+// untouched would replace the key with one language's rendering of it and the
+// save would keep that wording everywhere. Held here to tell an edit from an
+// accidental confirmation.
+std::string g_pendingName;
 
 /// Applies `name` to the pending save and redraws the list.
 ///
@@ -99,6 +108,7 @@ void ApplyRename(const std::string& name)
 {
     const auto entry = SaveCatalog::Find(g_pendingSaveId);
     g_pendingSaveId = -1;
+    g_pendingName.clear();
     if (!entry.has_value()) {
         SR_LOG("the save went away while the dialog was open");
         return;
@@ -140,10 +150,12 @@ bool OpenFor(int saveId)
     // player who only wants to mark the original can type around it instead of
     // retyping it. Clearing the field resets, same as the button.
     g_pendingSaveId = saveId;
+    g_pendingName = entry->displayName;
     if (RenameDialog::Show(entry->displayName, canReset)) {
         return true;
     }
     g_pendingSaveId = -1;
+    g_pendingName.clear();
     SR_LOG("could not show the dialog");
     return false;
 }
@@ -218,9 +230,22 @@ void RegisterCommands()
     // The flash element only exists once the UI has loaded, so this cannot run
     // from KCSEPlugin_Load.
     RenameDialog::Install();
-    RenameDialog::SetAcceptHandler(&ApplyRename);
+    RenameDialog::SetAcceptHandler([](const std::string& typed) {
+        // Confirming the line as it was offered is not a rename, and writing it
+        // would cost the save its localized name for nothing.
+        if (typed == g_pendingName) {
+            SR_LOG("%d confirmed unchanged, left alone", g_pendingSaveId);
+            g_pendingSaveId = -1;
+            g_pendingName.clear();
+            return;
+        }
+        ApplyRename(typed);
+    });
     RenameDialog::SetResetHandler([] { ApplyRename(""); });
-    RenameDialog::SetCancelHandler([] { g_pendingSaveId = -1; });
+    RenameDialog::SetCancelHandler([] {
+        g_pendingSaveId = -1;
+        g_pendingName.clear();
+    });
 
     if (env->pInput) {
         env->pInput->AddEventListener(&g_renameKey);
