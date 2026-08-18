@@ -2,7 +2,7 @@
 Rename any savegame from the game's own load menu. Highlight a save, press F2, type a name. No console, no external tools, and the list updates on the spot.
 
 [size=6][b]The problem[/b][/size]
-Your saves are named after the quest that was running when you made them, and nothing else. Play one questline for an evening and the load list turns into six rows reading [i]On the Guild's Business[/i], separated only by a timestamp. There is no way to mark the one before the hard fight, the one you want to come back to, or the one you keep for a different ending.
+Your saves are named after the quest that was running when you made them, and nothing else. Play one questline for an evening and the load list turns into six rows reading [i]quest name[/i], separated only by a timestamp. There is no way to mark the one before the hard fight, the one you want to come back to, or the one you keep for a different ending.
 
 The information you want is already in the file. It just isn't yours to write.
 
