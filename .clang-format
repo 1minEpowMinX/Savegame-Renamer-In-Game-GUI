@@ -1,0 +1,35 @@
+# Describes the style already in the tree rather than imposing a new one.
+# Visual Studio applies this on format-document and on type.
+Language: Cpp
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+PointerAlignment: Left
+AlwaysBreakTemplateDeclarations: Yes
+SortIncludes: false
+
+# A function body opens on its own line; everything else keeps its brace on the
+# line that introduced it, else and catch included.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: false
+  AfterStruct: false
+  AfterEnum: false
+  AfterNamespace: false
+  AfterControlStatement: Never
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeElse: false
+  BeforeCatch: false
+  BeforeLambdaBody: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+FixNamespaceComments: true
+NamespaceIndentation: None

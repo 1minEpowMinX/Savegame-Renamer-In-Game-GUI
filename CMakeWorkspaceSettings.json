@@ -1,0 +1,4 @@
+{
+  "enableCMake": true,
+  "sourceDirectory": "..\_deps\libKCD2\.buildenv"
+}

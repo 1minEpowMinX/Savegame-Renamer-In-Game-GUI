@@ -41,6 +41,25 @@ The flash is compiled by [JPEXS FFDec](https://github.com/jindrapetrik/jpexs-dec
 Paths that belong to one machine are read from the environment, each falling back
 to the author's own: `FFDEC`, `KCD2_ROOT`, `KCD2_PLUGIN_DLL`.
 
+### In Visual Studio
+
+Open this folder. `CMakeWorkspaceSettings.json` sends the CMake configure at
+libKCD2's `.buildenv`, because that is where the build actually starts: this
+project's own `cpp/.buildenv/CMakeLists.txt` is a fragment that expects
+`RE_ROOT`, `RE_BUILDENV` and the `kcd_re` target from that parent and cannot
+configure on its own.
+
+The path in that file is `..\_deps\libKCD2\.buildenv`, which is the layout
+`tools/build_cpp.bat` expects as well: libKCD2 checked out beside this project
+under `_deps`. Somewhere else, point both at it.
+
+Configuration comes from libKCD2's `CMakePresets.json`, which names an absolute
+path to the Ninja shipped with one Visual Studio install; a different install
+needs that preset edited there rather than here.
+
+`.clang-format` and `.editorconfig` describe the style already in the tree and
+are applied by the editor without further setup.
+
 ## Translating
 
 `src/Localization/strings.xml` holds the two strings the mod owns; everything

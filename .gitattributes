@@ -1,0 +1,24 @@
+# The working tree is Windows, the repository is LF. Without this every commit
+# renegotiates line endings per file and reports it as a warning.
+* text=auto eol=lf
+
+# Sources and data the build reads back, kept LF on disk as well: the flash
+# toolchain and the localization generator both write LF, and a checkout that
+# converts them makes every rebuild look like a change.
+*.as       text eol=lf
+*.xml      text eol=lf
+*.py       text eol=lf
+*.cpp      text eol=lf
+*.h        text eol=lf
+*.md       text eol=lf
+*.json     text eol=lf
+
+# Windows-only, and cmd.exe needs the carriage returns.
+*.bat      text eol=crlf
+
+# Build products and archives, byte for byte.
+*.pak      binary
+*.gfx      binary
+*.whs      binary
+*.dll      binary
+*.zip      binary

@@ -1,0 +1,21 @@
+# Visual Studio, VS Code and most editors read this natively.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+[*.{cpp,h}]
+# Matches .clang-format, which is what actually formats these.
+indent_size = 4
+
+[*.bat]
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,6 +1,18 @@
 build/
 vcpkg_installed/
 releases/*.zip
-*.user
 __pycache__/
 *.pyc
+
+# Visual Studio's own workspace state: window layout, IntelliSense caches, the
+# Copilot symbol index. Machine-local and regenerated on open.
+.vs/
+out/
+*.user
+*.vcxproj
+*.vcxproj.filters
+CMakeUserPresets.json
+
+# Language-server leftovers, should another editor be pointed at the tree.
+.cache/
+compile_commands.json
