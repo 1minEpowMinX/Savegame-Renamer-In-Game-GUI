@@ -12,8 +12,7 @@
 //   onRenameAccept(name), onRenameCancel(), onRenameReset()
 //
 // Every plate here is the game's own: the window frame, the field backing and
-// the key caps are imported from the vanilla movies (see base.xml), so the
-// dialog is built from the same parts as the screens around it.
+// the key caps are imported from the vanilla movies (see base.xml).
 //
 // Written for FFDec's AS2 parser: one declaration per var, no object literals,
 // no ternary, no chained assignments.
@@ -145,16 +144,26 @@ frame._height = BOX_H;
 
 // ---------------------------------------------------------------- helpers --
 
-// embedFonts must be set BEFORE the format is applied: unset, the field falls
-// back to device rendering, which draws nothing here because the movie carries
-// no device font.
-// The box a field is given is not trimmed to what it holds. textWidth sums glyph
-// advances, which is short of what an italic face actually paints: its last
-// letter leans past its own advance, and a field cut to the sum clips that lean.
-// The measure is still right for laying a row out, only not for bounding it.
+// Returns a new text field on `parent`, styled and ready for setText.
+//
+// @param parent Clip to create the field in.
+// @param name Instance name.
+// @param depth Depth within `parent`.
+// @param x Left edge.
+// @param y Top edge.
+// @param w Field width.
+// @param h Field height.
+// @param size Type size.
+// @param color Type colour.
+// @param font ImportAssets2 symbol name of the face.
+// @param align One of "left", "center", "right".
+// @return The field, carrying its format on `styleFmt`.
 function mkText(parent, name, depth, x, y, w, h, size, color, font, align) {
     var tf = parent.createTextField(name, depth, x, y, w, h);
     tf.selectable = false;
+    // Set before the format is applied: unset, the field falls back to device
+    // rendering, which draws nothing here because the movie carries no device
+    // font.
     tf.embedFonts = true;
     var fmt = new TextFormat();
     fmt.font = font;
@@ -166,17 +175,23 @@ function mkText(parent, name, depth, x, y, w, h, size, color, font, align) {
     return tf;
 }
 
-// setNewTextFormat only styles text assigned afterwards, and this player drops
-// it on assignment, so the format is re-applied over the whole field.
+// Assigns `value` to `tf` and re-applies the field's stored format.
+//
+// @param tf Field made by mkText.
+// @param value Text to show.
 function setText(tf, value) {
     tf.text = value;
+    // setNewTextFormat styles only text assigned afterwards, and this player
+    // drops it on assignment.
     tf.setTextFormat(tf.styleFmt);
 }
 
-// The pair answers the mouse across its whole width, so the area is filled
-// rather than left to the label's own bounds. Transparent, and redrawn whenever
-// the wording changes width.
+// Draws the transparent area a key-hint pair answers the mouse across.
+//
+// @param clip Pair built by mkKeyHint, carrying spanW and rowH.
 function drawHit(clip) {
+    // Filled across the whole pair rather than left to the label's own bounds,
+    // and redrawn whenever the wording changes width.
     clip.clear();
     clip.beginFill(0xFFFFFF, 0);
     clip.moveTo(0, 0);
@@ -186,19 +201,37 @@ function drawHit(clip) {
     clip.endFill();
 }
 
-// Puts new wording on a pair built by mkKeyHint. The span is what a row of them
-// is centred by, so it has to be re-measured here and not just at build time:
-// the same prompt is a different width in every language.
+// Puts new wording on a pair built by mkKeyHint, and re-measures its span.
+//
+// @param clip The pair.
+// @param label Text to set beside the cap.
 function setHintLabel(clip, label) {
     clip.labelValue = label;
     setText(clip.labelText, label);
+    // Measured again rather than kept from build time: a row of pairs is centred
+    // by the sum of their spans, and the same prompt is a different width in
+    // every language. textWidth sums glyph advances, which is short of what an
+    // italic face paints -- right for laying a row out, wrong for bounding a
+    // field to what it holds.
     clip.spanW = clip.capW + KEY_GAP + clip.labelText.textWidth;
     drawHit(clip);
 }
 
-// A key cap with its label beside it, the pairing the game uses for every
-// prompt it prints. `spanW` is how wide the pair came out, so a row of them can
-// be centred, and `rowH` how tall.
+// Returns a key cap with its label beside it, the pairing the game uses for
+// every prompt it prints.
+//
+// @param parent Clip to build in.
+// @param name Instance name.
+// @param depth Depth within `parent`.
+// @param key Text on the plate.
+// @param capFrame Frame of mc_button the plate shows.
+// @param capSpan Advance the plate reserves at native height.
+// @param label Word beside the plate.
+// @param action Value handed to fc_setInput when the pair is clicked.
+// @param labelSize Type size of the label.
+// @param labelFont ImportAssets2 symbol name of the face.
+// @param labelColor Type colour at rest.
+// @return The pair, carrying its width on `spanW` and its height on `rowH`.
 function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
                    labelSize, labelFont, labelColor) {
     var clip = parent.createEmptyMovieClip(name, depth);
@@ -338,6 +371,9 @@ var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", CAP_MEDIUM, CAP_SPAN_MEDIU
 var keyReset = mkKeyHint(box, "keyReset", 9, "Del", CAP_WIDE, CAP_SPAN_WIDE,
                          "reset", "reset", 13, FONT_REGULAR, COLOR_HINT);
 
+// Centres the row of prompts on the frame's inner width.
+//
+// @param withReset Whether the Reset pair is shown and counted into the row.
 function layoutKeys(withReset) {
     var total = keyAccept.spanW + PAIR_GAP + keyCancel.spanW;
     if (withReset) {
@@ -395,6 +431,7 @@ hint.onRelease = null;
 // quest name is over the mark often enough to light the warning on open.
 var openedWith = "";
 
+// Redraws the character counter, amber once an edited name runs past SOFT_LIMIT.
 function updateCounter() {
     if (input.text.length > SOFT_LIMIT && input.text != openedWith) {
         counter.styleFmt.color = COLOR_WARN;
@@ -404,10 +441,11 @@ function updateCounter() {
     setText(counter, input.text.length + " / " + SOFT_LIMIT);
 }
 
-// Characters typed into the field arrive with the default format, which is
-// bound to no font and therefore draws empty boxes. Re-applying the format
-// resets the caret to the start, so it is put back where it was.
+// Re-applies the input field's format and puts the caret back where it was.
 function restyleInput() {
+    // Characters typed into the field arrive with the default format, which is
+    // bound to no font and draws empty boxes. Re-applying it resets the caret to
+    // the start.
     var caret = Selection.getCaretIndex();
     input.setTextFormat(inputFmt);
     Selection.setSelection(caret, caret);
@@ -430,6 +468,7 @@ input.onKillFocus = function () {
 
 // ------------------------------------------------------------ engine calls --
 
+// Shows the dialog, the field prefilled and the caret at its end.
 function fc_open(currentName, canReset) {
     box._visible = true;
     openedWith = currentName;
@@ -441,14 +480,17 @@ function fc_open(currentName, canReset) {
     Selection.setSelection(input.text.length, input.text.length);
 }
 
+// Shows or hides the F2 prompt over the save list.
 function fc_showHint(visible) {
     hint._visible = visible;
 }
 
-// The captions arrive translated: the movie has no access to the localization
-// tables, and a key assigned to a field from ActionScript is not resolved on the
-// way in.
+// Sets every caption the dialog and the prompt show, and lays the row of
+// prompts out again at the new widths.
 function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
+    // The captions arrive translated: the movie has no access to the
+    // localization tables, and a key assigned to a field from ActionScript is
+    // not resolved on the way in.
     setText(title, titleText);
     setHintLabel(keyAccept, acceptText);
     setHintLabel(keyCancel, cancelText);
@@ -458,11 +500,15 @@ function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
     hint._x = HINT_CENTRE_X - hint.spanW / 2;
 }
 
-// The engine splits an event's arguments on a vertical bar, so a name carrying
-// one would reach the plugin cut short at it rather than whole. The plugin drops
-// the character anyway -- it is the separator inside UIDescription -- so it is
-// dropped here, where the rest of the name still survives.
+// Returns `text` with vertical bars removed.
+//
+// @param text Text as typed.
+// @return The text without bars.
 function stripBars(text) {
+    // The engine splits an event's arguments on a vertical bar, so a name
+    // carrying one reaches the plugin cut short at it. The plugin drops the
+    // character anyway -- it is the separator inside UIDescription -- and
+    // dropping it here leaves the rest of the name whole.
     var out = "";
     var i = 0;
     while (i < text.length) {
@@ -474,6 +520,7 @@ function stripBars(text) {
     return out;
 }
 
+// Acts on a key the engine delivers to the plugin rather than to the movie.
 function fc_setInput(action) {
     if (action == "accept") {
         var typed = stripBars(input.text);
