@@ -175,14 +175,9 @@ KeyListener g_keyListener;
 /// stays visible as far as the engine is concerned until this runs.
 void Dismiss()
 {
-    auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (env && env->pFlashUI) {
-        _smart_ptr<IUIElement> el;
-        env->pFlashUI->GetUIElement(el, "SavegameRenamer");
-        if (el)
-            el->SetVisible(false);
-    }
-    if (env && env->pInput)
+    if (IUIElement* el = Element())
+        el->SetVisible(false);
+    if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput)
         env->pInput->RemoveEventListener(&g_keyListener);
 
     g_open = false;
