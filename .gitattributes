@@ -26,3 +26,4 @@
 *.whs      binary
 *.dll      binary
 *.zip      binary
+*.png      binary
