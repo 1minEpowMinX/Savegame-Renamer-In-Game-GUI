@@ -62,7 +62,7 @@
 | `flash/renamer.as` | ActionScript диалога |
 | `flash/renamer.xml` | Описание UI-элемента для движка |
 | `tools/build.py` | Упаковка pak, сборка релизного архива |
-| `tools/whs_header.py` | Эталонный прототип модели, уже написан и проверен |
+| `prototypes/whs_header.py` | Эталонный прототип модели, уже написан и проверен |
 
 Разделение модель/мост/вид/склейка держится жёстко: `whs::Description` не знает про игру и собирается в тестах без единого заголовка libKCD2, `RenameDialog` не знает про сохранения.
 
@@ -1228,10 +1228,10 @@ TEST_CASE("A real savegame survives a rename and a reset", "[real]")
 
 - [ ] **Step 6: Прогнать сверку с эталонным прототипом**
 
-Скопировать реальный сейв во временный каталог, задать `KCD2_TEST_SAVE` и прогнать. Затем той же операцией через `tools/whs_header.py` получить второй файл и сравнить результаты побайтово:
+Скопировать реальный сейв во временный каталог, задать `KCD2_TEST_SAVE` и прогнать. Затем той же операцией через `prototypes/whs_header.py` получить второй файл и сравнить результаты побайтово:
 
 ```bash
-python -c "import sys; sys.path.insert(0,'tools'); from whs_header import Header,F_QUEST,F_OBJECTIVE; h=Header(sys.argv[1]); f=h.ui_fields(); f[F_QUEST]='Renamer smoke test'; f[F_OBJECTIVE]=''; h.set_ui_fields(f); h.write(sys.argv[2])" "$KCD2_TEST_SAVE" /tmp/python_out.whs
+python -c "import sys; sys.path.insert(0,'prototypes'); from whs_header import Header,F_QUEST,F_OBJECTIVE; h=Header(sys.argv[1]); f=h.ui_fields(); f[F_QUEST]='Renamer smoke test'; f[F_OBJECTIVE]=''; h.set_ui_fields(f); h.write(sys.argv[2])" "$KCD2_TEST_SAVE" /tmp/python_out.whs
 ```
 
 Ожидается: заголовки совпадают по полю `UIDescription`, payload у обоих идентичен исходному. Прототип не пишет `RenamerOriginal`, поэтому сравнивать надо поле, а не весь файл.

@@ -8,10 +8,30 @@ rem
 rem Pass a target name to build just that one, e.g. build_cpp.bat SavegameRenamerTests.
 setlocal
 
-set "VCPKG_ROOT=D:\Games\Self-Mods\KCD2\_deps\vcpkg"
-set "VS=D:\IDE\Microsoft Visual Studio\18\Community"
+rem The machine paths live in build.env beside the project, which tools/buildenv.py
+rem reads as well. A variable already set in the environment is left alone, so a
+rem one-off run can override one without editing the file.
+set "ENV_FILE=%~dp0..\build.env"
+if exist "%ENV_FILE%" (
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ENV_FILE%") do (
+        if not defined %%A set "%%A=%%~B"
+    )
+)
+
+if not defined VS_ROOT (
+    echo VS_ROOT is not set: it holds the Visual Studio installation.
+    echo Copy build.env.example to build.env and fill it in.
+    exit /b 1
+)
+if not defined LIBKCD2_ROOT (
+    echo LIBKCD2_ROOT is not set: it holds the libKCD2 checkout.
+    echo Copy build.env.example to build.env and fill it in.
+    exit /b 1
+)
+
+set "VS=%VS_ROOT%"
 set "CMAKE=%VS%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
-set "RE=D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv"
+set "RE=%LIBKCD2_ROOT%\.buildenv"
 
 if not exist "%CMAKE%" (
     echo cmake not found at "%CMAKE%"

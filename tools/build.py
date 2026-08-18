@@ -19,6 +19,7 @@ import zipfile
 
 import build_flash
 import build_localization
+import buildenv
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
@@ -28,15 +29,10 @@ MODID = "savegame_renamer"
 RELEASES_DIR = os.path.join(PROJECT_ROOT, "releases")
 PAK = os.path.join(DATA_DIR, MODID + ".pak")
 
-# One machine's layout, so both can be pointed elsewhere. KCD2_ROOT is where
-# --deploy copies to; KCD2_PLUGIN_DLL is where the CMake build leaves the
-# plugin, which is inside libKCD2's tree rather than this project's.
-GAME_ROOT = os.environ.get(
-    "KCD2_ROOT", r"D:\Games\Steam\steamapps\common\KingdomComeDeliverance2")
-PLUGIN_DLL = os.environ.get(
-    "KCD2_PLUGIN_DLL",
-    r"D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv\build-release"
-    r"\SavegameRenamer\SavegameRenamer.dll")
+# Where the CMake build leaves the plugin, relative to libKCD2's tree. Derived
+# rather than configured: the build writes it there and nowhere else.
+PLUGIN_IN_BUILD = os.path.join(".buildenv", "build-release", "SavegameRenamer",
+                               "SavegameRenamer.dll")
 
 MAX_EXTRA_FIELD_LEN = 0
 
@@ -137,10 +133,12 @@ def layout():
     # manifest rather than inside the data pak.
     pairs += [(os.path.join(LOCALIZATION_DIR, f), "Localization/" + f)
               for f in sorted(os.listdir(LOCALIZATION_DIR)) if f.endswith(".pak")]
-    if os.path.isfile(PLUGIN_DLL):
-        pairs.append((PLUGIN_DLL, "KCSE/Plugins/" + os.path.basename(PLUGIN_DLL)))
+    plugin = os.path.join(buildenv.require("LIBKCD2_ROOT", "the libKCD2 checkout"),
+                          PLUGIN_IN_BUILD)
+    if os.path.isfile(plugin):
+        pairs.append((plugin, "KCSE/Plugins/" + os.path.basename(plugin)))
     else:
-        print("warning: %s not built" % PLUGIN_DLL)
+        print("warning: %s not built" % plugin)
     return pairs
 
 
@@ -149,7 +147,8 @@ def deploy():
 
     @return Destination directory, or None when a file could not be replaced.
     """
-    dest = os.path.join(GAME_ROOT, "Mods", MODID)
+    dest = os.path.join(buildenv.require("KCD2_ROOT", "the game installation"),
+                        "Mods", MODID)
     for source, relative in layout():
         target = os.path.join(dest, relative.replace("/", os.sep))
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -193,6 +192,20 @@ def main():
                         help="write releases/<modid>-<version>.zip")
     args = parser.parse_args()
 
+    try:
+        return run(args)
+    except RuntimeError as exc:
+        # An unconfigured path is a setup fault rather than a crash.
+        print(exc)
+        return 1
+
+
+def run(args):
+    """Build, verify and act on `args`.
+
+    @param args Parsed command line.
+    @return Process exit status.
+    """
     build_flash.build()
     localization = build_localization.build()
 

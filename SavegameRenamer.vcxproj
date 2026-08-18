@@ -5,9 +5,8 @@
      from a batch file: the file tree, the include paths and defines IntelliSense
      needs, and a debug target.
 
-     Paths that belong to one machine are read from the environment first, the
-     same three names tools\build.py uses, each falling back to the author's own
-     layout. -->
+     Paths that belong to one machine come from build.env beside the project,
+     which the rest of the build reads too. -->
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- Release builds the plugin and nothing else, which is the loop while editing
@@ -41,13 +40,22 @@
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
+  <!-- The machine paths come out of build.env beside the project, the same file
+       tools/buildenv.py and tools/build_cpp.bat read, so a path is written once
+       for the whole build. An environment variable of the same name wins over
+       it, and nothing here carries one developer's layout. -->
   <PropertyGroup Label="UserMacros">
-    <!-- Where the game is installed; the debug target launches from here. -->
+    <BuildEnvFile>$(MSBuildProjectDirectory)\build.env</BuildEnvFile>
+    <BuildEnvText Condition="Exists('$(BuildEnvFile)')">$([System.IO.File]::ReadAllText('$(BuildEnvFile)'))</BuildEnvText>
+
+    <!-- Where the game is installed; the Deploy configuration starts it. -->
     <KCD2Root Condition="'$(KCD2Root)' == ''">$(KCD2_ROOT)</KCD2Root>
-    <KCD2Root Condition="'$(KCD2Root)' == ''">D:\Games\Steam\steamapps\common\KingdomComeDeliverance2</KCD2Root>
+    <KCD2Root Condition="'$(KCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'KCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim())</KCD2Root>
 
     <!-- The reverse-engineered headers and the build environment this project is
-         a subproject of. Beside this one under _deps, as build_cpp.bat expects. -->
+         a subproject of. -->
+    <LibKCD2Root Condition="'$(LibKCD2Root)' == ''">$(LIBKCD2_ROOT)</LibKCD2Root>
+    <LibKCD2Root Condition="'$(LibKCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'LIBKCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim())</LibKCD2Root>
     <LibKCD2Root Condition="'$(LibKCD2Root)' == ''">$(MSBuildProjectDirectory)\..\_deps\libKCD2</LibKCD2Root>
     <LibKCD2Build>$(LibKCD2Root)\.buildenv\build-release</LibKCD2Build>
   </PropertyGroup>
@@ -140,12 +148,15 @@
     <None Include="tools\build.py" />
 	<None Include="tools\build_flash.py" />
 	<None Include="tools\build_localization.py" />
-	<None Include="tools\whs_header.py" />
     <None Include="tools\build_cpp.bat" />
     <None Include="docs\2026-08-17-savegame-renamer-design.md" />
 	<None Include="docs\2026-08-17-savegame-renamer-plan.md" />
     <None Include="docs\nexus-description.bbcode.txt" />
     <None Include="README.md" />
+    <None Include="tools\buildenv.py" />
+    <None Include="build.env.example" />
+    <None Include="prototypes\whs_header.py" />
+    <None Include="prototypes\README.md" />
 	<None Include=".gitignore" />
   </ItemGroup>
 

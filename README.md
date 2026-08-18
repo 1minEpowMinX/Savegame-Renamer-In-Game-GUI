@@ -17,6 +17,7 @@ replaced, so it does not conflict with other interface mods.
 | `flash/` | the dialog: `base.xml` is the SWF skeleton, `renamer.as` is all of the behaviour |
 | `src/` | what ships: the manifest, the UI element declaration, the localization source |
 | `tools/` | the build |
+| `prototypes/` | working code that settled a question and is not part of the build |
 | `docs/` | design and implementation notes (Russian) |
 
 `src/Data/savegame_renamer.pak` and `src/Localization/*.pak` are build products
@@ -26,9 +27,16 @@ written with fixed timestamps and are reproducible.
 ## Building
 
 Building from source needs Visual Studio with the C++ workload, vcpkg, a JVM for
-FFDec, and Python 3.9 or newer. The scripts use the standard library only, so
-there is nothing to install past the interpreter itself; 3.9 is where
-`ET.indent` arrives, which is what lays out the generated string tables.
+[JPEXS FFDec](https://github.com/jindrapetrik/jpexs-decompiler), and Python 3.9
+or newer. The scripts use the standard library only, so there is nothing to
+install past the interpreter itself; 3.9 is where `ET.indent` arrives, which is
+what lays out the generated string tables.
+
+Copy `build.env.example` to `build.env` and fill in where those live. It is the
+one place the paths are written: the Python scripts, `tools/build_cpp.bat` and
+the Visual Studio project all read that file, and it is not tracked, so no
+checkout carries another developer's layout. A variable already set in the
+environment wins over the file, which is enough for a one-off override.
 
 The plugin builds as a subproject of [libKCD2](https://github.com/JerryYOJ/libKCD2),
 whose build environment globs `Projects/*/.buildenv/CMakeLists.txt`; this project
@@ -40,10 +48,6 @@ python tools\build.py            compile the flash, build the paks
 python tools\build.py --deploy   install into the game
 python tools\build.py --release  write releases/<modid>-<version>.zip
 ```
-
-The flash is compiled by [JPEXS FFDec](https://github.com/jindrapetrik/jpexs-decompiler).
-Paths that belong to one machine are read from the environment, each falling back
-to the author's own: `FFDEC`, `KCD2_ROOT`, `KCD2_PLUGIN_DLL`.
 
 ### In Visual Studio
 
@@ -77,10 +81,9 @@ them.
 Clean is deliberately inert. The build directory belongs to libKCD2 and holds
 every other plugin built from that tree.
 
-Machine paths come from the environment first, the same names the Python scripts
-use, each falling back to the author's layout: `KCD2Root` (or `KCD2_ROOT`) for the
-game, `LibKCD2Root` for the headers, defaulting to `..\_deps\libKCD2` beside this
-project.
+The project reads `build.env` for the same two paths the rest of the build takes
+from it, `KCD2_ROOT` and `LIBKCD2_ROOT`, so the solution carries no absolute path
+of its own.
 
 `.clang-format` and `.editorconfig` describe the style already in the tree and are
 applied by the editor without further setup.

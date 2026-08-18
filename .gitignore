@@ -12,6 +12,9 @@ out/
 CMakeUserPresets.json
 CppProperties.json
 
+# One machine's paths; build.env.example is the tracked description of it.
+build.env
+
 # MSBuild's intermediate directory for the project, created next to it as
 # <project>/<platform>/<configuration> the first time it evaluates the build.
 /SavegameRenamer/

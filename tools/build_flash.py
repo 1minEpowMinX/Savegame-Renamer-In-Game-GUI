@@ -18,14 +18,22 @@ import shutil
 import subprocess
 import sys
 
+import buildenv
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FLASH_DIR = os.path.join(PROJECT_ROOT, "flash")
 OUTPUT = os.path.join(PROJECT_ROOT, "src", "Data", "Libs", "UI", "renamer.gfx")
 SCRATCH = os.path.join(PROJECT_ROOT, "build", "flash")
 
 # JPEXS Free Flash Decompiler, which compiles the skeleton and imports the
-# script into it. Overridable: it has no standard install location.
-FFDEC = os.environ.get("FFDEC", r"D:\Computer tech. programs\FFDec\ffdec-cli.exe")
+# script into it. Resolved late so that importing this module costs nothing on a
+# machine that only wants the other half of the build.
+def ffdec():
+    """Return the path of the FFDec command line.
+
+    @return Path as configured.
+    """
+    return buildenv.require("FFDEC", "the JPEXS FFDec command line")
 
 
 def run(*args):
@@ -34,7 +42,7 @@ def run(*args):
     @param args Command line following the executable.
     @return None.
     """
-    result = subprocess.run([FFDEC] + list(args), capture_output=True, text=True)
+    result = subprocess.run([ffdec()] + list(args), capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError("ffdec %s failed:\n%s\n%s"
                            % (args[0], result.stdout, result.stderr))
@@ -45,8 +53,8 @@ def build():
 
     @return Path of the file written.
     """
-    if not os.path.isfile(FFDEC):
-        raise RuntimeError("FFDec not found at %s" % FFDEC)
+    if not os.path.isfile(ffdec()):
+        raise RuntimeError("FFDec not found at %s" % ffdec())
 
     shutil.rmtree(SCRATCH, ignore_errors=True)
     os.makedirs(SCRATCH)
