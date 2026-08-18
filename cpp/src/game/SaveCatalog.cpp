@@ -4,7 +4,7 @@
 #include <ShlObj.h>
 
 #include "REL.h"
-#include "framework/C_LocalizedString.h"
+#include "Strings.h"
 #include "framework/C_SaveGameDescription.h"
 #include "framework/C_SaveGameManager.h"
 
@@ -88,17 +88,6 @@ std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
 
 }  // namespace
 
-std::string Localize(const std::string& text)
-{
-    if (text.empty())
-        return text;
-
-    CryStringT<char> output;
-    if (!wh::framework::C_LocalizedString::Localize(CryStringT<char>(text.c_str()), output))
-        return text;
-    return output.c_str();
-}
-
 bool Install()
 {
     void* target = reinterpret_cast<void*>(REL::ID(kUpdateDescriptionsId).address());
@@ -142,8 +131,8 @@ std::vector<SaveEntry> List()
 
             // The line as the load list renders it, so the dialog can offer it
             // for editing and a custom name can be built on top of the original.
-            entry.displayName = Localize(header->DisplayName());
-            const std::string objective = Localize(header->ObjectiveName());
+            entry.displayName = Strings::Localize(header->DisplayName());
+            const std::string objective = Strings::Localize(header->ObjectiveName());
             if (!objective.empty())
                 entry.displayName += " - " + objective;
 

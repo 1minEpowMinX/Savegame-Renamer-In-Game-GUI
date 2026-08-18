@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Source table for the mod's own UI strings, one row per key.
+
+     Only strings the game does not already have live here. Accept, cancel and
+     reset are taken from the game's own keys instead (see cpp/src/game/Strings.h),
+     so those words match the menu exactly in every language and follow it if
+     Warhorse ever changes them.
+
+     The noun for a savegame is the one the game uses in that language, read off
+     ui_DeleteSavedGame and ui_help_modded_save. The verb is ours: the base game
+     has no rename anywhere.
+
+     tools/build_localization.py turns this into one <Language>_xml.pak per
+     language. A language with no <text> here falls back to the English above it.
+     Adding a language means adding a line, nothing else. -->
+<Strings>
+
+  <String key="ui_savegame_renamer_title" english="Rename savegame">
+    <text language="Chineses">重命名存档</text>
+    <text language="Chineset">重新命名存檔</text>
+    <text language="Czech">Přejmenovat uloženou pozici</text>
+    <text language="French">Renommer la sauvegarde</text>
+    <text language="German">Speicherstand umbenennen</text>
+    <text language="Italian">Rinomina salvataggio</text>
+    <text language="Japanese">セーブデータの名前を変更</text>
+    <text language="Korean">세이브 이름 변경</text>
+    <text language="Polish">Zmień nazwę zapisu</text>
+    <text language="Portuguese">Renomear jogo salvo</text>
+    <text language="Russian">Переименовать сохранение</text>
+    <text language="Spanish">Renombrar partida guardada</text>
+    <text language="Turkish">Kaydı yeniden adlandır</text>
+    <text language="Ukrainian">Перейменувати збереження</text>
+    <text language="Vietnamese">Đổi tên bản lưu</text>
+  </String>
+
+  <!-- The prompt over the save list. It names the object as well as the action,
+       so a player who has never opened the dialog knows what would be renamed. -->
+  <String key="ui_savegame_renamer_hint" english="rename save">
+    <text language="Chineses">重命名存档</text>
+    <text language="Chineset">重新命名存檔</text>
+    <text language="Czech">přejmenovat pozici</text>
+    <text language="French">renommer la sauvegarde</text>
+    <text language="German">Speicherstand umbenennen</text>
+    <text language="Italian">rinomina salvataggio</text>
+    <text language="Japanese">セーブデータ名を変更</text>
+    <text language="Korean">세이브 이름 변경</text>
+    <text language="Polish">zmień nazwę zapisu</text>
+    <text language="Portuguese">renomear jogo salvo</text>
+    <text language="Russian">переименовать сохранение</text>
+    <text language="Spanish">renombrar partida</text>
+    <text language="Turkish">kaydı yeniden adlandır</text>
+    <text language="Ukrainian">перейменувати збереження</text>
+    <text language="Vietnamese">đổi tên bản lưu</text>
+  </String>
+
+</Strings>

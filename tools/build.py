@@ -1,4 +1,4 @@
-"""Build the mod: compile the flash, pack src/Data into a .pak, and deploy.
+"""Build the mod: compile the flash, build the localization, pack and deploy.
 
 Pass --deploy to copy the result into the game's Mods folder, which also picks up
 the plugin DLL from the CMake build tree.
@@ -19,10 +19,12 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 import build_flash
+import build_localization
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 DATA_DIR = os.path.join(SRC_DIR, "Data")
+LOCALIZATION_DIR = os.path.join(SRC_DIR, "Localization")
 MODID = "savegame_renamer"
 PAK = os.path.join(DATA_DIR, MODID + ".pak")
 
@@ -108,8 +110,15 @@ def deploy():
     os.makedirs(os.path.join(dest, "Data"), exist_ok=True)
     os.makedirs(os.path.join(dest, "KCSE", "Plugins"), exist_ok=True)
 
+    # The game merges these into its own tables, so they go beside the manifest
+    # rather than inside the data pak.
+    os.makedirs(os.path.join(dest, "Localization"), exist_ok=True)
+
     copies = [(os.path.join(SRC_DIR, "mod.manifest"), os.path.join(dest, "mod.manifest")),
               (PAK, os.path.join(dest, "Data", os.path.basename(PAK)))]
+    copies += [(os.path.join(LOCALIZATION_DIR, f),
+                os.path.join(dest, "Localization", f))
+               for f in sorted(os.listdir(LOCALIZATION_DIR)) if f.endswith(".pak")]
     if os.path.isfile(PLUGIN_DLL):
         copies.append((PLUGIN_DLL, os.path.join(dest, "KCSE", "Plugins",
                                                 os.path.basename(PLUGIN_DLL))))
@@ -134,6 +143,7 @@ def main():
     args = parser.parse_args()
 
     build_flash.build()
+    localization = build_localization.build()
 
     names = pack(PAK, DATA_DIR)
     errors = []
@@ -143,6 +153,7 @@ def main():
             print(e)
         return 1
 
+    print("built %d localization paks" % len(localization))
     print("packed %s (%d files)" % (os.path.relpath(PAK, PROJECT_ROOT), len(names)))
     for n in names:
         print("  " + n)

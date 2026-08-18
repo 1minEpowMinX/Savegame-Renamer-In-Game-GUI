@@ -18,6 +18,14 @@
         <param name="canReset" desc="1 when the save carries a stashed original name" type="bool" />
       </function>
 
+      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: the movie cannot reach the localization tables">
+        <param name="title" desc="dialog heading" type="string" />
+        <param name="accept" desc="word beside the Enter key" type="string" />
+        <param name="cancel" desc="word beside the Esc key" type="string" />
+        <param name="reset" desc="word beside the Del key" type="string" />
+        <param name="hint" desc="word beside the F2 key over the save list" type="string" />
+      </function>
+
       <function name="Close" funcname="fc_close" desc="hides the dialog without emitting an event" />
 
       <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt drawn over the save list">
@@ -58,9 +66,19 @@
     </GFx>
 
     <functions>
+
+      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: the movie cannot reach the localization tables">
+        <param name="title" desc="dialog heading" type="string" />
+        <param name="accept" desc="word beside the Enter key" type="string" />
+        <param name="cancel" desc="word beside the Esc key" type="string" />
+        <param name="reset" desc="word beside the Del key" type="string" />
+        <param name="hint" desc="word beside the F2 key over the save list" type="string" />
+      </function>
+
       <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt">
         <param name="visible" desc="" type="bool" />
       </function>
+
     </functions>
 
   </UIElement>

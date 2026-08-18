@@ -13,6 +13,7 @@
 #include "guimodule/SUITypes.h"
 
 #include "Log.h"
+#include "Strings.h"
 
 using Offsets::IUIElement;
 
@@ -103,6 +104,27 @@ void SetMenuBusy(bool busy)
     SUIArguments args;
     args.AddArgument(busy);
     Call(MenuElement(), "SetBusyProtection", "fc_setBusyProtection", args);
+}
+
+/// Sends the current language's captions into `el`.
+///
+/// The movie cannot reach the localization tables itself: a key assigned to a
+/// text field from ActionScript is not resolved on the way in. It is called
+/// before every showing rather than once at startup, so a language changed
+/// mid-session lands and an element instantiated late is not missed.
+///
+/// @param el Element to caption.
+void ApplyLabels(IUIElement* el)
+{
+    const Strings::Labels labels = Strings::Get();
+
+    SUIArguments args;
+    args.AddArgument(labels.title.c_str());
+    args.AddArgument(labels.accept.c_str());
+    args.AddArgument(labels.cancel.c_str());
+    args.AddArgument(labels.reset.c_str());
+    args.AddArgument(labels.hint.c_str());
+    Call(el, "SetLabels", "fc_setLabels", args);
 }
 
 /// Feeds Enter and Esc into the movie while the dialog is open.
@@ -232,6 +254,7 @@ bool Show(const std::string& currentName, bool canReset)
     // is hidden the engine does not render the movie, and a call lands in a
     // frame that was never drawn.
     el->SetVisible(true);
+    ApplyLabels(el);
 
     SUIArguments args;
     args.AddArgument(currentName.c_str());
@@ -261,8 +284,10 @@ void ShowHint(bool visible)
     if (!el)
         return;
 
-    if (visible)
+    if (visible) {
         el->SetVisible(true);
+        ApplyLabels(el);
+    }
 
     SUIArguments args;
     args.AddArgument(visible);

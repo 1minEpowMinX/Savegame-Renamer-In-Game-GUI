@@ -20,6 +20,7 @@
 #include "Log.h"
 #include "game/RenameDialog.h"
 #include "game/SaveCatalog.h"
+#include "game/Strings.h"
 #include "game/SaveLoadHook.h"
 #include "whs/Description.h"
 
@@ -83,7 +84,7 @@ void CmdSet(IConsoleCmdArgs* args)
     SaveCatalog::Refresh();
     const bool redrawn = SaveLoadHook::RebuildLoadPage();
 
-    SR_LOG("%d is now '%s'%s", id, SaveCatalog::Localize(header->DisplayName()).c_str(),
+    SR_LOG("%d is now '%s'%s", id, Strings::Localize(header->DisplayName()).c_str(),
            redrawn ? "" : " (load page not open, list will refresh on next open)");
 }
 
@@ -117,7 +118,7 @@ void ApplyRename(const std::string& name)
 
     SaveCatalog::Refresh();
     SaveLoadHook::RebuildLoadPage();
-    SR_LOG("%d is now '%s'", entry->id, SaveCatalog::Localize(header->DisplayName()).c_str());
+    SR_LOG("%d is now '%s'", entry->id, Strings::Localize(header->DisplayName()).c_str());
 }
 
 /// Opens the dialog for `saveId`.

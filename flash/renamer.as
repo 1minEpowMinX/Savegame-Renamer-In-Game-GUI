@@ -2,6 +2,7 @@
 //
 // Engine API (inbound, on _root -- see UIElements/SavegameRenamer.xml):
 //   fc_open(currentName, canReset)   show the dialog, prefilled
+//   fc_setLabels(...)                the five captions, already translated
 //   fc_close()                       hide it without emitting an event
 //   fc_showHint(visible)             show the F2 prompt over the save list
 //   fc_setInput(action)              "accept" | "cancel" | "reset", fed by the
@@ -166,6 +167,30 @@ function setText(tf, value) {
     tf.setTextFormat(tf.styleFmt);
 }
 
+// The pair answers the mouse across its whole width, so the area is filled
+// rather than left to the label's own bounds. Transparent, and redrawn whenever
+// the wording changes width.
+function drawHit(clip) {
+    clip.clear();
+    clip.beginFill(0xFFFFFF, 0);
+    clip.moveTo(0, 0);
+    clip.lineTo(clip.spanW, 0);
+    clip.lineTo(clip.spanW, clip.rowH);
+    clip.lineTo(0, clip.rowH);
+    clip.endFill();
+}
+
+// Puts new wording on a pair built by mkKeyHint. The span is what a row of them
+// is centred by, so it has to be re-measured here and not just at build time:
+// the same prompt is a different width in every language.
+function setHintLabel(clip, label) {
+    clip.labelValue = label;
+    setText(clip.labelText, label);
+    clip.labelText._width = clip.labelText.textWidth + 4;
+    clip.spanW = clip.capW + KEY_GAP + clip.labelText.textWidth;
+    drawHit(clip);
+}
+
 // A key cap with its label beside it, the pairing the game uses for every
 // prompt it prints. `spanW` is how wide the pair came out, so a row of them can
 // be centred, and `rowH` how tall.
@@ -228,18 +253,14 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     clip.capWatcher = watcher;
 
     clip.rowH = rowH;
+    clip.capW = capW;
     clip.spanW = capW + KEY_GAP + labelText.textWidth;
     clip.labelText = labelText;
     clip.labelValue = label;
     clip.action = action;
     clip.restColor = labelColor;
 
-    clip.beginFill(0xFFFFFF, 0);
-    clip.moveTo(0, 0);
-    clip.lineTo(clip.spanW, 0);
-    clip.lineTo(clip.spanW, rowH);
-    clip.lineTo(0, rowH);
-    clip.endFill();
+    drawHit(clip);
 
     clip.onRollOver = function () {
         this.labelText.styleFmt.color = COLOR_HOVER;
@@ -415,6 +436,19 @@ function fc_open(currentName, canReset) {
 
 function fc_showHint(visible) {
     hint._visible = visible;
+}
+
+// The captions arrive translated: the movie has no access to the localization
+// tables, and a key assigned to a field from ActionScript is not resolved on the
+// way in.
+function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
+    setText(title, titleText);
+    setHintLabel(keyAccept, acceptText);
+    setHintLabel(keyCancel, cancelText);
+    setHintLabel(keyReset, resetText);
+    setHintLabel(hint, hintText);
+    layoutKeys(keyReset._visible);
+    hint._x = HINT_CENTRE_X - hint.spanW / 2;
 }
 
 function fc_close() {
