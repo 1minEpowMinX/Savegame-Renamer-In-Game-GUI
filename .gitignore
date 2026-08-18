@@ -9,9 +9,8 @@ __pycache__/
 .vs/
 out/
 *.user
-*.vcxproj
-*.vcxproj.filters
 CMakeUserPresets.json
+CppProperties.json
 
 # Language-server leftovers, should another editor be pointed at the tree.
 .cache/

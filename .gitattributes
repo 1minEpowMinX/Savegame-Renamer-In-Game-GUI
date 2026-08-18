@@ -13,8 +13,12 @@
 *.md       text eol=lf
 *.json     text eol=lf
 
-# Windows-only, and cmd.exe needs the carriage returns.
+# Windows-only. cmd.exe needs the carriage returns, and Visual Studio rewrites a
+# solution file it finds with anything else.
 *.bat      text eol=crlf
+*.sln      text eol=crlf
+*.vcxproj  text eol=crlf
+*.filters  text eol=crlf
 
 # Build products and archives, byte for byte.
 *.pak      binary

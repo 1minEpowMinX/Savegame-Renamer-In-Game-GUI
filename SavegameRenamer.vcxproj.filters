@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Groups the tree in Solution Explorer along the same lines the directories
+     already draw: the model that knows nothing about the game, the modules that
+     touch it, the tests, and everything that is not C++. -->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <Filter Include="model">
+      <UniqueIdentifier>{1a4f7c20-8b31-4d55-9e0a-2c6f18d3b401}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="game">
+      <UniqueIdentifier>{2b5a8d31-9c42-4e66-8f1b-3d7a29e4c512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{3c6b9e42-ad53-4f77-9a2c-4e8b3af5d623}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="flash">
+      <UniqueIdentifier>{4d7caf53-be64-4088-ab3d-5f9c4b06e734}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{5e8db064-cf75-4199-bc4e-60ad5c17f845}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="build">
+      <UniqueIdentifier>{6f9ec175-d086-42aa-cd5f-71be6d280956}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{70afd286-e197-43bb-de60-82cf7e391a67}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="cpp\src\whs\Description.cpp"><Filter>model</Filter></ClCompile>
+    <ClCompile Include="cpp\src\whs\Sanitise.cpp"><Filter>model</Filter></ClCompile>
+    <ClCompile Include="cpp\src\plugin.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\RenameDialog.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\SaveCatalog.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\SaveLoadHook.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\Strings.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\DescriptionRead.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\DescriptionRename.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\DescriptionWrite.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\RealSave.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\Sanitise.cpp"><Filter>tests</Filter></ClCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="cpp\include\whs\Description.h"><Filter>model</Filter></ClInclude>
+    <ClInclude Include="cpp\include\whs\Sanitise.h"><Filter>model</Filter></ClInclude>
+    <ClInclude Include="cpp\src\Log.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\RenameDialog.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\SaveCatalog.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\SaveLoadHook.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\Strings.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\tests\TestFixture.h"><Filter>tests</Filter></ClInclude>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="flash\renamer.as"><Filter>flash</Filter></None>
+    <None Include="flash\base.xml"><Filter>flash</Filter></None>
+    <None Include="src\Localization\strings.xml"><Filter>data</Filter></None>
+    <None Include="src\Data\Libs\UI\UIElements\SavegameRenamer.xml"><Filter>data</Filter></None>
+    <None Include="src\mod.manifest"><Filter>data</Filter></None>
+    <None Include="cpp\.buildenv\CMakeLists.txt"><Filter>build</Filter></None>
+    <None Include="tools\build.py"><Filter>build</Filter></None>
+    <None Include="tools\build_cpp.bat"><Filter>build</Filter></None>
+    <None Include="tools\build_flash.py"><Filter>build</Filter></None>
+    <None Include="tools\build_localization.py"><Filter>build</Filter></None>
+    <None Include="tools\whs_header.py"><Filter>build</Filter></None>
+    <None Include="README.md"><Filter>docs</Filter></None>
+  </ItemGroup>
+</Project>

@@ -43,22 +43,28 @@ to the author's own: `FFDEC`, `KCD2_ROOT`, `KCD2_PLUGIN_DLL`.
 
 ### In Visual Studio
 
-Open this folder. `CMakeWorkspaceSettings.json` sends the CMake configure at
-libKCD2's `.buildenv`, because that is where the build actually starts: this
-project's own `cpp/.buildenv/CMakeLists.txt` is a fragment that expects
-`RE_ROOT`, `RE_BUILDENV` and the `kcd_re` target from that parent and cannot
-configure on its own.
+Open `SavegameRenamer.sln`. It is a Makefile project: Build runs
+`toolsuild_cpp.bat`, the same command as from a shell, and the real build stays
+with CMake and Ninja inside libKCD2's tree. What the project adds is what a batch
+file cannot tell the editor — the file tree, the include paths and defines
+IntelliSense needs, and F5 set to launch the game so breakpoints bind once KCSE
+has loaded the plugin.
 
-The path in that file is `..\_deps\libKCD2\.buildenv`, which is the layout
-`tools/build_cpp.bat` expects as well: libKCD2 checked out beside this project
-under `_deps`. Somewhere else, point both at it.
+Configuring it as a CMake folder does not work: `cpp/.buildenv/CMakeLists.txt` is
+a fragment that expects `RE_ROOT`, `RE_BUILDENV` and the `kcd_re` target from the
+parent project, and libKCD2's build environment is the only place that supplies
+them.
 
-Configuration comes from libKCD2's `CMakePresets.json`, which names an absolute
-path to the Ninja shipped with one Visual Studio install; a different install
-needs that preset edited there rather than here.
+Clean is deliberately inert. The build directory belongs to libKCD2 and holds
+every other plugin built from that tree.
 
-`.clang-format` and `.editorconfig` describe the style already in the tree and
-are applied by the editor without further setup.
+Machine paths come from the environment first, the same names the Python scripts
+use, each falling back to the author's layout: `KCD2Root` (or `KCD2_ROOT`) for the
+game, `LibKCD2Root` for the headers, defaulting to `..\_deps\libKCD2` beside this
+project.
+
+`.clang-format` and `.editorconfig` describe the style already in the tree and are
+applied by the editor without further setup.
 
 ## Translating
 

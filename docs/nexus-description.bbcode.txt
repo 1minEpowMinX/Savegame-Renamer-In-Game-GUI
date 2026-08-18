@@ -38,7 +38,7 @@ The localisation covers Czech, English, French, German, Italian, Spanish, Portug
 [*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url], matching your game build[/*]
 [/list]
 
-No new game required. Built and tested on 1.5.6. The Address Library is what maps the plugin to your particular build, so [b]update it after a game patch[/b]: a plugin asking for an address the table does not cover fails outright rather than quietly.
+No new game required. Built and tested on 1.5.6 Steam version. The Address Library is what maps the plugin to your particular build, so [b]update it after a game patch[/b]: a plugin asking for an address the table does not cover fails outright rather than quietly.
 
 [size=6][b]Installation[/b][/size]
 [list=1]
