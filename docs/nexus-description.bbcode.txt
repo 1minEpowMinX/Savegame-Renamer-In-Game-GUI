@@ -2,7 +2,7 @@
 Rename any savegame from the game's own load menu. Highlight a save, press F2, type a name. No console, no external tools, and the list updates on the spot.
 
 [size=6][b]The problem[/b][/size]
-Your saves are named after the quest that was running when you made them, and nothing else. Play one questline for an evening and the load list turns into six rows reading [i]quest name[/i], separated only by a timestamp. There is no way to mark the one before the hard fight, the one you want to come back to, or the one you keep for a different ending.
+Your saves are named after the quest that was running when you made them, and nothing else. Play one questline for an evening and the load list turns into six rows reading [i]Quest name[/i], separated only by a timestamp. There is no way to mark the one before the hard fight, the one you want to come back to, or the one you keep for a different ending.
 
 The information you want is already in the file. It just isn't yours to write.
 
@@ -14,30 +14,30 @@ The information you want is already in the file. It just isn't yours to write.
 [*]The original quest name is kept inside the save, so a rename is never one-way[/*]
 [*]Built from the game's own artwork: the window frame, the key plates and the fonts all come out of the vanilla menus[/*]
 [*]Full localisation in all 16 languages the game ships with[/*]
-[*]Small footprint: a 5 KB pak and a plugin. No vanilla file is replaced[/*]
+[*]Small footprint: a few kilobytes of interface data and one plugin. No vanilla file is replaced[/*]
 [/list]
-
 [size=6][b]What it writes[/b][/size]
 The name lives in the description header of the [i].whs[/i] file, in the field the load list reads. The original goes into an attribute of its own, which is what [b]Del[/b] reads back:
 
-[code]
-Before   UIDescription="…|@qname_predanivchramu_CiLb||…"
+[code]Before   UIDescription="…|@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu|…"
 
-After    RenamerOriginal="@qname_predanivchramu_CiLb|"
+After    RenamerOriginal="@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu"
          UIDescription="…|Before the hard fight||…"[/code]
+
+The quest name and the objective printed under it both go into the stash, and the objective is cleared: a name you chose stands for the whole line, not half of it.
 
 Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file and replaces the original only once complete, so an interrupted write cannot leave you with half a savegame.
 
-Uninstalling is safe. Renamed saves keep their names and load normally without the mod. If you want the original names back, reset them with [b]Del[/b] before uninstalling.
+[size=6][b]Languages[/b][/size]
+Czech, English, French, German, Italian, Spanish, Portuguese, Polish, Russian, Ukrainian, Turkish, Japanese, Korean, Simplified and Traditional Chinese, and Vietnamese — every language the game ships with.
 
-The localisation covers Czech, English, French, German, Italian, Spanish, Portuguese, Polish, Russian, Ukrainian, Turkish, Japanese, Korean, Simplified and Traditional Chinese, and Vietnamese. Accept, cancel and reset are not translated by this mod at all: they are taken from the game's own strings, so they read exactly as they do everywhere else in your menu.
+Accept, cancel and reset are not translated by this mod at all: they are taken from the game's own strings, so they read exactly as they do everywhere else in your menu, and they follow it if Warhorse ever changes the wording.
 
 [size=6][b]Requirements[/b][/size]
 [list]
 [*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]Kingdom Come Script Extender[/url][/*]
 [*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url], matching your game build[/*]
 [/list]
-
 No new game required. Built and tested on 1.5.6 Steam version. The Address Library is what maps the plugin to your particular build, so [b]update it after a game patch[/b]: a plugin asking for an address the table does not cover fails outright rather than quietly.
 
 [size=6][b]Installation[/b][/size]
@@ -46,21 +46,25 @@ No new game required. Built and tested on 1.5.6 Steam version. The Address Libra
 [*]The result should look like [i]Mods/savegame_renamer/[/i] containing [i]Data/[/i], [i]Localization/[/i], [i]KCSE/[/i] and [i]mod.manifest[/i].[/*]
 [*]Launch the game. No further setup.[/*]
 [/list]
+[size=6][b]Uninstalling[/b][/size]
+Delete [i]Mods/savegame_renamer/[/i]. Renamed saves keep their names and load normally without the mod. If you want the original names back, reset them with [b]Del[/b] before you remove it.
 
 [size=6][b]Compatibility[/b][/size]
-No vanilla file is replaced. The dialog is its own interface element on its own layer, so it does not collide with menu or HUD mods. Nothing is written to a save until you rename one.
+No vanilla file is replaced: the dialog is its own interface element on its own layer, and the mod's two strings are added to the game's tables rather than overwriting anything in them. Nothing is written to a save until you rename one.
 
-[b]Rename Your Savegame[/b] does the same job, so pick one rather than running both: two mods writing the same field of the same header will not agree about what the original was.
+The mod does hook the load menu, so a mod that replaces the menu movie wholesale is the one thing that could get in its way.
+
+[b][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url][/b] does the same job, so pick one rather than running both: two mods writing the same field of the same header will not agree about what the original was.
 
 [size=6][b]Known limitations[/b][/size]
 [list]
 [*][b]A name typed in one script may show as boxes under another language.[/b] The game loads only the glyphs its current interface needs — under a European language it carries no Chinese, Japanese or Korean glyphs at all, and under a Chinese one the Latin font is cut down to 48 characters. Your name is stored correctly either way and reads properly again once you switch back. A mod cannot fix this without shipping a font of its own.[/*]
 [*][b]Confirming a name you have not edited does nothing on purpose.[/b] A save you have never renamed holds a quest key rather than text, and the list translates it fresh in whatever language you play in. Writing that translation into the file would tie the save to one language, so the mod leaves it alone until you actually edit the name.[/*]
-[*]The character counter turns amber past 40 characters. That is a hint, not a limit: longer names are written, and the list scrolls them.[/*]
+[*][b]Keyboard only.[/b] F2 opens the dialog, and the name is typed into it. The game's own menus carry no text field anywhere, so there is no on-screen keyboard a controller could reach even once the dialog is up. A pad still moves the highlight; naming the save needs a keyboard.[/*]
+[*]The counter turns amber past 40 characters, and stays quiet while the field still holds the name it opened on. That is a hint rather than a limit: longer names are written and the list scrolls them. The field itself stops taking input at 120.[/*]
 [/list]
-
 [size=6][b]Permissions[/b][/size]
-GPLv3, sources at PLACEHOLDER_repository_url. Translations, forks and derivative work need no permission from me, under the same licence: credit the original and link back, and that is all I ask. Collections and modpacks are welcome with credit and a link; if that means hosting the file itself somewhere else, ask me first.
+GPLv3, sources at {{REPOSITORY_URL}}. Translations, forks and derivative work need no permission from me, under the same licence: credit the original and link back, and that is all I ask. Collections and modpacks are welcome on the same terms; the licence lets you rehost the file, and I would appreciate a note if you do.
 
 [size=6][b]Shout outs[/b][/size]
 Warhorse Studios.
