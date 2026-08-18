@@ -8,8 +8,8 @@ Each pak holds a single table in the game's format: one row per key, holding the
 key, the English text and the text for that language. Rows are written for every
 shipped language, falling back to English, so a player never sees a bare key.
 
-Entry timestamps are fixed rather than taken from the source file: the paks are
-committed, and a build would otherwise rewrite all sixteen on every run.
+Entry timestamps are fixed rather than taken from the source file, so an
+unchanged strings.xml packs to the same bytes on every run.
 
 Run with no arguments; paths resolve relative to this file.
 """

@@ -57,9 +57,7 @@ public:
     /// Replaces the displayed name, stashing the original quest and objective
     /// on the first call.
     ///
-    /// An input that sanitises to nothing resets instead, so that clearing the
-    /// field in the dialog restores the quest name rather than blanking the
-    /// entry in the load list.
+    /// An input that sanitises to nothing calls ResetName instead.
     ///
     /// @param name Text as typed by the player.
     void SetDisplayName(std::string_view name);
@@ -74,9 +72,8 @@ public:
     /// Writes the header back, copying the payload through unchanged.
     ///
     /// Refuses when the file on disk no longer holds the save this object was
-    /// read from, so a slot the game reused or deleted while a rename dialog
-    /// was open is left alone. The new file is built beside the original and
-    /// replaces it only once complete.
+    /// read from. The new file is built beside the original and replaces it
+    /// only once complete.
     ///
     /// @return True when the file was replaced.
     bool Write() const;
@@ -87,10 +84,31 @@ private:
     std::uint64_t m_payloadOffset = 0; ///< First byte of the payload in m_path.
     int m_saveId = 0;
 
+    /// Returns the value of root attribute `name`.
+    ///
+    /// @param name Attribute name.
+    /// @return The value as the header carries it, still escaped, or empty.
     std::string Attribute(const std::string& name) const;
+
+    /// Returns the UIDescription attribute split on its separator.
+    ///
+    /// @return One entry per field, empty when the attribute is absent.
     std::vector<std::string> UiFields() const;
+
+    /// Sets root attribute `name`, adding it to the root element when absent.
+    ///
+    /// @param name Attribute name.
+    /// @param value Value to write, already escaped.
     void SetAttribute(const std::string& name, const std::string& value);
+
+    /// Removes root attribute `name`. Does nothing when it is absent.
+    ///
+    /// @param name Attribute name.
     void RemoveAttribute(const std::string& name);
+
+    /// Packs `fields` back into the UIDescription attribute.
+    ///
+    /// @param fields One entry per field, as UiFields returns them.
     void SetUiFields(const std::vector<std::string>& fields);
 };
 

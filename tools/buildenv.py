@@ -1,4 +1,4 @@
-"""Reads the machine paths the build needs out of build.env.
+"""Read the machine paths the build needs out of build.env.
 
 The file sits beside the project, is not tracked, and holds one KEY=VALUE per
 line. build.env.example lists every key with a description. The same file is read

@@ -35,17 +35,23 @@ void ShowHint(bool visible);
 
 /// Forwards a key the engine does not deliver to the movie.
 ///
-/// @param action Either "accept" or "cancel".
+/// @param action One of "accept", "cancel" or "reset".
 /// @return True when the element accepted the call.
 bool SendInput(const char* action);
 
 /// Sets the handler called when the player confirms a name.
+///
+/// @param handler Called with the text as typed.
 void SetAcceptHandler(std::function<void(const std::string&)> handler);
 
 /// Sets the handler called when the player dismisses the dialog.
+///
+/// @param handler Called with no arguments.
 void SetCancelHandler(std::function<void()> handler);
 
 /// Sets the handler called when the player asks for the original name back.
+///
+/// @param handler Called with no arguments.
 void SetResetHandler(std::function<void()> handler);
 
 }  // namespace RenameDialog
