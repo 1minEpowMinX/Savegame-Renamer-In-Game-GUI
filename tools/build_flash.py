@@ -23,7 +23,9 @@ FLASH_DIR = os.path.join(PROJECT_ROOT, "flash")
 OUTPUT = os.path.join(PROJECT_ROOT, "src", "Data", "Libs", "UI", "renamer.gfx")
 SCRATCH = os.path.join(PROJECT_ROOT, "build", "flash")
 
-FFDEC = r"D:\Computer tech. programs\FFDec\ffdec-cli.exe"
+# JPEXS Free Flash Decompiler, which compiles the skeleton and imports the
+# script into it. Overridable: it has no standard install location.
+FFDEC = os.environ.get("FFDEC", r"D:\Computer tech. programs\FFDec\ffdec-cli.exe")
 
 
 def run(*args):

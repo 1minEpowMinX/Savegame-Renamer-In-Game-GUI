@@ -9,12 +9,10 @@
 
 #include "CryEngine/CryCommon/SInputEvent.h"
 #include "KCSE/KCSEAPI.h"
-#include "Offsets/vtables/IConsole.h"
 #include "Offsets/vtables/IInput.h"
 #include "Offsets/vtables/IInputEventListener.h"
 #include "crysystem/SSystemGlobalEnvironment.h"
 
-#include <cstdlib>
 #include <string>
 
 #include "Log.h"
@@ -27,66 +25,6 @@
 KCSE_PLUGIN_INFO("SavegameRenamer", "Lefxxx", 1);
 
 namespace {
-
-// Temporary, replaced by the F2 dialog: lists what the catalog sees so the
-// game-side plumbing can be checked before any UI exists.
-void CmdList(IConsoleCmdArgs*)
-{
-    if (!SaveCatalog::Ready()) {
-        SR_LOG("save manager not captured yet, open the load menu once");
-        return;
-    }
-    const auto saves = SaveCatalog::List();
-    SR_LOG("%zu savegames", saves.size());
-    for (const auto& s : saves)
-        SR_LOG("  %5d  type %d  %-40s  %s",
-               s.id, s.type, s.displayName.c_str(), s.file.string().c_str());
-}
-
-// Temporary, replaced by the F2 dialog: renames one savegame by id. Everything
-// after the id becomes the name, spaces included; passing no name resets the
-// save to the quest name it had before the first rename.
-void CmdSet(IConsoleCmdArgs* args)
-{
-    if (args->GetArgCount() < 2) {
-        SR_LOG("usage: renamer_set <id> [name]");
-        return;
-    }
-
-    const int id = std::atoi(args->GetArg(1));
-    const auto entry = SaveCatalog::Find(id);
-    if (!entry.has_value()) {
-        SR_LOG("no savegame with id %d", id);
-        return;
-    }
-
-    std::string name;
-    for (int i = 2; i < args->GetArgCount(); ++i) {
-        if (!name.empty())
-            name += ' ';
-        name += args->GetArg(i);
-    }
-
-    auto header = whs::Description::Read(entry->file);
-    if (!header.has_value()) {
-        SR_LOG("could not read %s", entry->file.string().c_str());
-        return;
-    }
-
-    header->SetDisplayName(name);
-    if (!header->Write()) {
-        SR_LOG("could not write %s", entry->file.string().c_str());
-        return;
-    }
-
-    // The file is current, the manager's descriptions are not, and the page
-    // that is already on screen is built from those descriptions.
-    SaveCatalog::Refresh();
-    const bool redrawn = SaveLoadHook::RebuildLoadPage();
-
-    SR_LOG("%d is now '%s'%s", id, Strings::Localize(header->DisplayName()).c_str(),
-           redrawn ? "" : " (load page not open, list will refresh on next open)");
-}
 
 // The save the open dialog belongs to.
 int g_pendingSaveId = -1;
@@ -187,45 +125,20 @@ class RenameKeyListener : public Offsets::IInputEventListener {
 
 RenameKeyListener g_renameKey;
 
-// Temporary, replaced by the F2 hook: opens the dialog for a save chosen by id.
-void CmdDialog(IConsoleCmdArgs* args)
-{
-    if (RenameDialog::IsOpen()) {
-        RenameDialog::Hide();
-        return;
-    }
-    if (args->GetArgCount() < 2) {
-        SR_LOG("usage: renamer_dialog <id>");
-        return;
-    }
-    OpenFor(std::atoi(args->GetArg(1)));
-}
-
-void RegisterCommands()
+/// Attaches the dialog and the key that opens it.
+void InstallUi()
 {
     // kMessage_DataLoaded is not promised to arrive once. A second pass would
     // add the element listener and the key listener again, and every rename
     // would then be applied twice.
-    static bool registered = false;
-    if (registered)
+    static bool installed = false;
+    if (installed)
         return;
 
     auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (!env || !env->pConsole) {
-        SR_LOG("console not available, commands not registered");
+    if (!env)
         return;
-    }
-    registered = true;
-    env->pConsole->AddCommand("renamer_list", &CmdList, VF_NULL,
-                              "Lists every savegame the renamer can see.");
-    env->pConsole->AddCommand("renamer_set", &CmdSet, VF_NULL,
-                              "renamer_set <id> [name] -- renames a savegame, or resets it "
-                              "to its quest name when no name is given.");
-    env->pConsole->AddCommand("renamer_dialog", &CmdDialog, VF_NULL,
-                              "renamer_dialog [name] -- shows or hides the rename dialog.");
-    env->pConsole->AddCommand("renamer_probe", [](IConsoleCmdArgs*) { SaveLoadHook::ProbeSelection(); },
-                              VF_NULL,
-                              "renamer_probe -- logs the properties of the highlighted menu row.");
+    installed = true;
 
     // The flash element only exists once the UI has loaded, so this cannot run
     // from KCSEPlugin_Load.
@@ -260,7 +173,7 @@ void OnKcseMessage(KCSE::Message* msg)
         RenameDialog::ShowHint(false);
 
     if (msg && msg->type == KCSE::IMessagingInterface::kMessage_DataLoaded)
-        RegisterCommands();
+        InstallUi();
 }
 
 }  // namespace

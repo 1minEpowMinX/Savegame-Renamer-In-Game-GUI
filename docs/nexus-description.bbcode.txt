@@ -1,0 +1,64 @@
+[size=4][b]Rename any savegame from the load menu, without leaving the game.[/b][/size]
+
+Highlight a save, press [b]F2[/b], type a name. The list updates on the spot.
+
+[img]PLACEHOLDER_dialog.png[/img]
+
+[size=3][b]How it works[/b][/size]
+
+[list]
+[*][b]F2[/b] on a highlighted save opens the dialog. The key does nothing anywhere else in the menu.
+[*][b]Enter[/b] accepts, [b]Esc[/b] cancels, [b]Del[/b] restores the name the save had before you first renamed it. Every prompt is clickable as well.
+[*]Clearing the field and accepting also restores the original name.
+[*]Confirming a name you have not edited changes nothing, so an accidental Enter costs you nothing.
+[/list]
+
+The dialog is built from the game's own artwork: the frame, the key plates and the fonts all come out of the vanilla menus, so it looks like a screen Warhorse shipped rather than a mod window pasted on top.
+
+[size=3][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]Kingdom Come Script Extender (KCSE)[/url]
+[*][url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3363]KCD2 Address Library[/url], matching your game build
+[/list]
+
+The Address Library is what maps this plugin's code to your particular build of the game. [b]After a game patch, update it before playing[/b] — a plugin asking for an address the table does not cover fails hard rather than quietly.
+
+[size=3][b]Installation[/b][/size]
+
+Any mod manager, or unzip into the game folder so that you end up with:
+
+[code]KingdomComeDeliverance2/Mods/savegame_renamer/mod.manifest
+KingdomComeDeliverance2/Mods/savegame_renamer/Data/savegame_renamer.pak
+KingdomComeDeliverance2/Mods/savegame_renamer/Localization/*.pak
+KingdomComeDeliverance2/Mods/savegame_renamer/KCSE/Plugins/SavegameRenamer.dll[/code]
+
+[size=3][b]Languages[/b][/size]
+
+All sixteen the game ships: English, Czech, German, French, Spanish, Italian, Portuguese, Polish, Russian, Ukrainian, Turkish, Vietnamese, Japanese, Korean, and both Chinese scripts.
+
+Accept, cancel and reset are not translated by this mod at all — they are taken from the game's own strings, so they read exactly as they do everywhere else in your menu.
+
+[size=3][b]What it does to your saves[/b][/size]
+
+The name lives in the description header of the [i].whs[/i] file, alongside the quest name that was there before it. Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file first and replaces the original only once complete, so a crash mid-save cannot leave you with half a savegame.
+
+Uninstalling is safe. Renamed saves keep their names and load normally without the mod: the game tolerates the extra attribute the mod leaves behind. If you want the original names back, reset them with [b]Del[/b] before uninstalling.
+
+[size=3][b]Known limitations[/b][/size]
+
+[list]
+[*][b]A name typed in one script may show as boxes under another language.[/b] The game loads only the glyphs its current interface needs — under a European language it carries no CJK glyphs at all, and under a Chinese one the Latin font is cut down to 48 characters. Your name is stored correctly either way and reads properly again once you switch back. A mod cannot fix this without shipping a font.
+[*][b]Confirming an untouched name is deliberately a no-op.[/b] A save you have never renamed carries a quest key, not text, and the list translates it fresh in whatever language you play in. Writing that translation into the file would fix the save to one language, so the mod leaves it alone unless you actually edit the name.
+[*]The character counter turns amber past 40 characters. That is a hint, not a limit — longer names are written, and the list scrolls them.
+[/list]
+
+[size=3][b]Compared to [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url][/b][/size]
+
+That mod does the same job through console commands, and its own page notes that the list does not refresh until you leave the playline screen and come back. This one is a menu dialog with no console involved, the list redraws immediately, and the original name is recoverable afterwards. Do not run both.
+
+[size=3][b]Source and licence[/b][/size]
+
+GPLv3. Sources: PLACEHOLDER_repository_url
+
+Built on [url=https://github.com/JerryYOJ/libKCD2]libKCD2[/url]. Thanks to the authors of KCSE and the Address Library, without which none of this is reachable.

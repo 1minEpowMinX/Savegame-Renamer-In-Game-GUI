@@ -14,7 +14,6 @@ import argparse
 import os
 import shutil
 import sys
-import time
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -26,11 +25,18 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 DATA_DIR = os.path.join(SRC_DIR, "Data")
 LOCALIZATION_DIR = os.path.join(SRC_DIR, "Localization")
 MODID = "savegame_renamer"
+RELEASES_DIR = os.path.join(PROJECT_ROOT, "releases")
 PAK = os.path.join(DATA_DIR, MODID + ".pak")
 
-GAME_ROOT = r"D:\Games\Steam\steamapps\common\KingdomComeDeliverance2"
-PLUGIN_DLL = (r"D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv\build-release"
-              r"\SavegameRenamer\SavegameRenamer.dll")
+# One machine's layout, so both can be pointed elsewhere. KCD2_ROOT is where
+# --deploy copies to; KCD2_PLUGIN_DLL is where the CMake build leaves the
+# plugin, which is inside libKCD2's tree rather than this project's.
+GAME_ROOT = os.environ.get(
+    "KCD2_ROOT", r"D:\Games\Steam\steamapps\common\KingdomComeDeliverance2")
+PLUGIN_DLL = os.environ.get(
+    "KCD2_PLUGIN_DLL",
+    r"D:\Games\Self-Mods\KCD2\_deps\libKCD2\.buildenv\build-release"
+    r"\SavegameRenamer\SavegameRenamer.dll")
 
 MAX_EXTRA_FIELD_LEN = 0
 
@@ -40,6 +46,10 @@ def pack(pak_path, src_dir):
 
     Files ending in .pak are skipped so an archive living inside its own source
     directory does not pack a copy of itself.
+
+    Entry timestamps are fixed rather than read off the files: the archive is
+    committed, and a stamp per build would rewrite it whether or not anything
+    inside it changed.
 
     @param pak_path Archive to create, overwriting any existing file.
     @param src_dir Directory whose tree becomes the archive's root.
@@ -53,7 +63,7 @@ def pack(pak_path, src_dir):
 
     with zipfile.ZipFile(pak_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for arcname, full in entries:
-            info = zipfile.ZipInfo(arcname, time.localtime(os.path.getmtime(full))[:6])
+            info = zipfile.ZipInfo(arcname, build_localization.EPOCH)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o600 << 16
             with open(full, "rb") as f:
@@ -101,31 +111,48 @@ def check_archive(pak_path, src_dir, errors):
                     errors.append("%s: %s is not well-formed: %s" % (pak_path, name, exc))
 
 
+def version():
+    """Return the version the manifest declares.
+
+    The manifest is what the game and the Nexus page both read, so nothing else
+    keeps a copy of the number.
+
+    @return Version string.
+    """
+    return ET.parse(os.path.join(SRC_DIR, "mod.manifest")).findtext("info/version")
+
+
+def layout():
+    """Return the mod folder's contents as (source, relative destination) pairs.
+
+    Shared by --deploy and --release so an installed mod and a released one
+    cannot come out differently arranged.
+
+    @return List of pairs, the destinations relative to the mod folder.
+    """
+    pairs = [(os.path.join(SRC_DIR, "mod.manifest"), "mod.manifest"),
+             (os.path.join(PROJECT_ROOT, "LICENSE"), "LICENSE"),
+             (PAK, "Data/" + os.path.basename(PAK))]
+    # The game merges these into its own string tables, so they sit beside the
+    # manifest rather than inside the data pak.
+    pairs += [(os.path.join(LOCALIZATION_DIR, f), "Localization/" + f)
+              for f in sorted(os.listdir(LOCALIZATION_DIR)) if f.endswith(".pak")]
+    if os.path.isfile(PLUGIN_DLL):
+        pairs.append((PLUGIN_DLL, "KCSE/Plugins/" + os.path.basename(PLUGIN_DLL)))
+    else:
+        print("warning: %s not built" % PLUGIN_DLL)
+    return pairs
+
+
 def deploy():
-    """Copy the manifest, the pak and the plugin DLL into the game.
+    """Copy the mod folder's contents into the game.
 
     @return Destination directory, or None when a file could not be replaced.
     """
     dest = os.path.join(GAME_ROOT, "Mods", MODID)
-    os.makedirs(os.path.join(dest, "Data"), exist_ok=True)
-    os.makedirs(os.path.join(dest, "KCSE", "Plugins"), exist_ok=True)
-
-    # The game merges these into its own tables, so they go beside the manifest
-    # rather than inside the data pak.
-    os.makedirs(os.path.join(dest, "Localization"), exist_ok=True)
-
-    copies = [(os.path.join(SRC_DIR, "mod.manifest"), os.path.join(dest, "mod.manifest")),
-              (PAK, os.path.join(dest, "Data", os.path.basename(PAK)))]
-    copies += [(os.path.join(LOCALIZATION_DIR, f),
-                os.path.join(dest, "Localization", f))
-               for f in sorted(os.listdir(LOCALIZATION_DIR)) if f.endswith(".pak")]
-    if os.path.isfile(PLUGIN_DLL):
-        copies.append((PLUGIN_DLL, os.path.join(dest, "KCSE", "Plugins",
-                                                os.path.basename(PLUGIN_DLL))))
-    else:
-        print("warning: %s not built, DLL not deployed" % PLUGIN_DLL)
-
-    for source, target in copies:
+    for source, relative in layout():
+        target = os.path.join(dest, relative.replace("/", os.sep))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
         try:
             shutil.copyfile(source, target)
         except PermissionError:
@@ -135,11 +162,34 @@ def deploy():
     return dest
 
 
+def release():
+    """Write the archive that goes on Nexus, and return its path.
+
+    The archive holds one folder named after the modid, which is what the game
+    expects under Mods and what every mod manager unpacks as-is.
+
+    @return Path of the archive written.
+    """
+    os.makedirs(RELEASES_DIR, exist_ok=True)
+    path = os.path.join(RELEASES_DIR, "%s-%s.zip" % (MODID, version()))
+
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for source, relative in layout():
+            info = zipfile.ZipInfo(MODID + "/" + relative, build_localization.EPOCH)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o600 << 16
+            with open(source, "rb") as f:
+                z.writestr(info, f.read())
+    return path
+
+
 def main():
     """Build, verify and optionally deploy."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--deploy", action="store_true",
                         help="copy the result into the game's Mods folder")
+    parser.add_argument("--release", action="store_true",
+                        help="write releases/<modid>-<version>.zip")
     args = parser.parse_args()
 
     build_flash.build()
@@ -163,6 +213,11 @@ def main():
         if dest is None:
             return 1
         print("deployed to " + dest)
+
+    if args.release:
+        path = release()
+        print("wrote %s (%d bytes)" % (os.path.relpath(path, PROJECT_ROOT),
+                                       os.path.getsize(path)))
     return 0
 
 

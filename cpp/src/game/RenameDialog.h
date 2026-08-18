@@ -25,9 +25,6 @@ bool IsOpen();
 /// @return True when the element accepted the call.
 bool Show(const std::string& currentName, bool canReset);
 
-/// Hides the dialog without emitting an event.
-void Hide();
-
 /// Shows or hides the prompt that advertises the rename key.
 ///
 /// It is drawn over the save list, not inside the dialog: a player who has

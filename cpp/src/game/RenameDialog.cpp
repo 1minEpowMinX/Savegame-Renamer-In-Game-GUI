@@ -271,13 +271,6 @@ bool Show(const std::string& currentName, bool canReset)
     return true;
 }
 
-void Hide()
-{
-    if (IUIElement* el = Element())
-        Call(el, "Close", "fc_close", SUIArguments());
-    Dismiss();
-}
-
 void ShowHint(bool visible)
 {
     IUIElement* el = HintElement();

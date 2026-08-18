@@ -3,7 +3,6 @@
 #include <MinHook.h>
 
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -213,104 +212,7 @@ void SelectedButton(VarObj& out)
         out.Reset();
 }
 
-/// Renders a flash value as text for the log.
-std::string Describe(const SFlashVarValue& v)
-{
-    char buf[128];
-    if (v.IsInt())
-        std::snprintf(buf, sizeof(buf), "int %d", v.GetInt());
-    else if (v.IsUInt())
-        std::snprintf(buf, sizeof(buf), "uint %u", v.GetUInt());
-    else if (v.IsDouble())
-        std::snprintf(buf, sizeof(buf), "double %.3f", v.GetDouble());
-    else if (v.IsString())
-        std::snprintf(buf, sizeof(buf), "string '%s'", v.GetConstStrPtr());
-    else if (v.IsBool())
-        std::snprintf(buf, sizeof(buf), "bool %d", v.GetBool() ? 1 : 0);
-    else if (v.IsNull())
-        std::snprintf(buf, sizeof(buf), "null");
-    else
-        std::snprintf(buf, sizeof(buf), "undefined");
-    return buf;
-}
-
 }  // namespace
-
-void ProbeSelection()
-{
-    auto player = MenuPlayer();
-    if (!player) {
-        SR_LOG("probe: no menu player");
-        return;
-    }
-
-    SFlashVarValue container = SFlashVarValue::CreateUndefined();
-    SFlashVarValue index = SFlashVarValue::CreateUndefined();
-    const bool haveC = player->GetVariable("_root.g_selectContainer", container);
-    const bool haveI = player->GetVariable("_root.g_selectButton", index);
-    SR_LOG("probe: g_selectContainer read=%d %s, g_selectButton read=%d %s",
-           haveC, Describe(container).c_str(), haveI, Describe(index).c_str());
-    if (!haveC || !haveI)
-        return;
-
-    // Dump the shape of the array itself: the indices above are live, yet every
-    // index has so far produced the same row, so the structure is not what the
-    // menu script implied.
-    VarObj array;
-    if (!player->GetVariable("_root.MenuManagerArray", *array.Receive()) || !array) {
-        SR_LOG("probe: MenuManagerArray unreadable");
-        return;
-    }
-    SR_LOG("probe: MenuManagerArray isArray=%d size=%u",
-           array.Get()->IsArray(), array.Get()->GetArraySize());
-
-    for (unsigned c = 0; c < array.Get()->GetArraySize() && c < 4; ++c) {
-        VarObj row;
-        if (!array.Get()->GetElement(c, *row.Receive()) || !row) {
-            SR_LOG("probe:   [%u] unreadable", c);
-            continue;
-        }
-        const unsigned count = row.Get()->GetArraySize();
-        SR_LOG("probe:   [%u] isArray=%d size=%u", c, row.Get()->IsArray(), count);
-
-        for (unsigned b = 0; b < count && b < 6; ++b) {
-            VarObj btn;
-            if (!row.Get()->GetElement(b, *btn.Receive()) || !btn) {
-                SR_LOG("probe:     [%u][%u] unreadable", c, b);
-                continue;
-            }
-            SFlashVarValue name = SFlashVarValue::CreateUndefined();
-            SFlashVarValue type = SFlashVarValue::CreateUndefined();
-            btn.Get()->GetMember("_name", name);
-            btn.Get()->GetMember("type", type);
-            SR_LOG("probe:     [%u][%u] name=%s type=%s",
-                   c, b, Describe(name).c_str(), Describe(type).c_str());
-        }
-    }
-
-    VarObj button;
-    SelectedButton(button);
-    if (!button) {
-        SR_LOG("probe: no highlighted button");
-        return;
-    }
-
-    static const char* kMembers[] = {"type", "saveId", "playlineId", "_name", "timestamp"};
-    for (const char* member : kMembers) {
-        SFlashVarValue value = SFlashVarValue::CreateUndefined();
-        const bool ok = button.Get()->GetMember(member, value);
-        SR_LOG("probe: %-12s read=%d %s", member, ok, Describe(value).c_str());
-    }
-
-    VarObj head;
-    if (button.Get()->GetMember("tfHead", *head.Receive()) && head) {
-        SFlashVarValue text = SFlashVarValue::CreateUndefined();
-        const bool ok = head.Get()->GetMember("text", text);
-        SR_LOG("probe: %-12s read=%d %s", "tfHead.text", ok, Describe(text).c_str());
-    }
-
-    SR_LOG("probe: SelectedSaveId() -> %d", SelectedSaveId());
-}
 
 int SelectedSaveId()
 {
