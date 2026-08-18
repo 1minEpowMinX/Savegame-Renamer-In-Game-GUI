@@ -42,6 +42,25 @@ std::regex AttributePattern(const std::string& name)
     return std::regex("\\s" + name + "=\"([^\"]*)\"");
 }
 
+/// Returns the offset of the root element's closing bracket.
+///
+/// A '>' standing inside an attribute value is passed over. The character needs
+/// no escaping there, and the game leaves it as it is.
+///
+/// @param xml Header XML.
+/// @return Offset of the bracket, or npos when the element is unterminated.
+std::size_t RootTagEnd(const std::string& xml)
+{
+    bool quoted = false;
+    for (std::size_t i = 0; i < xml.size(); ++i) {
+        if (xml[i] == '"')
+            quoted = !quoted;
+        else if (xml[i] == '>' && !quoted)
+            return i;
+    }
+    return std::string::npos;
+}
+
 }  // namespace
 
 std::optional<Description> Description::Read(const std::filesystem::path& path)
@@ -129,7 +148,9 @@ void Description::SetAttribute(const std::string& name, const std::string& value
     // A new attribute goes last on the root element, just before its closing
     // bracket. An unknown attribute is tolerated by the game's parser; an
     // unknown child element is not.
-    m_xml.insert(m_xml.find('>'), written);
+    const std::size_t end = RootTagEnd(m_xml);
+    if (end != std::string::npos)
+        m_xml.insert(end, written);
 }
 
 void Description::RemoveAttribute(const std::string& name)

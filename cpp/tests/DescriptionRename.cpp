@@ -124,3 +124,18 @@ TEST_CASE("An attribute whose name ends in another's is not mistaken for it", "[
     auto d = Load(SampleXml(3754, "@quest", "@objective", " AutoSaveId=\"9999\""), "rename_suffix.whs");
     CHECK(d.SaveId() == 3754);
 }
+
+TEST_CASE("A '>' inside an attribute value does not misplace the stash", "[rename]")
+{
+    // '>' needs no escaping inside an attribute value, so the game is free to
+    // write one there. The stash still goes on the root element.
+    auto d = Load(SampleXml(3754, "Kolben > Talmberk", "@objective"), "rename_bracket.whs");
+    d.SetDisplayName("Marked");
+
+    CHECK(d.Xml().find("RenamerOriginal=\"Kolben > Talmberk|@objective\"") != std::string::npos);
+    CHECK(d.Xml().find("|Marked||location_suchdol|") != std::string::npos);
+
+    d.ResetName();
+    CHECK(d.DisplayName() == "Kolben > Talmberk");
+    CHECK(d.ObjectiveName() == "@objective");
+}
