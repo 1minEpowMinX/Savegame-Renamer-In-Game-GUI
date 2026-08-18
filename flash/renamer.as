@@ -146,6 +146,10 @@ frame._height = BOX_H;
 // embedFonts must be set BEFORE the format is applied: unset, the field falls
 // back to device rendering, which draws nothing here because the movie carries
 // no device font.
+// The box a field is given is not trimmed to what it holds. textWidth sums glyph
+// advances, which is short of what an italic face actually paints: its last
+// letter leans past its own advance, and a field cut to the sum clips that lean.
+// The measure is still right for laying a row out, only not for bounding it.
 function mkText(parent, name, depth, x, y, w, h, size, color, font, align) {
     var tf = parent.createTextField(name, depth, x, y, w, h);
     tf.selectable = false;
@@ -186,7 +190,6 @@ function drawHit(clip) {
 function setHintLabel(clip, label) {
     clip.labelValue = label;
     setText(clip.labelText, label);
-    clip.labelText._width = clip.labelText.textWidth + 4;
     clip.spanW = clip.capW + KEY_GAP + clip.labelText.textWidth;
     drawHit(clip);
 }
@@ -214,10 +217,6 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     // the field is hung high enough that the line's middle meets the plate's.
     labelText._x = capW + KEY_GAP;
     labelText._y = rowH / 2 - 2 - metrics.height / 2;
-    // Slack past the run, or the last glyph is clipped. It is not part of the
-    // span: counting padding as content pushes a centred pair off its axis by
-    // half of it.
-    labelText._width = labelText.textWidth + 4;
 
     // The plate is drawn from its left edge and centred on its own origin
     // vertically, which is why the holder sits on the row's centre line and not
