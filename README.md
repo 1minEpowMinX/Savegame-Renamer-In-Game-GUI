@@ -25,10 +25,14 @@ written with fixed timestamps and are reproducible.
 
 ## Building
 
+Building from source needs Visual Studio with the C++ workload, vcpkg, a JVM for
+FFDec, and Python 3.9 or newer. The scripts use the standard library only, so
+there is nothing to install past the interpreter itself; 3.9 is where
+`ET.indent` arrives, which is what lays out the generated string tables.
+
 The plugin builds as a subproject of [libKCD2](https://github.com/JerryYOJ/libKCD2),
 whose build environment globs `Projects/*/.buildenv/CMakeLists.txt`; this project
-is reached through a directory junction named `Projects\SavegameRenamer`. Visual
-Studio with the C++ workload and vcpkg are what `tools/build_cpp.bat` expects.
+is reached through a directory junction named `Projects\SavegameRenamer`.
 
 ```
 tools\build_cpp.bat              plugin and tests

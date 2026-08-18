@@ -16,9 +16,17 @@ Run with no arguments; paths resolve relative to this file.
 
 import os
 import sys
-import time
 import xml.etree.ElementTree as ET
 import zipfile
+
+# ET.indent, which lays the generated table out the way the game's own tables
+# are laid out. The guard is here rather than in build.py because this is where
+# the requirement comes from, and build.py reaches every path through this
+# import.
+MIN_PYTHON = (3, 9)
+if sys.version_info < MIN_PYTHON:
+    raise SystemExit("Python %d.%d or newer is required, this is %d.%d"
+                     % (MIN_PYTHON + sys.version_info[:2]))
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCALIZATION_DIR = os.path.join(PROJECT_ROOT, "src", "Localization")
