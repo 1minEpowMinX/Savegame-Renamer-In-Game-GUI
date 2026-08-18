@@ -125,24 +125,9 @@ class RenameKeyListener : public Offsets::IInputEventListener {
 
 RenameKeyListener g_renameKey;
 
-/// Attaches the dialog and the key that opens it.
-void InstallUi()
+/// Points the dialog's three outcomes at what each of them means for a save.
+void WireDialog()
 {
-    // kMessage_DataLoaded is not promised to arrive once. A second pass would
-    // add the element listener and the key listener again, and every rename
-    // would then be applied twice.
-    static bool installed = false;
-    if (installed)
-        return;
-
-    auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (!env)
-        return;
-    installed = true;
-
-    // The flash element only exists once the UI has loaded, so this cannot run
-    // from KCSEPlugin_Load.
-    RenameDialog::Install();
     RenameDialog::SetAcceptHandler([](const std::string& typed) {
         // Confirming the line as it was offered is not a rename, and writing it
         // would cost the save its localized name for nothing.
@@ -159,9 +144,33 @@ void InstallUi()
         g_pendingSaveId = -1;
         g_pendingName.clear();
     });
+}
 
-    if (env->pInput) {
+/// Attaches the dialog and the key that opens it.
+void InstallUi()
+{
+    // kMessage_DataLoaded is not promised to arrive once, and the two halves are
+    // tracked apart: a listener added a second time applies every rename twice,
+    // while a half that failed has to be reachable by the next message. The
+    // element is absent until the UI has loaded, which is also why none of this
+    // can run from KCSEPlugin_Load.
+    static bool dialogInstalled = false;
+    static bool keyArmed = false;
+    if (dialogInstalled && keyArmed)
+        return;
+
+    auto* env = SSystemGlobalEnvironment::GetInstance();
+    if (!env)
+        return;
+
+    if (!dialogInstalled && RenameDialog::Install()) {
+        WireDialog();
+        dialogInstalled = true;
+    }
+
+    if (!keyArmed && env->pInput) {
         env->pInput->AddEventListener(&g_renameKey);
+        keyArmed = true;
         SR_LOG("F2 armed");
     }
 }
