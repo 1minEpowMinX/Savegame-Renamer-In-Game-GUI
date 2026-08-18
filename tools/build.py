@@ -165,8 +165,10 @@ def deploy():
 def release():
     """Write the archive that goes on Nexus, and return its path.
 
-    The archive holds one folder named after the modid, which is what the game
-    expects under Mods and what every mod manager unpacks as-is.
+    Paths inside start at Mods/, so unpacking the archive over the game folder
+    puts the mod where the game looks for it. Rooting it at the modid instead
+    reads as correct and installs one directory too high, where nothing loads
+    and nothing complains.
 
     @return Path of the archive written.
     """
@@ -175,7 +177,8 @@ def release():
 
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for source, relative in layout():
-            info = zipfile.ZipInfo(MODID + "/" + relative, build_localization.EPOCH)
+            info = zipfile.ZipInfo("Mods/" + MODID + "/" + relative,
+                                   build_localization.EPOCH)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o600 << 16
             with open(source, "rb") as f:
