@@ -455,9 +455,25 @@ function fc_close() {
     Selection.setFocus(null);
 }
 
+// The engine splits an event's arguments on a vertical bar, so a name carrying
+// one would reach the plugin cut short at it rather than whole. The plugin drops
+// the character anyway -- it is the separator inside UIDescription -- so it is
+// dropped here, where the rest of the name still survives.
+function stripBars(text) {
+    var out = "";
+    var i = 0;
+    while (i < text.length) {
+        if (text.charAt(i) != "|") {
+            out = out + text.charAt(i);
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
 function fc_setInput(action) {
     if (action == "accept") {
-        var typed = input.text;
+        var typed = stripBars(input.text);
         box._visible = false;
         Selection.setFocus(null);
         fscommand("onRenameAccept", typed);
