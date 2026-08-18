@@ -105,6 +105,39 @@ bool Ready()
     return g_manager != nullptr;
 }
 
+namespace {
+
+/// Fills `out` from one of the manager's descriptions.
+///
+/// @param desc Description to describe.
+/// @param out Receives the entry.
+/// @return False when the file behind the description could not be resolved or
+///         read, in which case `out` is left half-written.
+bool BuildEntry(const C_SaveGameDescription* desc, SaveEntry& out)
+{
+    out.id = desc->m_saveIndex;
+    // E_SaveGameType is an empty enum-wrapper struct, so the member is a single
+    // byte holding E_SaveGameType::Type rather than a readable field.
+    out.type = *reinterpret_cast<const std::uint8_t*>(&desc->m_saveType);
+    out.file = ResolvePath(desc->m_fileName.c_str(), out.id);
+    if (out.file.empty())
+        return false;
+
+    const auto header = whs::Description::Read(out.file);
+    if (!header.has_value())
+        return false;
+
+    // The line as the load list renders it, so the dialog can offer it for
+    // editing and a custom name can be built on top of the original.
+    out.displayName = Strings::Localize(header->DisplayName());
+    const std::string objective = Strings::Localize(header->ObjectiveName());
+    if (!objective.empty())
+        out.displayName += " - " + objective;
+    return true;
+}
+
+}  // namespace
+
 std::vector<SaveEntry> List()
 {
     std::vector<SaveEntry> out;
@@ -113,30 +146,9 @@ std::vector<SaveEntry> List()
 
     for (const auto& slot : g_manager->m_slotsByType) {
         for (const C_SaveGameDescription* desc : slot.m_saves) {
-            if (!desc)
-                continue;
-
             SaveEntry entry;
-            entry.id = desc->m_saveIndex;
-            // E_SaveGameType is an empty enum-wrapper struct, so the member is a
-            // single byte holding E_SaveGameType::Type rather than a readable field.
-            entry.type = *reinterpret_cast<const std::uint8_t*>(&desc->m_saveType);
-            entry.file = ResolvePath(desc->m_fileName.c_str(), entry.id);
-            if (entry.file.empty())
-                continue;
-
-            const auto header = whs::Description::Read(entry.file);
-            if (!header.has_value())
-                continue;
-
-            // The line as the load list renders it, so the dialog can offer it
-            // for editing and a custom name can be built on top of the original.
-            entry.displayName = Strings::Localize(header->DisplayName());
-            const std::string objective = Strings::Localize(header->ObjectiveName());
-            if (!objective.empty())
-                entry.displayName += " - " + objective;
-
-            out.push_back(std::move(entry));
+            if (desc && BuildEntry(desc, entry))
+                out.push_back(std::move(entry));
         }
     }
     return out;
@@ -144,9 +156,20 @@ std::vector<SaveEntry> List()
 
 std::optional<SaveEntry> Find(int saveId)
 {
-    for (auto& entry : List()) {
-        if (entry.id == saveId)
-            return entry;
+    if (!g_manager)
+        return std::nullopt;
+
+    // Matched on the description before anything touches the disk. Going through
+    // List() here meant resolving and reading the header of every save on the
+    // machine, twice over, on each press of the rename key.
+    for (const auto& slot : g_manager->m_slotsByType) {
+        for (const C_SaveGameDescription* desc : slot.m_saves) {
+            if (!desc || desc->m_saveIndex != saveId)
+                continue;
+            SaveEntry entry;
+            if (BuildEntry(desc, entry))
+                return entry;
+        }
     }
     return std::nullopt;
 }
