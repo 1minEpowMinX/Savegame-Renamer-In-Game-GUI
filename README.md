@@ -39,8 +39,16 @@ checkout carries another developer's layout. A variable already set in the
 environment wins over the file, which is enough for a one-off override.
 
 The plugin builds as a subproject of [libKCD2](https://github.com/JerryYOJ/libKCD2),
-whose build environment globs `Projects/*/.buildenv/CMakeLists.txt`; this project
-is reached through a directory junction named `Projects\SavegameRenamer`.
+whose build environment globs `Projects/*/.buildenv/CMakeLists.txt`, so this
+project has to be linked in there once. From an elevated prompt:
+
+```
+mklink /J "<libKCD2>\Projects\SavegameRenamer" "<this checkout>\cpp"
+```
+
+`tools/build_cpp.bat` checks the link before building. Without it CMake simply
+does not see the project, the other plugins in that tree build, and the run
+reports success having produced nothing.
 
 ```
 tools\build_cpp.bat              plugin and tests
