@@ -84,10 +84,21 @@
     <AdditionalOptions>/std:c++17 /utf-8</AdditionalOptions>
   </PropertyGroup>
 
+  <!-- Each configuration starts what it has just built. Release stops at the
+       plugin and the tests, and the game it could otherwise start would be
+       running whichever plugin was installed last, not the one on screen. -->
   <PropertyGroup Label="Debugging">
-    <!-- The plugin is loaded into the game by KCSE, so the thing to start is the
-         game. Breakpoints in this project bind once it has loaded the DLL. -->
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" Label="Debugging">
+    <LocalDebuggerCommand>$(LibKCD2Build)\SavegameRenamer\SavegameRenamerTests.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(LibKCD2Build)\SavegameRenamer</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+
+  <!-- The plugin is loaded into the game by KCSE, so the thing to start is the
+       game. Breakpoints bind once it has loaded the DLL. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Deploy'" Label="Debugging">
     <LocalDebuggerCommand>$(KCD2Root)\Bin\Win64MasterMasterSteamPGO\KingdomCome.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>$(KCD2Root)\Bin\Win64MasterMasterSteamPGO</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

@@ -55,15 +55,19 @@ set to launch the game so breakpoints bind once KCSE has loaded the plugin.
 
 Two configurations, both x64:
 
-| Configuration | Build runs |
-|---|---|
-| `Release` | `tools\build_cpp.bat` — the plugin alone, the loop while editing C++ |
-| `Deploy` | that, then `tools\build.py --deploy` — flash, localization, pak, install |
+| Configuration | Build runs | F5 starts |
+|---|---|---|
+| `Release` | `tools\build_cpp.bat` — the plugin alone, the loop while editing C++ | the test executable |
+| `Deploy` | that, then `tools\build.py --deploy` — flash, localization, pak, install | the game |
 
-The two are chained rather than independent: the pipeline copies the plugin it
-has just built, so it does not run when the compile failed. `Deploy` needs FFDec
-on the machine and the game closed, which is why the C++ loop is a configuration
-of its own.
+The two commands are chained rather than independent: the pipeline copies the
+plugin it has just built, so it does not run when the compile failed. `Deploy`
+needs FFDec on the machine and the game closed, which is why the C++ loop is a
+configuration of its own.
+
+Each configuration starts what it has just built. Release installs nothing, so a
+game started from it would be running whichever plugin was deployed last rather
+than the one just compiled.
 
 Configuring it as a CMake folder does not work: `cpp/.buildenv/CMakeLists.txt` is
 a fragment that expects `RE_ROOT`, `RE_BUILDENV` and the `kcd_re` target from the
