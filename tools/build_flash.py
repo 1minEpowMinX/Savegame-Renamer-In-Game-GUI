@@ -1,13 +1,13 @@
 """Compile flash/base.xml and flash/renamer.as into the .gfx the mod ships.
 
-Both inputs are text, so the only binary in the source tree is the build product.
+Both inputs are text; the compiled .gfx is the only binary the source tree
+carries.
 
-base.xml is the SWF skeleton: stage size and, critically, the ImportAssets2 tags
-that pull the menu fonts out of the game's shared gfxfontlib.gfx. A text field
-in a movie without those imports renders nothing at all.
+base.xml is the SWF skeleton: stage size and the ImportAssets2 tags that pull the
+menu fonts out of the game's shared gfxfontlib.gfx.
 
-renamer.as is the whole dialog. FFDec has no "compile one file" mode, so the
-skeleton's placeholder script is exported to a scratch folder, overwritten, and
+renamer.as is the whole dialog. It reaches the container by way of a scratch
+folder: the skeleton's placeholder script is exported there, overwritten, and
 imported back.
 
 Run with no arguments; paths resolve relative to this file.
@@ -60,9 +60,13 @@ def build():
     os.makedirs(SCRATCH)
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
 
+    # The skeleton's ImportAssets2 tags are what make the fonts reachable: a text
+    # field in a movie without them renders nothing at all.
     container = os.path.join(SCRATCH, "container.swf")
     run("-xml2swf", os.path.join(FLASH_DIR, "base.xml"), container)
 
+    # FFDec has no "compile one file" mode, so the skeleton's placeholder script
+    # is what the real source replaces.
     exported = os.path.join(SCRATCH, "exported")
     run("-export", "script", exported, container)
 
@@ -74,7 +78,7 @@ def build():
     run("-importScript", container, OUTPUT, exported)
 
     # The importer is quiet about a script it could not compile, so read the
-    # result back and insist our source actually landed in it.
+    # result back and insist the source actually landed in it.
     verify = os.path.join(SCRATCH, "verify")
     run("-export", "script", verify, OUTPUT)
     with open(os.path.join(verify, "scripts", "frame_1", "DoAction.as"), encoding="utf-8") as f:

@@ -1,15 +1,14 @@
 """Turn src/Localization/strings.xml into one <Language>_xml.pak per language.
 
 The game reads these out of the mod folder alongside its own tables and merges
-them into the localization manager, so the plugin can resolve the mod's keys the
+them into the localization manager, where the plugin resolves the mod's keys the
 same way it resolves the game's.
 
 Each pak holds a single table in the game's format: one row per key, holding the
-key, the English text and the text for that language. Rows are written for every
-shipped language, falling back to English, so a player never sees a bare key.
+key, the English text and the text for that language. Every shipped language gets
+a row, falling back to English.
 
-Entry timestamps are fixed rather than taken from the source file, so an
-unchanged strings.xml packs to the same bytes on every run.
+Entry timestamps are fixed rather than taken from the source file.
 
 Run with no arguments; paths resolve relative to this file.
 """
@@ -67,6 +66,8 @@ def table_for(rows, language):
     out = ET.Element("Table")
     for key, english, texts in rows:
         row = ET.SubElement(out, "Row")
+        # English fills a language the source carries no row for, so a player
+        # never meets a bare key.
         for value in (key, english, texts.get(language, english)):
             ET.SubElement(row, "Cell").text = value
     ET.indent(out, space="\t")
@@ -82,6 +83,8 @@ def build():
     written = []
     for language in LANGUAGES:
         path = os.path.join(LOCALIZATION_DIR, language + "_xml.pak")
+        # A fixed stamp rather than the source file's: the paks are committed,
+        # and a stamp per build rewrites every one of them on every run.
         info = zipfile.ZipInfo(TABLE, EPOCH)
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o600 << 16

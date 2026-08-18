@@ -18,8 +18,9 @@ namespace SaveCatalog {
 namespace {
 
 // C_SaveGameManager::UpdateSaveGameDescriptions: enumerates "*.whs" and rebuilds
-// m_slotsByType. Hooked for its `this`, which is the only handle on the manager
-// this plugin can get; also re-invoked as the list refresh.
+// m_slotsByType. Hooked for its `this`: the manager is owned by
+// C_PlayerProfileWHManager and has no resolvable global, so this call is the only
+// handle on it. Also re-invoked as the list refresh.
 constexpr std::uint64_t kUpdateDescriptionsId = 38334;
 
 using UpdateDescriptionsFn = void(*)(C_SaveGameManager*);
@@ -49,10 +50,8 @@ std::filesystem::path SavesRoot()
 
 /// Returns the full path of `fileName` under the playline holding save `saveId`.
 ///
-/// The description carries the bare file name; the directory is "%s/playline%d/%s"
-/// and the manager does not expose the playline index. Candidates are therefore
-/// matched on the SaveId inside the header as well as on the name, and an
-/// ambiguous match is refused rather than guessed.
+/// Candidates are matched on the SaveId inside the header as well as on the
+/// name. An ambiguous match resolves to an empty path.
 ///
 /// @param fileName Bare name such as "permanent3754.whs".
 /// @param saveId Id the header must declare.
@@ -63,6 +62,9 @@ std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
     if (root.empty())
         return {};
 
+    // The description carries the bare file name and the manager does not expose
+    // the playline index, so every "<root>/playline*/<name>" is a candidate and
+    // the header is what tells them apart.
     std::error_code ec;
     std::filesystem::path found;
     for (const auto& dir : std::filesystem::directory_iterator(root, ec)) {

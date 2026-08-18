@@ -13,9 +13,9 @@ struct SaveEntry {
 
 /// Reads the game's savegame list and asks it to rebuild after a file changed.
 ///
-/// The game's C_SaveGameManager is owned by C_PlayerProfileWHManager and has no
-/// resolvable global, so the instance is captured from the `this` of the first
-/// UpdateSaveGameDescriptions call. Install() must run before anything else.
+/// The manager instance is captured by Install() from the `this` of the first
+/// UpdateSaveGameDescriptions call. Find() and Refresh() report nothing until
+/// that call has come.
 namespace SaveCatalog {
 
 /// Hooks UpdateSaveGameDescriptions so the manager instance can be captured.

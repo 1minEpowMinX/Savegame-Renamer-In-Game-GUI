@@ -103,9 +103,9 @@ TEST_CASE("Renaming leaves the other header attributes alone", "[rename]")
 
 TEST_CASE("A name holding regex replacement syntax is stored literally", "[rename]")
 {
-    // The value used to be handed to regex_replace as its replacement argument,
-    // where "$&" pastes the whole match back in, quotes included, and "$1" is
-    // dropped. The header came out unparseable and the save left the load list.
+    // regex_replace reads its replacement argument as a format string: "$&"
+    // pastes the whole match back in, quotes included, and "$1" is dropped.
+    // Either leaves the header unparseable and the save gone from the load list.
     for (const std::string name : {"Cost 100$", "Save $1 here", "A $& B", "$$ pure"}) {
         auto d = Load(SampleXml(), "rename_dollar.whs");
         d.SetDisplayName(name);

@@ -24,14 +24,14 @@ enum class UiField {
 /// The description header of one .whs savegame.
 ///
 /// Holds the header text only. The payload stays in the file on disk and is
-/// copied through on write, so a save of any size costs one header in memory.
+/// copied through on write.
 class Description {
 public:
     /// Reads the header of the save at `path`.
     ///
     /// Accepts a file only when it carries the savegame magic, a header that
     /// fits inside it, a numeric SaveId and a UIDescription holding at least
-    /// the quest and objective fields. Every other member relies on that.
+    /// the quest and objective fields.
     ///
     /// @param path Savegame to read.
     /// @return The parsed description, or an empty optional.

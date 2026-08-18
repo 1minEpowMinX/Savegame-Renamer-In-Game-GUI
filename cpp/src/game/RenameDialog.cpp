@@ -44,10 +44,9 @@ IUIElement* Element()
 
 /// Returns the element that carries the prompt over the save list.
 ///
-/// It is a second declaration of the same movie, with every input attribute
-/// off: the dialog's element grabs the mouse across the whole screen, so
-/// keeping that one visible for the prompt took clicks and the wheel away from
-/// the list underneath.
+/// A second declaration of the same movie, with every input attribute off. The
+/// reason it is not the dialog's own element is on the declaration itself, in
+/// UIElements/SavegameRenamer.xml.
 IUIElement* HintElement()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
@@ -60,7 +59,7 @@ IUIElement* HintElement()
     return el.get();
 }
 
-/// Returns the vanilla menu element, used to silence it while the dialog is up.
+/// Returns the vanilla menu element, which is silenced while the dialog is up.
 IUIElement* MenuElement()
 {
     auto* env = SSystemGlobalEnvironment::GetInstance();
@@ -94,13 +93,12 @@ bool Call(IUIElement* el, const char* name, const char* funcname, const SUIArgum
 
 /// Stops the pause menu reacting to input while the dialog is up.
 ///
-/// The menu is not key-driven: the game forwards actions into Menu.gfx itself,
-/// so events_exclusive on our own element does not hold it back. Menu.gfx has
-/// its own switch for that feed.
-///
 /// @param busy Whether the menu should ignore the forwarded input.
 void SetMenuBusy(bool busy)
 {
+    // The menu is not key-driven: the game forwards actions into Menu.gfx
+    // itself, which events_exclusive on the dialog's element does not hold back.
+    // Menu.gfx carries its own switch for that feed.
     SUIArguments args;
     args.AddArgument(busy);
     Call(MenuElement(), "SetBusyProtection", "fc_setBusyProtection", args);
@@ -108,14 +106,15 @@ void SetMenuBusy(bool busy)
 
 /// Sends the current language's captions into `el`.
 ///
-/// The movie cannot reach the localization tables itself: a key assigned to a
-/// text field from ActionScript is not resolved on the way in. It is called
-/// before every showing rather than once at startup, so a language changed
-/// mid-session lands and an element instantiated late is not missed.
+/// Called before every showing rather than once at startup.
 ///
 /// @param el Element to caption.
 void ApplyLabels(IUIElement* el)
 {
+    // The movie cannot reach the localization tables itself: a key assigned to a
+    // text field from ActionScript is not resolved on the way in. Per showing
+    // rather than once, so a language changed mid-session lands and an element
+    // instantiated late is still captioned.
     const Strings::Labels labels = Strings::Get();
 
     SUIArguments args;
@@ -127,19 +126,13 @@ void ApplyLabels(IUIElement* el)
     Call(el, "SetLabels", "fc_setLabels", args);
 }
 
-/// Feeds Enter and Esc into the movie while the dialog is open.
-///
-/// The engine delivers typed characters to a Scaleform input field on its own
-/// but routes these two elsewhere, so they are observed here and forwarded as
-/// SetInput calls.
-///
-/// Unlike MCM's listener this one consumes what it handles: the load list also
-/// acts on Enter, and SetBusyProtection does not hold that back, so a confirmed
-/// rename would otherwise be followed by the game offering to load the save.
-/// Both edges are swallowed, or the release alone still reaches the menu.
+/// Forwards the dialog's own keys into the movie while it is open, and consumes
+/// them.
 class KeyListener : public Offsets::IInputEventListener {
     static bool IsOurs(const Offsets::SInputEvent& ev)
     {
+        // The engine delivers typed characters to a Scaleform input field on its
+        // own and routes these four elsewhere.
         return ev.keyId == Offsets::eKI_Enter
             || ev.keyId == Offsets::eKI_NP_Enter
             || ev.keyId == Offsets::eKI_Escape
@@ -159,6 +152,9 @@ class KeyListener : public Offsets::IInputEventListener {
             else
                 SendInput("accept");
         }
+        // Both edges are swallowed. The load list acts on Enter as well,
+        // SetBusyProtection does not hold that back, and a release reaching the
+        // menu on its own is enough for it to offer to load the save.
         return true;
     }
 

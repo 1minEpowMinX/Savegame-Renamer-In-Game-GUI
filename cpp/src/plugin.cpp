@@ -64,6 +64,8 @@ void ApplyRename(const std::string& name)
         return;
     }
 
+    // In this order. The file has changed, but the manager still holds the old
+    // description and the page still holds the old text.
     SaveCatalog::Refresh();
     SaveLoadHook::RebuildLoadPage();
     SR_LOG("%d is now '%s'", entry->id, Strings::Localize(header->DisplayName()).c_str());
@@ -99,9 +101,6 @@ bool OpenFor(int saveId)
 }
 
 /// Opens the rename dialog on the highlighted save list row.
-///
-/// Self-gating: SelectedSaveId returns -1 unless a savegame row is highlighted,
-/// so the key does nothing anywhere else in the menu.
 class RenameKeyListener : public Offsets::IInputEventListener {
     bool OnInputEvent(const Offsets::SInputEvent& ev) override
     {
@@ -110,6 +109,8 @@ class RenameKeyListener : public Offsets::IInputEventListener {
         if (RenameDialog::IsOpen())
             return false;
 
+        // Self-gating: the id is -1 unless a savegame row is highlighted, which
+        // is what keeps the key inert everywhere else in the menu.
         const int saveId = SaveLoadHook::SelectedSaveId();
         if (saveId < 0)
             return false;

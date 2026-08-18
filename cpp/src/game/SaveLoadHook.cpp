@@ -24,13 +24,14 @@ namespace SaveLoadHook {
 namespace {
 
 // C_UISaveLoad::BuildLoadGamePage: builds menu page 8, the list of saves for one
-// playline. Hooked for its `this` and its playline argument, neither of which is
-// reachable any other way; also re-invoked to redraw the list after a rename.
+// playline. Hooked for its `this` and its playline argument: C_UISaveLoad is a
+// value member of C_UIMenu with no accessor of its own, and nothing else exposes
+// the playline. Also re-invoked to redraw the list after a rename.
 constexpr std::uint64_t kBuildLoadGamePageId = 94;
 
 // C_UIMenu::PreparePage, which every page builder in the menu calls before it
 // lays anything out. Hooked to take the rename prompt down the moment the menu
-// moves off the save list: our element draws over the whole screen, and a prompt
+// moves off the save list: the prompt's element draws over the whole screen, and one
 // left up follows the player into the settings and into the game.
 constexpr std::uint64_t kPreparePageId = 43;
 
@@ -117,17 +118,15 @@ std::shared_ptr<Offsets::IFlashPlayer> MenuPlayer()
 
 /// Reads a flash value as an integer whatever numeric type it carries.
 ///
-/// The getters on SFlashVarValue assert the exact type and then read that
-/// member of the union outright. With asserts compiled out, GetInt() on a
-/// double returns the low half of its bit pattern, which is zero for every
-/// small whole number. ActionScript hands out doubles for plain numbers, so
-/// this conversion is not optional.
-///
 /// @param v Value to read.
 /// @param out Receives the number.
 /// @return True when the value held a number.
 bool ToInt(const SFlashVarValue& v, int& out)
 {
+    // The getters on SFlashVarValue assert the exact type and then read that
+    // member of the union outright. With asserts compiled out, GetInt() on a
+    // double returns the low half of its bit pattern, zero for every small whole
+    // number, and ActionScript hands out doubles for plain numbers.
     if (v.IsInt())
         out = v.GetInt();
     else if (v.IsUInt())
@@ -145,8 +144,7 @@ bool ToInt(const SFlashVarValue& v, int& out)
 
 /// Owns an IFlashVariableObject and releases it.
 ///
-/// Every getter that hands one back allocates, so the traversal below would leak
-/// one object per key press without this.
+/// Every getter that hands one back allocates.
 class VarObj {
 public:
     VarObj() = default;
@@ -173,9 +171,7 @@ private:
 
 /// Returns the highlighted button of the menu movie, or an empty holder.
 ///
-/// The two selection indices address MenuManagerArray, which has to be walked
-/// with GetElement: a dotted path such as "MenuManagerArray.0.3" resolves the
-/// container but silently ignores the second index and yields the first row.
+/// @param out Receives the button.
 void SelectedButton(VarObj& out)
 {
     out.Reset();
@@ -197,6 +193,9 @@ void SelectedButton(VarObj& out)
     if (container < 0 || index < 0)
         return;
 
+    // Walked with GetElement rather than reached by a dotted path:
+    // "MenuManagerArray.0.3" resolves the container, silently ignores the second
+    // index and yields the first row.
     VarObj array;
     if (!player->GetVariable("_root.MenuManagerArray", *array.Receive()) || !array)
         return;

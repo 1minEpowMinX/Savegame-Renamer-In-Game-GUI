@@ -4,10 +4,8 @@
 
 /// The mod's user-visible text, resolved through the game's localization tables.
 ///
-/// Words the game already has are taken from its own keys rather than restated
-/// here, so they match the surrounding menu in every language the game ships and
-/// follow it if Warhorse changes them. The mod's own two strings are shipped in
-/// Localization/<Language>_xml.pak, built from src/Localization/strings.xml.
+/// Words the game already names are taken from its own keys; the rest come from
+/// the tables built out of src/Localization/strings.xml.
 namespace Strings {
 
 /// Returns `text` with localization markup resolved.
@@ -30,8 +28,10 @@ struct Labels {
 
 /// Returns the labels in the language the game is running in.
 ///
-/// Resolved on each call rather than cached, so a language changed mid-session
-/// is picked up. A key the tables do not carry falls back to English.
+/// Resolved on each call rather than cached. A key the tables do not carry
+/// falls back to English.
+///
+/// @return The labels.
 Labels Get();
 
 }  // namespace Strings

@@ -6,8 +6,8 @@
 /// Owns the SavegameRenamer flash element: shows the dialog and reports what the
 /// player did with it.
 ///
-/// Knows nothing about savegames. It is handed a name to display and gives back
-/// the name that was typed, so the element can be exercised on its own.
+/// Knows nothing about savegames: it is handed a name to display and gives back
+/// the name that was typed.
 namespace RenameDialog {
 
 /// Registers the element event listener.
@@ -27,8 +27,7 @@ bool Show(const std::string& currentName, bool canReset);
 
 /// Shows or hides the prompt that advertises the rename key.
 ///
-/// It is drawn over the save list, not inside the dialog: a player who has
-/// never opened the dialog is exactly the one who needs telling.
+/// The prompt is drawn over the save list rather than inside the dialog.
 ///
 /// @param visible Whether the prompt should be on screen.
 void ShowHint(bool visible);

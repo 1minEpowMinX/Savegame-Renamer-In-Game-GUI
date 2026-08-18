@@ -8,14 +8,14 @@ namespace whs {
 /// Returns `raw` with the UIDescription field separator and control characters
 /// removed, runs of spaces collapsed and the edges trimmed.
 ///
-/// Bytes outside ASCII pass through untouched, so UTF-8 text survives.
+/// Bytes outside ASCII pass through untouched, leaving UTF-8 text intact.
 ///
 /// @param raw Text as typed by the player.
 /// @return The cleaned name, possibly empty.
 std::string SanitiseName(std::string_view raw);
 
-/// Returns `raw` with the characters that would corrupt an XML attribute value
-/// replaced by entities.
+/// Returns `raw` with the characters XML reserves inside a double-quoted
+/// attribute value replaced by entities.
 ///
 /// @param raw Text to place inside a double-quoted attribute.
 /// @return The escaped text.

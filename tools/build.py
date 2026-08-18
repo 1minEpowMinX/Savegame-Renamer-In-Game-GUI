@@ -2,12 +2,6 @@
 
 Pass --deploy to copy the result into the game's Mods folder, which also picks up
 the plugin DLL from the CMake build tree.
-
-The archive must carry no extra field in its central directory: the engine takes
-the local-header data offset from the central directory's extra-field length, so
-an archiver that writes an NTFS timestamp there (7-Zip, Explorer's "Send to")
-pushes the engine past the start of the deflate stream and it drops the file.
-zipfile writes neither. This constraint is inherited from better_arm_of_beowulf.
 """
 
 import argparse
@@ -34,22 +28,26 @@ PAK = os.path.join(DATA_DIR, MODID + ".pak")
 PLUGIN_IN_BUILD = os.path.join(".buildenv", "build-release", "SavegameRenamer",
                                "SavegameRenamer.dll")
 
+# The engine reads a local-header data offset past the central directory's
+# extra-field length, so an archiver that writes an NTFS timestamp there (7-Zip,
+# Explorer's "Send to") lands it past the start of the deflate stream and the
+# file is dropped. zipfile writes neither field. Inherited from
+# better_arm_of_beowulf.
 MAX_EXTRA_FIELD_LEN = 0
 
 
 def pack(pak_path, src_dir):
     """Write every file under src_dir into pak_path.
 
-    Files ending in .pak are skipped so an archive living inside its own source
-    directory does not pack a copy of itself.
-
-    Entry timestamps are fixed rather than read off the files, so an unchanged
-    tree packs to the same bytes on every build.
+    Files ending in .pak are skipped, and entry timestamps are fixed rather than
+    read off the files.
 
     @param pak_path Archive to create, overwriting any existing file.
     @param src_dir Directory whose tree becomes the archive's root.
     @return Sorted list of archive-relative names written.
     """
+    # .pak skipped: the archive lives inside its own source directory and would
+    # pack a copy of itself.
     entries = sorted(
         (os.path.relpath(os.path.join(root, f), src_dir).replace(os.sep, "/"),
          os.path.join(root, f))
@@ -58,6 +56,9 @@ def pack(pak_path, src_dir):
 
     with zipfile.ZipFile(pak_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for arcname, full in entries:
+            # A fixed stamp rather than the file's own: the archive is
+            # committed, and a stamp per build rewrites it whether or not
+            # anything inside it changed.
             info = zipfile.ZipInfo(arcname, build_localization.EPOCH)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o600 << 16
@@ -112,23 +113,20 @@ def check_archive(pak_path, src_dir, errors):
 def version():
     """Return the version the manifest declares.
 
-    The manifest is what the game and the Nexus page both read, so nothing else
-    keeps a copy of the number.
-
     @return Version string.
     """
+    # The manifest is what the game and the Nexus page both read, so nothing else
+    # keeps a copy of the number.
     return ET.parse(os.path.join(SRC_DIR, "mod.manifest")).findtext("info/version")
 
 
 def layout(require_plugin):
     """Return the mod folder's contents as (source, relative destination) pairs.
 
-    Shared by --deploy and --release so an installed mod and a released one
-    cannot come out differently arranged.
+    Shared by --deploy and --release, so an installed mod and a released one
+    carry the same arrangement.
 
-    @param require_plugin Whether a missing plugin is an error rather than a
-        warning. A deploy without it leaves whatever was installed last in
-        place; a release without it is a mod that does nothing.
+    @param require_plugin Whether a missing plugin raises rather than warns.
     @return List of pairs, the destinations relative to the mod folder.
     """
     pairs = [(os.path.join(SRC_DIR, "mod.manifest"), "mod.manifest"),
@@ -143,6 +141,8 @@ def layout(require_plugin):
     if os.path.isfile(plugin):
         pairs.append((plugin, "KCSE/Plugins/" + os.path.basename(plugin)))
     elif require_plugin:
+        # A deploy without it leaves whatever was installed last in place; a
+        # release without it is an archive that installs a mod doing nothing.
         raise RuntimeError(
             "%s is not built, and an archive without it installs a mod that does "
             "nothing.\nRun tools%sbuild_cpp.bat first." % (plugin, os.sep))
@@ -173,12 +173,12 @@ def deploy():
 def release():
     """Write the archive that goes on Nexus, and return its path.
 
-    The archive holds one folder named after the modid, which is what unpacks
-    into Mods/ and what this author's other mods ship, so both install the same
-    way.
+    The archive holds one folder named after the modid.
 
     @return Path of the archive written.
     """
+    # That folder is what unpacks into Mods/, and what this author's other mods
+    # ship, so both install the same way.
     os.makedirs(RELEASES_DIR, exist_ok=True)
     path = os.path.join(RELEASES_DIR, "%s-%s.zip" % (MODID, version()))
 

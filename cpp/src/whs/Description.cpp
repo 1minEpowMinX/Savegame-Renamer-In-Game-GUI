@@ -33,24 +33,28 @@ bool ParseInt(const std::string& text, int& out)
 
 /// Returns the pattern matching `name` where it stands as an attribute.
 ///
-/// The separator before the name is part of the match. Without it "SaveId"
-/// also matches the tail of an attribute called "AutoSaveId", and the header
-/// carries several names that are suffixes of one another, GameReleaseVersion
-/// inside NewGameReleaseVersion among them.
+/// The separator before the name is part of the match.
+///
+/// @param name Attribute name.
+/// @return The pattern.
 std::regex AttributePattern(const std::string& name)
 {
+    // The leading \s is what tells a whole name from the tail of a longer one.
+    // The header carries SaveId inside AutoSaveId, and GameReleaseVersion inside
+    // NewGameReleaseVersion.
     return std::regex("\\s" + name + "=\"([^\"]*)\"");
 }
 
 /// Returns the offset of the root element's closing bracket.
 ///
-/// A '>' standing inside an attribute value is passed over. The character needs
-/// no escaping there, and the game leaves it as it is.
+/// A '>' standing inside an attribute value is passed over.
 ///
 /// @param xml Header XML.
 /// @return Offset of the bracket, or npos when the element is unterminated.
 std::size_t RootTagEnd(const std::string& xml)
 {
+    // XML asks for no escaping of '>' inside a value and the game writes one
+    // there: quest names and the UsedMods block both reach the header as typed.
     bool quoted = false;
     for (std::size_t i = 0; i < xml.size(); ++i) {
         if (xml[i] == '"')
@@ -98,6 +102,8 @@ std::optional<Description> Description::Read(const std::filesystem::path& path)
 
     if (!ParseInt(d.Attribute("SaveId"), d.m_saveId))
         return std::nullopt;
+    // Every accessor indexes these two without checking, so a header short of
+    // them is refused here rather than read past later.
     if (d.UiFields().size() <= static_cast<std::size_t>(UiField::Objective))
         return std::nullopt;
     return d;
@@ -237,6 +243,8 @@ bool Description::Write() const
         dst.write(m_xml.data(), static_cast<std::streamsize>(m_xml.size()));
         dst.put('\0');
 
+        // Copied through a fixed buffer, so a save of any size costs one header
+        // and one buffer in memory.
         src.seekg(static_cast<std::streamoff>(m_payloadOffset));
         std::vector<char> buffer(1u << 20);
         while (src) {

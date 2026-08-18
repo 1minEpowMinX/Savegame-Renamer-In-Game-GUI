@@ -1,12 +1,8 @@
 """Read the machine paths the build needs out of build.env.
 
 The file sits beside the project, is not tracked, and holds one KEY=VALUE per
-line. build.env.example lists every key with a description. The same file is read
-by tools/build_cpp.bat, so a path is written once no matter which half of the
-build wants it.
-
-A real environment variable wins over the file, so a one-off run can override a
-setting without editing anything.
+line. build.env.example lists every key with a description. tools/build_cpp.bat
+reads the same file, and a real environment variable wins over it.
 """
 
 import os
@@ -23,6 +19,9 @@ def _load():
 
     @return Mapping of key to value; empty when the file is absent.
     """
+    # One file for both halves of the build, so a machine path is written once
+    # whichever half wants it. The environment winning is enough for a one-off
+    # override without editing anything.
     global _values
     if _values is not None:
         return _values
