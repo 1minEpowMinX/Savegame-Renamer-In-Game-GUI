@@ -8,8 +8,11 @@
 namespace whs {
 namespace {
 
+/// The four bytes every .whs opens with.
 constexpr std::uint32_t kMagic = 0xFFFFFFFFu;
-constexpr std::size_t kPrefixSize = 8;
+
+/// Bytes before the header XML: the magic, then the header length.
+constexpr std::size_t kPrefixSize = sizeof(std::uint32_t) + sizeof(std::int32_t);
 
 /// Root attribute holding the quest and objective a rename replaced.
 constexpr const char* kStashAttribute = "RenamerOriginal";
@@ -101,8 +104,8 @@ std::optional<Description> Description::Read(const std::filesystem::path& path)
 
     std::uint32_t magic = 0;
     std::int32_t length = 0;
-    f.read(reinterpret_cast<char*>(&magic), 4);
-    f.read(reinterpret_cast<char*>(&length), 4);
+    f.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+    f.read(reinterpret_cast<char*>(&length), sizeof(length));
     if (!f || magic != kMagic || length <= 1)
         return std::nullopt;
     if (kPrefixSize + static_cast<std::uint64_t>(length) > fileSize)
@@ -244,8 +247,8 @@ bool Description::WriteTo(const std::filesystem::path& path) const
 
     const std::uint32_t magic = kMagic;
     const std::int32_t length = static_cast<std::int32_t>(m_xml.size() + 1);
-    dst.write(reinterpret_cast<const char*>(&magic), 4);
-    dst.write(reinterpret_cast<const char*>(&length), 4);
+    dst.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    dst.write(reinterpret_cast<const char*>(&length), sizeof(length));
     dst.write(m_xml.data(), static_cast<std::streamsize>(m_xml.size()));
     dst.put('\0');
 
