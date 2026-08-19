@@ -80,6 +80,8 @@
     <None Include="docs\2026-08-17-savegame-renamer-design.md"><Filter>docs</Filter></None>
     <None Include="docs\2026-08-17-savegame-renamer-plan.md"><Filter>docs</Filter></None>
     <None Include="docs\2026-08-19-refactoring-design.md"><Filter>docs</Filter></None>
+    <None Include="docs\2026-08-19-ui-audio-design.md"><Filter>docs</Filter></None>
+    <None Include="docs\2026-08-19-ui-audio-plan.md"><Filter>docs</Filter></None>
     <None Include="docs\nexus\description.bbcode.txt"><Filter>docs</Filter></None>
     <None Include="docs\nexus\make_art.py"><Filter>docs</Filter></None>
     <None Include="tools\buildenv.py"><Filter>build</Filter></None>

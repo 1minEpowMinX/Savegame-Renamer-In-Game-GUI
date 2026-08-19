@@ -13,6 +13,7 @@ The information you want is already in the file. It just isn't yours to write.
 [*]The load list redraws immediately, without leaving the page and coming back[/*]
 [*]The original quest name is kept inside the save, so a rename is never one-way[/*]
 [*]Built from the game's own artwork: the window frame, the key plates and the fonts all come out of the vanilla menus[/*]
+[*]Sounds like the menu it sits in: hover, confirm, cancel and refusal all play the game's own interface triggers. No sound file ships with the mod[/*]
 [*]Full localisation in all 16 languages the game ships with[/*]
 [*]Small footprint: a few kilobytes of interface data and one plugin. No vanilla file is replaced[/*]
 [/list]

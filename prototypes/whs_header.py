@@ -26,27 +26,27 @@ class Header:
         self.payload = self.raw[HEADER_SIZE + length:]
 
     def attr(self, name):
-        """Returns the value of XML attribute `name` on the root element."""
+        """Return the value of XML attribute `name` on the root element."""
         m = re.search(rf'{name}="([^"]*)"', self.xml)
         return m.group(1) if m else None
 
     def set_attr(self, name, value):
-        """Replaces the value of attribute `name`, or raises if it is absent."""
+        """Replace the value of attribute `name`, or raise if it is absent."""
         pattern = rf'({name}=")[^"]*(")'
         self.xml, n = re.subn(pattern, lambda m: m.group(1) + value + m.group(2), self.xml, count=1)
         if n == 0:
             raise KeyError(f"attribute {name} not present")
 
     def ui_fields(self):
-        """Returns UIDescription split on '|', trailing empty element included."""
+        """Return UIDescription split on '|', trailing empty element included."""
         return self.attr("UIDescription").split("|")
 
     def set_ui_fields(self, fields):
-        """Writes back the pipe-joined UIDescription fields."""
+        """Write back the pipe-joined UIDescription fields."""
         self.set_attr("UIDescription", "|".join(fields))
 
     def write(self, path):
-        """Writes the file with a length field recomputed from the current XML."""
+        """Write the file with a length field recomputed from the current XML."""
         body = self.xml.encode("utf-8") + b"\x00"
         with open(path, "wb") as f:
             f.write(struct.pack("<Ii", MAGIC, len(body)))

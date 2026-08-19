@@ -1,4 +1,4 @@
-"""Render the two images the Nexus page needs from the in-game screenshot.
+"""Render the images the Nexus page needs from the in-game screenshot.
 
 The screenshot beside this file is the mod running: the dialog open over the save
 list, six rows of it under the same quest name, and the F2 prompt in the corner
@@ -11,17 +11,35 @@ Run with no arguments; the PNGs land beside this file.
 """
 
 import os
+import re
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "Fonts")
 SHOT = os.path.join(HERE, "screenshot-rename-dialog.png")
+RENAMER_AS = os.path.join(HERE, os.pardir, os.pardir, "flash", "renamer.as")
 
-# The dialog's own colours (flash/renamer.as). GOLD is COLOR_PROMPT, the shade
-# every gold caption in the vanilla menu is set in.
-GOLD = (0xF6, 0xE8, 0x90)
-HINT = (0xC0, 0xB1, 0x90)
+
+def as_color(name):
+    """Read one 0xRRGGBB constant out of the dialog's source.
+
+    @param name Name of the ActionScript variable.
+    @return The colour as an (r, g, b) tuple.
+    """
+    with open(RENAMER_AS, encoding="utf-8") as f:
+        found = re.search(r"^var %s = 0x([0-9A-Fa-f]{6});" % name, f.read(), re.M)
+    if not found:
+        raise SystemExit("%s is not declared in %s" % (name, RENAMER_AS))
+    value = int(found.group(1), 16)
+    return (value >> 16, (value >> 8) & 0xFF, value & 0xFF)
+
+
+# Taken from the movie rather than restated, so the page follows the dialog when
+# it is retouched. GOLD is the shade every gold caption in the vanilla menu is
+# set in.
+GOLD = as_color("COLOR_PROMPT")
+HINT = as_color("COLOR_HINT")
 
 DISPLAY = os.path.join(FONTS, "BOOKOSB.TTF")
 BODY_ITALIC = os.path.join(FONTS, "constani.ttf")
@@ -65,9 +83,6 @@ def tracked_width(draw, text, face, tracking):
 def tracked_text(draw, xy, text, face, fill, tracking):
     """Draw `text` one character at a time with `tracking` between them.
 
-    Pillow has no letter-spacing, and the game's headings are widely tracked
-    caps.
-
     @param draw Drawing context.
     @param xy Top-left position.
     @param text Text to draw.
@@ -76,6 +91,8 @@ def tracked_text(draw, xy, text, face, fill, tracking):
     @param tracking Extra pixels between characters.
     @return Width drawn.
     """
+    # Pillow has no letter-spacing, and the game's headings are widely tracked
+    # caps.
     x, y = xy
     for char in text:
         draw.text((x, y), char, font=face, fill=fill)
@@ -136,14 +153,14 @@ def title_block(img, x, y, name_size, sub_size, tracking, rule_len):
 
 
 def header():
-    """Render the 1400x400 mod page header.
+    """Render the mod page header.
 
     The name on the left, the dialog itself on the right, over the screenshot
     blurred down to a ground.
 
     @return Path written.
     """
-    w, h = 1400, 400
+    w, h = 1400, 400   # the size Nexus asks a page header for
     shot = Image.open(SHOT).convert("RGB")
 
     # Scaled to the header's width, then a band taken from the middle of it. The
@@ -177,20 +194,20 @@ def header():
     rule(draw, 0, 0, w, 0.32, 3)
     rule(draw, 0, h - 3, w, 0.32, 3)
 
-    path = os.path.join(HERE, "header-1400x400.png")
+    path = os.path.join(HERE, "header-%dx%d.png" % (w, h))
     img.save(path)
     return path
 
 
 def mod_image():
-    """Render the 1920x1080 mod image.
+    """Render the mod image.
 
     The screenshot itself, cropped to the listing's aspect, with the name in the
     empty sky opposite the game's logo.
 
     @return Path written.
     """
-    w, h = 1920, 1080
+    w, h = 1920, 1080   # the size Nexus asks a mod image for
     img = Image.open(SHOT).convert("RGB").crop(FRAME_16_9).resize((w, h), Image.LANCZOS)
 
     # The block sits clear of the dialog's top left corner: the scrim stops above
@@ -202,7 +219,7 @@ def mod_image():
     rule(draw, 0, 0, w, 0.32, 4)
     rule(draw, 0, h - 4, w, 0.32, 4)
 
-    path = os.path.join(HERE, "mod-image-1920x1080.png")
+    path = os.path.join(HERE, "mod-image-%dx%d.png" % (w, h))
     img.save(path)
     return path
 

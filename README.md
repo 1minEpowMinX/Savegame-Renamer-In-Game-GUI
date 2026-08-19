@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/C++%2017-%2300599C.svg?logo=c%2B%2B&logoColor=white" alt="C++17">
   <img src="https://img.shields.io/badge/CMake-064F8C?logo=cmake&logoColor=fff" alt="CMake">
   <img src="https://img.shields.io/badge/Catch2-f5f5f5?logo=c%2B%2B&logoColor=555" alt="Catch2">
-  <img src="https://img.shields.io/badge/Python%203.9+-3776AB?logo=python&logoColor=fff" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/Python%203-3776AB?logo=python&logoColor=fff" alt="Python 3">
   <img src="https://img.shields.io/badge/ActionScript%202-B4232C?logo=adobe&logoColor=fff" alt="ActionScript 2">
   <img src="https://img.shields.io/badge/Licence-GPL--3.0-blue.svg" alt="GPL-3.0">
 </p>
@@ -48,8 +48,9 @@ written with fixed timestamps and are reproducible.
 | Python 3.9 or newer | the pak and localization build |
 
 The scripts use the standard library only, so there is nothing to install past
-the interpreter itself; 3.9 is where `ET.indent` arrives, which is what lays out
-the generated string tables.
+the interpreter itself. The version is checked against `MIN_PYTHON` in
+`tools/build_localization.py`, and it is that low only because `ET.indent`, which
+lays out the generated string tables, arrives there.
 
 ### 1. Fill in the machine paths
 
@@ -130,7 +131,7 @@ never depends on what happens to be installed.
 
 ## 🌍 Translating
 
-`src/Localization/strings.xml` holds the two strings the mod owns; everything
+`src/Localization/strings.xml` holds the strings the mod owns; everything
 else it displays is taken from the game's own string tables and needs no
 translation. Add a `<text language="…">` line and rebuild.
 

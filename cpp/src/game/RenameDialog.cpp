@@ -102,15 +102,13 @@ void SetMenuBusy(bool busy)
 
 /// Sends the current language's captions into `el`.
 ///
-/// Called before every showing rather than once at startup.
-///
 /// @param el Element to caption.
 void ApplyLabels(IUIElement* el)
 {
-    // The movie cannot reach the localization tables itself: a key assigned to a
-    // text field from ActionScript is not resolved on the way in. Per showing
-    // rather than once, so a language changed mid-session lands and an element
-    // instantiated late is still captioned.
+    // The captions go in translated; the reason is on the SetLabels declaration
+    // itself, in UIElements/SavegameRenamer.xml. Per showing rather than once,
+    // so a language changed mid-session lands and an element instantiated late
+    // is still captioned.
     const Strings::Labels labels = Strings::Get();
 
     SUIArguments args;
@@ -161,12 +159,11 @@ class KeyListener : public Offsets::IInputEventListener {
 
 KeyListener g_keyListener;
 
-/// Takes the dialog off screen after the movie has already hidden itself.
-///
-/// The movie clears its own artwork before emitting the event, but the element
-/// stays visible as far as the engine is concerned until this runs.
+/// Takes the dialog off screen, releases its keys and lets the menu act again.
 void Dismiss()
 {
+    // The movie clears its own artwork before emitting the event; the element
+    // stays visible as far as the engine is concerned until this runs.
     if (IUIElement* el = DialogElement())
         el->SetVisible(false);
     if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput)

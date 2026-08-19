@@ -1,15 +1,8 @@
 // Savegame Renamer dialog -- frame 1 DoAction (AS2 / Flash 8 / Scaleform GFx).
 //
-// Engine API (inbound, on _root -- see UIElements/SavegameRenamer.xml):
-//   fc_open(currentName, canReset)   show the dialog, prefilled
-//   fc_setLabels(...)                the five captions, already translated
-//   fc_showHint(visible)             show the F2 prompt over the save list
-//   fc_setInput(action)              "accept" | "cancel" | "reset", fed by the
-//                                    plugin's input listener because the engine
-//                                    delivers typed characters to the movie but
-//                                    not these keys
-// Events (outbound via fscommand):
-//   onRenameAccept(name), onRenameCancel(), onRenameReset()
+// The fc_* functions the engine calls in on _root, and the fscommand events the
+// movie sends back, are declared and described in UIElements/SavegameRenamer.xml.
+// Each one is defined under "engine calls" at the foot of this file.
 //
 // Every plate here is the game's own: the window frame, the field backing and
 // the key caps are imported from the vanilla movies (see base.xml).
@@ -39,10 +32,9 @@ var ROW_META = 20;
 // carrying a centred, black, bold text field for the key name. Loading it is
 // what the game does for every prompt it prints, so a plate built here matches
 // the ones on the same screen down to the pixel.
-// The game asks for it as buttons.swf, the name it was authored under. The
-// shipped name is what is asked for here instead: the log shows the file
-// opener is handed the string as written, so the authoring name reaches it
-// unrewritten and finds nothing.
+// Asked for by its shipped name rather than the buttons.swf it was authored
+// under: the engine's file opener is handed the string as written, so the
+// authoring name reaches it unrewritten and finds nothing.
 var CAP_LIBRARY = "buttons.gfx";
 var CAP_NATIVE_H = 64;             // height the sprite is authored at
 
@@ -72,8 +64,8 @@ var PAIR_GAP = 40;  // pair to the next pair
 
 // The rows total 100 of the 152 units between the frame's rails: the prompt row
 // is as tall as its plates, which are one and a half times the type. The surplus
-// is split between the joints rather than pooled above the prompts, which is
-// what left a hole in the middle of the window.
+// is split between the joints rather than pooled above the prompts, so the
+// window carries no gap across its middle.
 var GAP_TITLE = 16;
 var GAP_COUNTER = 4;
 var GAP_RULE = 16;
@@ -81,7 +73,8 @@ var GAP_KEYS = 16;
 
 // Where the counter turns amber, and where the field stops taking input. Both
 // are settled here: the plugin bounds a name nowhere, and the load list scrolls
-// one that runs long rather than clipping it.
+// one that runs long rather than clipping it. Both numbers are quoted at the
+// reader on the mod page, in docs/nexus/description.bbcode.txt.
 var SOFT_LIMIT = 40;
 var MAX_CHARS = 120;
 
@@ -118,6 +111,26 @@ var Y_INPUT = Y_TITLE + ROW_TITLE + GAP_TITLE;
 var Y_META = Y_INPUT + ROW_INPUT + GAP_COUNTER;
 var Y_RULE = Y_META + ROW_META + GAP_RULE;
 var Y_KEYS = Y_RULE + GAP_KEYS;
+
+// -------------------------------------------------------------- ui sounds --
+
+// The game's own interface triggers, taken from the Audio class every vanilla
+// movie carries. The engine plays one for any element that declares the
+// onPlayAudio event: C_UICommonEventHandler is attached to every flash element
+// and is what receives it. The menu family is the one this dialog belongs to,
+// being drawn over the load list; the panel screens sound their own way.
+var SND_OPEN = "ui_menu_open";
+var SND_CLOSE = "ui_menu_close";
+var SND_FOCUS = "ui_menu_change_focus";
+var SND_CHOICE = "ui_menu_change_choice";
+var SND_DISABLE = "ui_menu_disable";
+
+// Plays one of the game's global audio triggers.
+//
+// @param trigger Name of the trigger.
+function playAudio(trigger) {
+    fscommand("onPlayAudio", trigger);
+}
 
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
@@ -297,6 +310,7 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     drawHit(clip);
 
     clip.onRollOver = function () {
+        playAudio(SND_FOCUS);
         this.labelText.styleFmt.color = COLOR_HOVER;
         setText(this.labelText, this.labelValue);
     };
@@ -362,8 +376,7 @@ footRule._y = Y_RULE;
 footRule._alpha = 35;
 
 // Three prompts of the same shape. Reset is one of them rather than a button:
-// in this game an action is a key and a word, and making it anything else is
-// what put three different languages in one row.
+// in this game an action is a key and a word.
 var keyAccept = mkKeyHint(box, "keyAccept", 7, "Enter", CAP_WIDE, CAP_SPAN_WIDE,
                           "accept", "accept", 13, FONT_REGULAR, COLOR_HINT);
 var keyCancel = mkKeyHint(box, "keyCancel", 8, "Esc", CAP_MEDIUM, CAP_SPAN_MEDIUM,
@@ -396,25 +409,23 @@ function layoutKeys(withReset) {
 
 layoutKeys(false);
 
-// The prompt that tells the player the key exists at all, sitting over the save
-// list rather than inside the dialog. It is placed against the same bottom-right
-// corner the game puts its own load and delete prompts in.
-// The game keeps its own prompts in a column on the right: a gold rule with the
-// "you can load this with E" line under it. The rename prompt goes directly
-// above that rule and on its centre line, so it joins that block instead of
-// floating beside it. Positioned by its centre, so the prompt stays put when
-// its wording changes length.
-// The axis the menu centres its own headings, buttons and rules on. It is
+// Where the prompt sits. The game keeps its own prompts in a column at the
+// bottom right: a gold rule with the "you can load this with E" line under it.
+// The rename prompt goes directly above that rule and on its centre line, so it
+// joins that block instead of floating beside it. Held as a centre, so the
+// prompt stays put when its wording changes length.
+//
+// The axis is the one the menu centres its own headings, buttons and rules on,
 // measured against those rather than derived: the movie's coordinate space is
 // not the one the menu lays out in, so the middle of the stage is not the middle
-// of the screen. Two placements either side of it fixed the scale between the
-// two spaces, and this is where they put the axis.
+// of the screen.
 var HINT_CENTRE_X = 622;
 var HINT_CENTRE_Y = 389;
 
-// The prompt belongs to the game's own line below it, not to the dialog, so it
-// is built at that line's size, face and colour rather than the dialog's. F2 is
-// a function key, which the game puts on the small square plate.
+// The prompt that tells the player the key exists at all, drawn over the save
+// list rather than inside the dialog. It belongs to the game's own line below
+// it, not to the dialog, so it is built at that line's size, face and colour.
+// F2 is a function key, which the game puts on the small square plate.
 var hint = mkKeyHint(_root, "hint", 2, "F2", CAP_SMALL, CAP_SPAN_SMALL,
                      "Rename save", "", PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
 hint._visible = false;
@@ -475,6 +486,9 @@ input.onKillFocus = function () {
 // ------------------------------------------------------------ engine calls --
 
 // Shows the dialog, the field prefilled and the caret at its end.
+//
+// @param currentName Name the load list shows for the save being renamed.
+// @param canReset Whether the save carries a stashed original name.
 function fc_open(currentName, canReset) {
     box._visible = true;
     openedWith = currentName;
@@ -484,19 +498,27 @@ function fc_open(currentName, canReset) {
     updateCounter();
     Selection.setFocus(input);
     Selection.setSelection(input.text.length, input.text.length);
+    playAudio(SND_OPEN);
 }
 
 // Shows or hides the F2 prompt over the save list.
+//
+// @param visible Whether the prompt should be on screen.
 function fc_showHint(visible) {
     hint._visible = visible;
 }
 
 // Sets every caption the dialog and the prompt show, and lays the row of
 // prompts out again at the new widths.
+//
+// @param titleText Dialog heading.
+// @param acceptText Word beside the Enter key.
+// @param cancelText Word beside the Esc key.
+// @param resetText Word beside the Del key.
+// @param hintText Word beside the F2 key over the save list.
 function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
-    // The captions arrive translated: the movie has no access to the
-    // localization tables, and a key assigned to a field from ActionScript is
-    // not resolved on the way in.
+    // The captions arrive translated. The reason is on the SetLabels
+    // declaration itself, in UIElements/SavegameRenamer.xml.
     setText(title, titleText);
     setHintLabel(keyAccept, acceptText);
     setHintLabel(keyCancel, cancelText);
@@ -537,14 +559,21 @@ function closeWith(event, arg) {
 }
 
 // Acts on a key the engine delivers to the plugin rather than to the movie.
+//
+// @param action One of "accept", "cancel" or "reset".
 function fc_setInput(action) {
     if (action == "accept") {
+        playAudio(SND_CHOICE);
         closeWith("onRenameAccept", stripBars(input.text));
     } else if (action == "cancel") {
+        playAudio(SND_CLOSE);
         closeWith("onRenameCancel", "");
     } else if (action == "reset") {
         if (keyReset._visible) {
+            playAudio(SND_CHOICE);
             closeWith("onRenameReset", "");
+        } else {
+            playAudio(SND_DISABLE);
         }
     }
 }

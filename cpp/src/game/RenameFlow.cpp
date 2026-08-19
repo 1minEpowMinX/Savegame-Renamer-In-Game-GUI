@@ -17,14 +17,9 @@ struct Pending {
     /// Id of the save, or -1 while no dialog is open.
     int saveId = -1;
 
-    /// The line the dialog was opened on, as the list renders it.
+    /// The line the dialog was opened on, localized, as the list renders it.
     ///
-    /// A save that has never been renamed carries a localization key rather than
-    /// text, and the list resolves it afresh in whatever language the game is
-    /// set to. The dialog offers the resolved line for editing, so confirming it
-    /// untouched would replace the key with one language's rendering of it and
-    /// the save would keep that wording everywhere. Held to tell an edit from an
-    /// accidental confirmation.
+    /// Held to tell an edit from a confirmation of the line as it was offered.
     std::string name;
 
     /// Forgets the save, leaving no dialog open.
@@ -73,8 +68,11 @@ void ApplyRename(const std::string& name)
 void Wire()
 {
     RenameDialog::SetAcceptHandler([](const std::string& typed) {
-        // Confirming the line as it was offered is not a rename, and writing it
-        // would cost the save its localized name for nothing.
+        // Confirming the line as it was offered is not a rename. A save that
+        // has never been renamed carries a localization key rather than text,
+        // which the list resolves afresh in whatever language the game is set
+        // to; writing the resolved line back fixes one language's rendering of
+        // it into the save everywhere.
         if (typed == g_pending.name) {
             SR_LOG("%d confirmed unchanged, left alone", g_pending.saveId);
             g_pending.Clear();

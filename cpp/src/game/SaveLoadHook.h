@@ -6,9 +6,10 @@
 /// call to BuildLoadGamePage.
 namespace SaveLoadHook {
 
-/// Hooks C_UISaveLoad::BuildLoadGamePage.
+/// Hooks C_UISaveLoad::BuildLoadGamePage, and C_UIMenu::PreparePage alongside
+/// it. A PreparePage hook that could not be placed is reported and skipped.
 ///
-/// @return True when the hook was created and enabled.
+/// @return True when the load-page hook was created and enabled.
 bool Install();
 
 /// Returns true once the game has built the load page at least once.

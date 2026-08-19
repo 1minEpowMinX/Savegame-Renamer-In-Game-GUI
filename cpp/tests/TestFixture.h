@@ -26,9 +26,9 @@ inline void MakeSave(const std::filesystem::path& path,
 
 /// Returns a description XML shaped like the header of a real permanent save.
 ///
-/// @param saveId Value for both the SaveId attribute and UIDescription field 1.
-/// @param quest UIDescription field 2, the name the load list shows.
-/// @param objective UIDescription field 3, appended to the name after " - ".
+/// @param saveId Value for both the SaveId attribute and UiField::Id.
+/// @param quest Text for UiField::Quest, the name the load list shows.
+/// @param objective Text for UiField::Objective, appended to the name after " - ".
 /// @param extraAttrs Text inserted before the root element's closing bracket.
 /// @return The header XML.
 inline std::string SampleXml(int saveId = 3754,

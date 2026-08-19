@@ -1,9 +1,10 @@
 // Savegame Renamer - In-Game GUI (KCSE plugin).
 //
 // Renames an existing savegame from the load menu. The displayed name lives in
-// field 2 of the UIDescription attribute inside the .whs description header;
-// the original quest and objective keys are stashed in a RenamerOriginal
-// attribute so the name can be reset.
+// the UIDescription field named by whs::UiField::Quest, inside the .whs
+// description header; the original quest and objective keys are stashed in a
+// root attribute of the mod's own, declared in whs/Description.cpp, so the name
+// can be reset.
 
 #include <MinHook.h>
 

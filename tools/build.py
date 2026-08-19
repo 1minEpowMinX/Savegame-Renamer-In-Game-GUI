@@ -1,7 +1,8 @@
-"""Build the mod: compile the flash, build the localization, pack and deploy.
+"""Build the mod: compile the flash, build the localization, pack and verify.
 
-Pass --deploy to copy the result into the game's Mods folder, which also picks up
-the plugin DLL from the CMake build tree.
+Pass --deploy to copy the result into the game's Mods folder, or --release to
+write the archive that goes on Nexus. Both take the plugin DLL from the CMake
+build tree.
 """
 
 import argparse
@@ -17,6 +18,8 @@ import buildenv
 import pak
 import project
 
+# What the game and the Nexus page both read, so nothing else in the build keeps
+# a copy of what it declares.
 MANIFEST = os.path.join(project.SRC_DIR, "mod.manifest")
 
 # Where the CMake build leaves the plugin, relative to libKCD2's tree. Derived
@@ -59,13 +62,12 @@ def pack(pak_path, src_dir):
 def central_entries(raw):
     """Return the archive's central directory, entry by entry.
 
-    Read out of the bytes rather than through zipfile, which reports neither
-    where an entry stands nor how long its extra field is.
-
     @param raw The whole archive.
     @return List of (name, extra field length), or None when the archive carries
         no end-of-central-directory record.
     """
+    # Read out of the bytes rather than through zipfile, which reports neither
+    # where an entry stands nor how long its extra field is.
     eocd = raw.rfind(b"PK\x05\x06")
     if eocd < 0:
         return None
@@ -120,9 +122,6 @@ def check_archive(pak_path, src_dir, errors):
 def declared(field):
     """Return one <info> field of the mod manifest.
 
-    The manifest is what the game and the Nexus page both read, so nothing else
-    keeps a copy of what it declares.
-
     @param field Name of the element under <info>.
     @return The field's text.
     """
@@ -140,12 +139,11 @@ def data_pak():
 def layout(require_plugin):
     """Return the mod folder's contents as (source, relative destination) pairs.
 
-    Shared by --deploy and --release, so an installed mod and a released one
-    carry the same arrangement.
-
     @param require_plugin Whether a missing plugin raises rather than warns.
     @return List of pairs, the destinations relative to the mod folder.
     """
+    # Shared by deploy() and release(), so an installed mod and a released one
+    # carry the same arrangement.
     data = data_pak()
     # The notices go beside the licence: the plugin links libKCD2 and MinHook
     # statically, and MinHook's terms ask for its notice wherever the binary goes.
@@ -199,8 +197,8 @@ def release():
 
     @return Path of the archive written.
     """
-    # That folder is what unpacks into Mods/, and what this author's other mods
-    # ship, so both install the same way.
+    # The folder inside the archive is what unpacks into Mods/, and what this
+    # author's other mods ship, so both install the same way.
     modid = declared("modid")
     os.makedirs(project.RELEASES_DIR, exist_ok=True)
     path = os.path.join(project.RELEASES_DIR, "%s-%s.zip" % (modid, declared("version")))
