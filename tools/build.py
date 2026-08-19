@@ -14,14 +14,10 @@ import zipfile
 import build_flash
 import build_localization
 import buildenv
+import pak
+import project
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-DATA_DIR = os.path.join(SRC_DIR, "Data")
-LOCALIZATION_DIR = os.path.join(SRC_DIR, "Localization")
-MODID = "savegame_renamer"
-RELEASES_DIR = os.path.join(PROJECT_ROOT, "releases")
-PAK = os.path.join(DATA_DIR, MODID + ".pak")
+MANIFEST = os.path.join(project.SRC_DIR, "mod.manifest")
 
 # Where the CMake build leaves the plugin, relative to libKCD2's tree. Derived
 # rather than configured: the build writes it there and nowhere else.
@@ -39,8 +35,7 @@ MAX_EXTRA_FIELD_LEN = 0
 def pack(pak_path, src_dir):
     """Write every file under src_dir into pak_path.
 
-    Files ending in .pak are skipped, and entry timestamps are fixed rather than
-    read off the files.
+    Files ending in .pak are skipped.
 
     @param pak_path Archive to create, overwriting any existing file.
     @param src_dir Directory whose tree becomes the archive's root.
@@ -54,17 +49,37 @@ def pack(pak_path, src_dir):
         for root, _, files in os.walk(src_dir) for f in files
         if not f.lower().endswith(".pak"))
 
-    with zipfile.ZipFile(pak_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    with pak.create(pak_path) as z:
         for arcname, full in entries:
-            # A fixed stamp rather than the file's own: the archive is
-            # committed, and a stamp per build rewrites it whether or not
-            # anything inside it changed.
-            info = zipfile.ZipInfo(arcname, build_localization.EPOCH)
-            info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o600 << 16
             with open(full, "rb") as f:
-                z.writestr(info, f.read())
+                pak.write_entry(z, arcname, f.read())
     return [arcname for arcname, _ in entries]
+
+
+def central_entries(raw):
+    """Return the archive's central directory, entry by entry.
+
+    Read out of the bytes rather than through zipfile, which reports neither
+    where an entry stands nor how long its extra field is.
+
+    @param raw The whole archive.
+    @return List of (name, extra field length), or None when the archive carries
+        no end-of-central-directory record.
+    """
+    eocd = raw.rfind(b"PK\x05\x06")
+    if eocd < 0:
+        return None
+    count = int.from_bytes(raw[eocd + 10:eocd + 12], "little")
+    pos = int.from_bytes(raw[eocd + 16:eocd + 20], "little")
+
+    entries = []
+    for _ in range(count):
+        name_len = int.from_bytes(raw[pos + 28:pos + 30], "little")
+        extra_len = int.from_bytes(raw[pos + 30:pos + 32], "little")
+        comment_len = int.from_bytes(raw[pos + 32:pos + 34], "little")
+        entries.append((raw[pos + 46:pos + 46 + name_len].decode("utf-8"), extra_len))
+        pos += 46 + name_len + extra_len + comment_len
+    return entries
 
 
 def check_archive(pak_path, src_dir, errors):
@@ -77,24 +92,16 @@ def check_archive(pak_path, src_dir, errors):
     """
     with open(pak_path, "rb") as f:
         raw = f.read()
-    eocd = raw.rfind(b"PK\x05\x06")
-    if eocd < 0:
+    entries = central_entries(raw)
+    if entries is None:
         errors.append("%s: no end-of-central-directory record" % pak_path)
         return
-    count = int.from_bytes(raw[eocd + 10:eocd + 12], "little")
-    pos = int.from_bytes(raw[eocd + 16:eocd + 20], "little")
 
     with zipfile.ZipFile(pak_path) as z:
         if z.testzip() is not None:
             errors.append("%s: CRC mismatch" % pak_path)
 
-        for _ in range(count):
-            name_len = int.from_bytes(raw[pos + 28:pos + 30], "little")
-            extra_len = int.from_bytes(raw[pos + 30:pos + 32], "little")
-            comment_len = int.from_bytes(raw[pos + 32:pos + 34], "little")
-            name = raw[pos + 46:pos + 46 + name_len].decode("utf-8")
-            pos += 46 + name_len + extra_len + comment_len
-
+        for name, extra_len in entries:
             if extra_len > MAX_EXTRA_FIELD_LEN:
                 errors.append("%s: %s has a %d-byte central extra field; the engine will "
                               "misplace the data offset" % (pak_path, name, extra_len))
@@ -110,14 +117,24 @@ def check_archive(pak_path, src_dir, errors):
                     errors.append("%s: %s is not well-formed: %s" % (pak_path, name, exc))
 
 
-def version():
-    """Return the version the manifest declares.
+def declared(field):
+    """Return one <info> field of the mod manifest.
 
-    @return Version string.
+    The manifest is what the game and the Nexus page both read, so nothing else
+    keeps a copy of what it declares.
+
+    @param field Name of the element under <info>.
+    @return The field's text.
     """
-    # The manifest is what the game and the Nexus page both read, so nothing else
-    # keeps a copy of the number.
-    return ET.parse(os.path.join(SRC_DIR, "mod.manifest")).findtext("info/version")
+    return ET.parse(MANIFEST).findtext("info/" + field)
+
+
+def data_pak():
+    """Return the data pak the mod ships.
+
+    @return Path of the archive.
+    """
+    return os.path.join(project.DATA_DIR, declared("modid") + ".pak")
 
 
 def layout(require_plugin):
@@ -129,13 +146,14 @@ def layout(require_plugin):
     @param require_plugin Whether a missing plugin raises rather than warns.
     @return List of pairs, the destinations relative to the mod folder.
     """
-    pairs = [(os.path.join(SRC_DIR, "mod.manifest"), "mod.manifest"),
-             (os.path.join(PROJECT_ROOT, "LICENSE"), "LICENSE"),
-             (PAK, "Data/" + os.path.basename(PAK))]
+    data = data_pak()
+    pairs = [(MANIFEST, "mod.manifest"),
+             (os.path.join(project.PROJECT_ROOT, "LICENSE"), "LICENSE"),
+             (data, "Data/" + os.path.basename(data))]
     # The game merges these into its own string tables, so they sit beside the
     # manifest rather than inside the data pak.
-    pairs += [(os.path.join(LOCALIZATION_DIR, f), "Localization/" + f)
-              for f in sorted(os.listdir(LOCALIZATION_DIR)) if f.endswith(".pak")]
+    pairs += [(os.path.join(project.LOCALIZATION_DIR, f), "Localization/" + f)
+              for f in sorted(os.listdir(project.LOCALIZATION_DIR)) if f.endswith(".pak")]
     plugin = os.path.join(buildenv.require("LIBKCD2_ROOT", "the libKCD2 checkout"),
                           PLUGIN_IN_BUILD)
     if os.path.isfile(plugin):
@@ -157,7 +175,7 @@ def deploy():
     @return Destination directory, or None when a file could not be replaced.
     """
     dest = os.path.join(buildenv.require("KCD2_ROOT", "the game installation"),
-                        "Mods", MODID)
+                        "Mods", declared("modid"))
     for source, relative in layout(require_plugin=False):
         target = os.path.join(dest, relative.replace("/", os.sep))
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -179,16 +197,14 @@ def release():
     """
     # That folder is what unpacks into Mods/, and what this author's other mods
     # ship, so both install the same way.
-    os.makedirs(RELEASES_DIR, exist_ok=True)
-    path = os.path.join(RELEASES_DIR, "%s-%s.zip" % (MODID, version()))
+    modid = declared("modid")
+    os.makedirs(project.RELEASES_DIR, exist_ok=True)
+    path = os.path.join(project.RELEASES_DIR, "%s-%s.zip" % (modid, declared("version")))
 
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    with pak.create(path) as z:
         for source, relative in layout(require_plugin=True):
-            info = zipfile.ZipInfo(MODID + "/" + relative, build_localization.EPOCH)
-            info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o600 << 16
             with open(source, "rb") as f:
-                z.writestr(info, f.read())
+                pak.write_entry(z, modid + "/" + relative, f.read())
     return path
 
 
@@ -218,16 +234,18 @@ def run(args):
     build_flash.build()
     localization = build_localization.build()
 
-    names = pack(PAK, DATA_DIR)
+    data = data_pak()
+    names = pack(data, project.DATA_DIR)
     errors = []
-    check_archive(PAK, DATA_DIR, errors)
+    check_archive(data, project.DATA_DIR, errors)
     if errors:
         for e in errors:
             print(e)
         return 1
 
     print("built %d localization paks" % len(localization))
-    print("packed %s (%d files)" % (os.path.relpath(PAK, PROJECT_ROOT), len(names)))
+    print("packed %s (%d files)"
+          % (os.path.relpath(data, project.PROJECT_ROOT), len(names)))
     for n in names:
         print("  " + n)
 
@@ -239,7 +257,7 @@ def run(args):
 
     if args.release:
         path = release()
-        print("wrote %s (%d bytes)" % (os.path.relpath(path, PROJECT_ROOT),
+        print("wrote %s (%d bytes)" % (os.path.relpath(path, project.PROJECT_ROOT),
                                        os.path.getsize(path)))
     return 0
 

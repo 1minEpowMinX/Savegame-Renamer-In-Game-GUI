@@ -16,7 +16,9 @@ Run with no arguments; paths resolve relative to this file.
 import os
 import sys
 import xml.etree.ElementTree as ET
-import zipfile
+
+import pak
+import project
 
 # ET.indent, which lays the generated table out the way the game's own tables
 # are laid out. The guard is here rather than in build.py because this is where
@@ -27,17 +29,13 @@ if sys.version_info < MIN_PYTHON:
     raise SystemExit("Python %d.%d or newer is required, this is %d.%d"
                      % (MIN_PYTHON + sys.version_info[:2]))
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOCALIZATION_DIR = os.path.join(PROJECT_ROOT, "src", "Localization")
-SOURCE = os.path.join(LOCALIZATION_DIR, "strings.xml")
+SOURCE = os.path.join(project.LOCALIZATION_DIR, "strings.xml")
 TABLE = "text_ui_savegame_renamer.xml"
 
 # The languages the game ships, spelled as it spells its own paks.
 LANGUAGES = ["Chineses", "Chineset", "Czech", "English", "French", "German",
              "Italian", "Japanese", "Korean", "Polish", "Portuguese", "Russian",
              "Spanish", "Turkish", "Ukrainian", "Vietnamese"]
-
-EPOCH = (2026, 8, 18, 0, 0, 0)
 
 
 def read_strings(path):
@@ -82,14 +80,9 @@ def build():
     rows = read_strings(SOURCE)
     written = []
     for language in LANGUAGES:
-        path = os.path.join(LOCALIZATION_DIR, language + "_xml.pak")
-        # A fixed stamp rather than the source file's: the paks are committed,
-        # and a stamp per build rewrites every one of them on every run.
-        info = zipfile.ZipInfo(TABLE, EPOCH)
-        info.compress_type = zipfile.ZIP_DEFLATED
-        info.external_attr = 0o600 << 16
-        with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-            z.writestr(info, table_for(rows, language).encode("utf-8"))
+        path = os.path.join(project.LOCALIZATION_DIR, language + "_xml.pak")
+        with pak.create(path) as z:
+            pak.write_entry(z, TABLE, table_for(rows, language).encode("utf-8"))
         written.append(path)
     return written
 

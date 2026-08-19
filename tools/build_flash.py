@@ -19,11 +19,10 @@ import subprocess
 import sys
 
 import buildenv
+import project
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FLASH_DIR = os.path.join(PROJECT_ROOT, "flash")
-OUTPUT = os.path.join(PROJECT_ROOT, "src", "Data", "Libs", "UI", "renamer.gfx")
-SCRATCH = os.path.join(PROJECT_ROOT, "build", "flash")
+OUTPUT = os.path.join(project.DATA_DIR, "Libs", "UI", "renamer.gfx")
+SCRATCH = os.path.join(project.BUILD_DIR, "flash")
 
 # JPEXS Free Flash Decompiler, which compiles the skeleton and imports the
 # script into it. Resolved late so that importing this module costs nothing on a
@@ -63,7 +62,7 @@ def build():
     # The skeleton's ImportAssets2 tags are what make the fonts reachable: a text
     # field in a movie without them renders nothing at all.
     container = os.path.join(SCRATCH, "container.swf")
-    run("-xml2swf", os.path.join(FLASH_DIR, "base.xml"), container)
+    run("-xml2swf", os.path.join(project.FLASH_DIR, "base.xml"), container)
 
     # FFDec has no "compile one file" mode, so the skeleton's placeholder script
     # is what the real source replaces.
@@ -73,7 +72,7 @@ def build():
     target = os.path.join(exported, "scripts", "frame_1", "DoAction.as")
     if not os.path.isfile(target):
         raise RuntimeError("FFDec exported no frame script; base.xml has no DoActionTag")
-    shutil.copyfile(os.path.join(FLASH_DIR, "renamer.as"), target)
+    shutil.copyfile(os.path.join(project.FLASH_DIR, "renamer.as"), target)
 
     run("-importScript", container, OUTPUT, exported)
 

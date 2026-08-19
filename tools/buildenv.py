@@ -7,7 +7,8 @@ reads the same file, and a real environment variable wins over it.
 
 import os
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from project import PROJECT_ROOT
+
 ENV_FILE = os.path.join(PROJECT_ROOT, "build.env")
 EXAMPLE_FILE = os.path.join(PROJECT_ROOT, "build.env.example")
 
