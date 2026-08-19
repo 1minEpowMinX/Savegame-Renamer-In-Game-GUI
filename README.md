@@ -138,3 +138,9 @@ translation. Add a `<text language="…">` line and rebuild.
 
 Copyright © 2026 [1minEpowMinX](https://github.com/1minEpowMinX).  
 This project is [GPL-3.0](LICENSE) licensed.
+
+The plugin links libKCD2 and MinHook statically, so their code ships inside
+`SavegameRenamer.dll`. Their notices are in
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which the mod folder and the
+release archive both carry: MinHook's terms ask for its notice wherever the
+binary goes.

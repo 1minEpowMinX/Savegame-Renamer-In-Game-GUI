@@ -180,6 +180,8 @@
     <None Include="docs\nexus\description.bbcode.txt" />
     <None Include="docs\nexus\make_art.py" />
     <None Include="README.md" />
+    <None Include="LICENSE" />
+    <None Include="THIRD-PARTY-NOTICES.txt" />
     <None Include="build.env.example" />
 	<None Include=".gitignore" />
   </ItemGroup>

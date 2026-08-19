@@ -42,7 +42,7 @@ No new game required. Built and tested on 1.5.6 Steam version. The Address Libra
 [size=6][b]Installation[/b][/size]
 [list=1]
 [*]Extract into your [i]Kingdom Come Deliverance II/Mods[/i] folder (create it if it isn't there).[/*]
-[*]The result should look like [i]Mods/savegame_renamer/[/i] containing [i]Data/[/i], [i]Localization/[/i], [i]KCSE/[/i], [i]mod.manifest[/i] and [i]LICENSE[/i].[/*]
+[*]The result should look like [i]Mods/savegame_renamer/[/i] containing [i]Data/[/i], [i]Localization/[/i], [i]KCSE/[/i], [i]mod.manifest[/i], [i]LICENSE[/i] and [i]THIRD-PARTY-NOTICES.txt[/i].[/*]
 [*]Launch the game. No further setup.[/*]
 [/list]
 [size=6][b]Uninstalling[/b][/size]

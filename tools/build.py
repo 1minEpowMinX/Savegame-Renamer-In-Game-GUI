@@ -147,8 +147,12 @@ def layout(require_plugin):
     @return List of pairs, the destinations relative to the mod folder.
     """
     data = data_pak()
+    # The notices go beside the licence: the plugin links libKCD2 and MinHook
+    # statically, and MinHook's terms ask for its notice wherever the binary goes.
     pairs = [(MANIFEST, "mod.manifest"),
              (os.path.join(project.PROJECT_ROOT, "LICENSE"), "LICENSE"),
+             (os.path.join(project.PROJECT_ROOT, "THIRD-PARTY-NOTICES.txt"),
+              "THIRD-PARTY-NOTICES.txt"),
              (data, "Data/" + os.path.basename(data))]
     # The game merges these into its own string tables, so they sit beside the
     # manifest rather than inside the data pak.
