@@ -64,7 +64,7 @@ The mod does hook the load menu, so a mod that replaces the menu movie wholesale
 [*]The counter turns amber past 40 characters, and stays quiet while the field still holds the name it opened on. That is a hint rather than a limit: longer names are written and the list scrolls them. The field itself stops taking input at 120.[/*]
 [/list]
 [size=6][b]Permissions[/b][/size]
-GPLv3, sources at {{REPOSITORY_URL}}. Translations, forks and derivative work need no permission from me, under the same licence: credit the original and link back, and that is all I ask. Collections and modpacks are welcome on the same terms; the licence lets you rehost the file, and I would appreciate a note if you do.
+GPLv3, sources at [url=https://github.com/1minEpowMinX/Savegame-Renamer-In-Game-GUI]GitHub[/url]. Translations, forks and derivative work need no permission from me, under the same licence: credit the original and link back, and that is all I ask. Collections and modpacks are welcome on the same terms; the licence lets you rehost the file, and I would appreciate a note if you do.
 
 [size=6][b]Shout outs[/b][/size]
 Warhorse Studios.
