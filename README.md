@@ -133,4 +133,5 @@ translation. Add a `<text language="…">` line and rebuild.
 
 ## 📝 Licence
 
-GPLv3, see [LICENSE](LICENSE).
+Copyright © 2026 [1minEpowMinX](https://github.com/1minEpowMinX).  
+This project is [GPL-3.0](LICENSE) licensed.
