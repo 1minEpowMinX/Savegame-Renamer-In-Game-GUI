@@ -210,10 +210,17 @@ int SelectedSaveId()
     if (std::strcmp(type.GetConstStrPtr(), "LoadButton") != 0)
         return -1;
 
-    // The row's own saveId member is the menu's internal slot index, not the
-    // number the player sees: row "4317." carries saveId 101. The visible number
-    // is UIDescription field 1, which the row prints as the "<id>. " prefix of
-    // its heading, and that is the id the rest of the mod keys on.
+    // The row's own saveId member is the menu's index into the save list, not
+    // the number the player sees: the row heading "4317." carries saveId 101,
+    // and the instance name Menu.gfx builds from it is "load101". It is what the
+    // menu hands back to the game for its own load and delete, and it says
+    // nothing about the file.
+    //
+    // The id in the file is UIDescription field 1, which the header also declares
+    // as SaveId, and which fc_addLoadButton prints as the "<id>. " prefix of the
+    // heading. That prefix is unconditional: the guard around it reads
+    // Number(field) != NaN, which no value fails. So the prefix is the field
+    // whatever it holds, and a field that is not a number is caught below.
     VarObj head;
     if (!button.Get()->GetMember("tfHead", *head.Receive()) || !head)
         return -1;
