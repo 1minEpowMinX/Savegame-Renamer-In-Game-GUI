@@ -19,12 +19,11 @@ The information you want is already in the file. It just isn't yours to write.
 [size=6][b]What it writes[/b][/size]
 The name lives in the description header of the [i].whs[/i] file, in the field the load list reads. The original goes into an attribute of its own, which is what [b]Del[/b] reads back:
 
-[code]Before   UIDescription="…|@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu|…"
+[code]Before   UIDescription="…|@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu|…"
 
-After    RenamerOriginal="@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu"
-         UIDescription="…|Before the hard fight||…"[/code]
-
-The quest name and the objective printed under it both go into the stash, and the objective is cleared: a name you chose stands for the whole line, not half of it.
+After    RenamerOriginal="@qname_predanivchramu_CiLb|@jmena_obj_zacatek_questu"
+         UIDescription="…|Before the hard fight||…"[/code]
+The quest name and the objective printed under it (if it exist via "-" symbol) both go into the stash, and the objective is cleared: a name you chose stands for the whole line, not half of it.
 
 Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file and replaces the original only once complete, so an interrupted write cannot leave you with half a savegame.
 
@@ -71,4 +70,4 @@ Warhorse Studios.
 
 [b]thazer[/b], whose [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url] is the reason this one exists. It showed that the name in the header could be rewritten at all, and after using it I wanted the same thing without leaving the menu. This mod grew out of that idea.
 
-The authors of KCSE and the Address Library, and [url=https://github.com/JerryYOJ/libKCD2]JerryYOJ[/url] for libKCD2, without which none of the game's own machinery would be reachable.
+The author [url=https://github.com/JerryYOJ/libKCD2]JerryYOJ[/url] for [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]KCSE[/url], the [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url] and [url=https://github.com/JerryYOJ/libKCD2]libKCD2[/url], without which none of the game's own machinery would be reachable.
