@@ -417,12 +417,18 @@ var HINT_CENTRE_Y = 389;
 // a function key, which the game puts on the small square plate.
 var hint = mkKeyHint(_root, "hint", 2, "F2", CAP_SMALL, CAP_SPAN_SMALL,
                      "Rename save", "", PROMPT_SIZE, FONT_ITALIC, COLOR_PROMPT);
-hint._x = HINT_CENTRE_X - hint.spanW / 2;
-hint._y = HINT_CENTRE_Y - hint.rowH / 2;
 hint._visible = false;
 hint.onRollOver = null;
 hint.onRollOut = null;
 hint.onRelease = null;
+
+// Puts the prompt on its axis, centred at the width its wording currently is.
+function placeHint() {
+    hint._x = HINT_CENTRE_X - hint.spanW / 2;
+    hint._y = HINT_CENTRE_Y - hint.rowH / 2;
+}
+
+placeHint();
 
 // -------------------------------------------------------------- behaviour --
 
@@ -497,7 +503,7 @@ function fc_setLabels(titleText, acceptText, cancelText, resetText, hintText) {
     setHintLabel(keyReset, resetText);
     setHintLabel(hint, hintText);
     layoutKeys(keyReset._visible);
-    hint._x = HINT_CENTRE_X - hint.spanW / 2;
+    placeHint();
 }
 
 // Returns `text` with vertical bars removed.
@@ -520,22 +526,25 @@ function stripBars(text) {
     return out;
 }
 
+// Takes the dialog off screen and reports what the player did with it.
+//
+// @param event Name of the event the plugin listens for.
+// @param arg Value carried with it.
+function closeWith(event, arg) {
+    box._visible = false;
+    Selection.setFocus(null);
+    fscommand(event, arg);
+}
+
 // Acts on a key the engine delivers to the plugin rather than to the movie.
 function fc_setInput(action) {
     if (action == "accept") {
-        var typed = stripBars(input.text);
-        box._visible = false;
-        Selection.setFocus(null);
-        fscommand("onRenameAccept", typed);
+        closeWith("onRenameAccept", stripBars(input.text));
     } else if (action == "cancel") {
-        box._visible = false;
-        Selection.setFocus(null);
-        fscommand("onRenameCancel", "");
+        closeWith("onRenameCancel", "");
     } else if (action == "reset") {
         if (keyReset._visible) {
-            box._visible = false;
-            Selection.setFocus(null);
-            fscommand("onRenameReset", "");
+            closeWith("onRenameReset", "");
         }
     }
 }

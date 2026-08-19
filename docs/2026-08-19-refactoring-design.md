@@ -176,4 +176,4 @@ AS2 порядок объявлений верхнего уровня значи
 - [x] Слой 1: `Hook.h`, `RenameFlow`, `RenameDialog::Element`
 - [x] Слой 2: `FindAttribute`, `Field`, разделение `Write`
 - [x] Слой 3: `pak.py`, `project.py`, `declared()`, разделение `check_archive`
-- [ ] Слой 4: `closeWith`, `placeHint`
+- [x] Слой 4: `closeWith`, `placeHint`
