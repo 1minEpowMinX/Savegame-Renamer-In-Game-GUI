@@ -151,7 +151,8 @@
     <None Include="tools\build_cpp.bat" />
     <None Include="docs\2026-08-17-savegame-renamer-design.md" />
 	<None Include="docs\2026-08-17-savegame-renamer-plan.md" />
-    <None Include="docs\nexus-description.bbcode.txt" />
+    <None Include="docs\nexus\description.bbcode.txt" />
+    <None Include="docs\nexus\make_art.py" />
     <None Include="README.md" />
     <None Include="tools\buildenv.py" />
     <None Include="build.env.example" />

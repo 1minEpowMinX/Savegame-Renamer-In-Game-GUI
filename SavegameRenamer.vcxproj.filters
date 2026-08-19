@@ -69,6 +69,10 @@
     <None Include="tools\build_flash.py"><Filter>build</Filter></None>
     <None Include="tools\build_localization.py"><Filter>build</Filter></None>
     <None Include="README.md"><Filter>docs</Filter></None>
+    <None Include="docs\2026-08-17-savegame-renamer-design.md"><Filter>docs</Filter></None>
+    <None Include="docs\2026-08-17-savegame-renamer-plan.md"><Filter>docs</Filter></None>
+    <None Include="docs\nexus\description.bbcode.txt"><Filter>docs</Filter></None>
+    <None Include="docs\nexus\make_art.py"><Filter>docs</Filter></None>
     <None Include="tools\buildenv.py"><Filter>build</Filter></None>
     <None Include="build.env.example"><Filter>build</Filter></None>
     <None Include="prototypes\whs_header.py"><Filter>prototypes</Filter></None>

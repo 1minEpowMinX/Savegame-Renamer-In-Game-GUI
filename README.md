@@ -19,6 +19,7 @@ replaced, so it does not conflict with other interface mods.
 | `tools/` | the build |
 | `prototypes/` | working code that settled a question and is not part of the build |
 | `docs/` | design and implementation notes (Russian) |
+| `docs/nexus/` | the mod page: its text, its images, and the screenshot and script they are made from |
 
 `src/Data/savegame_renamer.pak` and `src/Localization/*.pak` are build products
 that are committed, so a checkout can be installed without a build. Both are
