@@ -1,6 +1,5 @@
 #include "SaveCatalog.h"
 
-#include <MinHook.h>
 #include <ShlObj.h>
 
 #include "REL.h"
@@ -8,6 +7,7 @@
 #include "framework/C_SaveGameDescription.h"
 #include "framework/C_SaveGameManager.h"
 
+#include "Hook.h"
 #include "Log.h"
 #include "whs/Description.h"
 
@@ -91,16 +91,7 @@ std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
 
 bool Install()
 {
-    void* target = reinterpret_cast<void*>(REL::ID(kUpdateDescriptionsId).address());
-    void* original = nullptr;
-    if (MH_CreateHook(target, reinterpret_cast<void*>(&HookedUpdateDescriptions), &original) != MH_OK)
-        return false;
-    if (MH_EnableHook(target) != MH_OK) {
-        MH_RemoveHook(target);
-        return false;
-    }
-    g_originalUpdate = REL::Relocation<UpdateDescriptionsFn>(reinterpret_cast<std::uintptr_t>(original));
-    return true;
+    return Hook::Install(kUpdateDescriptionsId, &HookedUpdateDescriptions, g_originalUpdate);
 }
 
 std::optional<SaveEntry> Find(int saveId)

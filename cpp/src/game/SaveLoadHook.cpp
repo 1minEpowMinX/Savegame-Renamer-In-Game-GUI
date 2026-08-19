@@ -1,7 +1,5 @@
 #include "SaveLoadHook.h"
 
-#include <MinHook.h>
-
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -15,6 +13,7 @@
 #include "crysystem/SSystemGlobalEnvironment.h"
 #include "guimodule/C_UISaveLoad.h"
 
+#include "Hook.h"
 #include "Log.h"
 #include "RenameDialog.h"
 
@@ -69,29 +68,15 @@ void HookedPreparePage(void* self, std::uint8_t page)
 
 bool Install()
 {
-    void* target = reinterpret_cast<void*>(REL::ID(kBuildLoadGamePageId).address());
-    void* original = nullptr;
-    if (MH_CreateHook(target, reinterpret_cast<void*>(&HookedBuildLoadGamePage), &original) != MH_OK)
+    if (!Hook::Install(kBuildLoadGamePageId, &HookedBuildLoadGamePage, g_originalBuild))
         return false;
-    if (MH_EnableHook(target) != MH_OK) {
-        MH_RemoveHook(target);
-        return false;
-    }
-    g_originalBuild = REL::Relocation<BuildLoadGamePageFn>(reinterpret_cast<std::uintptr_t>(original));
 
     // The rest of the mod stands without this one, so its failure is reported
     // rather than fatal. What goes with it is the prompt coming down on the way
     // out of the save list.
-    void* preparePage = reinterpret_cast<void*>(REL::ID(kPreparePageId).address());
-    if (MH_CreateHook(preparePage, reinterpret_cast<void*>(&HookedPreparePage), &original) == MH_OK
-        && MH_EnableHook(preparePage) == MH_OK) {
-        g_originalPreparePage =
-            REL::Relocation<PreparePageFn>(reinterpret_cast<std::uintptr_t>(original));
-    } else {
-        MH_RemoveHook(preparePage);
+    if (!Hook::Install(kPreparePageId, &HookedPreparePage, g_originalPreparePage))
         SR_LOG("could not hook PreparePage; the rename prompt will stay up when the "
                "menu leaves the save list");
-    }
     return true;
 }
 

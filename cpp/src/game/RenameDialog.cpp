@@ -25,21 +25,29 @@ std::function<void()> g_onCancel;
 std::function<void()> g_onReset;
 bool g_open = false;
 
-/// Returns the dialog element, or null when the mod's pak is not installed.
-IUIElement* Element()
+/// Returns the element declared as `name`, or null.
+///
+/// @param cache Holder that keeps a reference to the element for the session.
+/// @param name Name from the <element name=...> attribute.
+/// @return The element, or null before the UI has loaded.
+IUIElement* Element(_smart_ptr<IUIElement>& cache, const char* name)
 {
+    if (cache)
+        return cache.get();
+
     auto* env = SSystemGlobalEnvironment::GetInstance();
     if (!env || !env->pFlashUI)
         return nullptr;
 
-    static _smart_ptr<IUIElement> el;   // holds a ref for the session
-    if (el)
-        return el.get();
+    env->pFlashUI->GetUIElement(cache, name);
+    return cache.get();
+}
 
-    env->pFlashUI->GetUIElement(el, "SavegameRenamer");
-    if (!el)
-        SR_LOG("element not found, is Mods/savegame_renamer/Data/savegame_renamer.pak installed?");
-    return el.get();
+/// Returns the dialog element, or null when the mod's pak is not installed.
+IUIElement* DialogElement()
+{
+    static _smart_ptr<IUIElement> el;
+    return Element(el, "SavegameRenamer");
 }
 
 /// Returns the element that carries the prompt over the save list.
@@ -49,27 +57,15 @@ IUIElement* Element()
 /// UIElements/SavegameRenamer.xml.
 IUIElement* HintElement()
 {
-    auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (!env || !env->pFlashUI)
-        return nullptr;
-
     static _smart_ptr<IUIElement> el;
-    if (!el)
-        env->pFlashUI->GetUIElement(el, "SavegameRenamerHint");
-    return el.get();
+    return Element(el, "SavegameRenamerHint");
 }
 
 /// Returns the vanilla menu element, which is silenced while the dialog is up.
 IUIElement* MenuElement()
 {
-    auto* env = SSystemGlobalEnvironment::GetInstance();
-    if (!env || !env->pFlashUI)
-        return nullptr;
-
     static _smart_ptr<IUIElement> el;
-    if (!el)
-        env->pFlashUI->GetUIElement(el, "Menu");
-    return el.get();
+    return Element(el, "Menu");
 }
 
 /// Calls a function on `el` by its XML name, falling back to the raw AS2 name.
@@ -171,7 +167,7 @@ KeyListener g_keyListener;
 /// stays visible as far as the engine is concerned until this runs.
 void Dismiss()
 {
-    if (IUIElement* el = Element())
+    if (IUIElement* el = DialogElement())
         el->SetVisible(false);
     if (auto* env = SSystemGlobalEnvironment::GetInstance(); env && env->pInput)
         env->pInput->RemoveEventListener(&g_keyListener);
@@ -222,9 +218,11 @@ Listener g_listener;
 
 bool Install()
 {
-    IUIElement* el = Element();
-    if (!el)
+    IUIElement* el = DialogElement();
+    if (!el) {
+        SR_LOG("element not found, is Mods/savegame_renamer/Data/savegame_renamer.pak installed?");
         return false;
+    }
     el->AddEventListener(&g_listener, "SavegameRenamer");
     SR_LOG("dialog element ready");
     return true;
@@ -237,7 +235,7 @@ bool IsOpen()
 
 bool Show(const std::string& currentName, bool canReset)
 {
-    IUIElement* el = Element();
+    IUIElement* el = DialogElement();
     if (!el)
         return false;
 
@@ -292,7 +290,7 @@ bool SendInput(const char* action)
 {
     SUIArguments args;
     args.AddArgument(action);
-    return Call(Element(), "SetInput", "fc_setInput", args);
+    return Call(DialogElement(), "SetInput", "fc_setInput", args);
 }
 
 void SetAcceptHandler(std::function<void(const std::string&)> handler)
