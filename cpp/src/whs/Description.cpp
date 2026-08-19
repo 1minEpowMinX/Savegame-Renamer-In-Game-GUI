@@ -31,31 +31,6 @@ bool ParseInt(const std::string& text, int& out)
     }
 }
 
-/// One root attribute where it stands in the header.
-struct AttributeMatch {
-    std::size_t position = 0;  ///< Offset of the separator before the name.
-    std::size_t length = 0;    ///< Length from that separator to the closing quote.
-    std::string value;         ///< The value as the header carries it, still escaped.
-};
-
-/// Returns root attribute `name` where it stands in `xml`.
-///
-/// @param xml Header XML.
-/// @param name Attribute name.
-/// @return Where the attribute stands, or nothing when it is absent.
-std::optional<AttributeMatch> FindAttribute(const std::string& xml, const std::string& name)
-{
-    // The separator before the name is part of the match: the leading \s is what
-    // tells a whole name from the tail of a longer one. The header carries SaveId
-    // inside AutoSaveId, and GameReleaseVersion inside NewGameReleaseVersion.
-    const std::regex pattern("\\s" + name + "=\"([^\"]*)\"");
-    std::smatch m;
-    if (!std::regex_search(xml, m, pattern))
-        return std::nullopt;
-    return AttributeMatch{static_cast<std::size_t>(m.position(0)),
-                          static_cast<std::size_t>(m.length(0)), m[1].str()};
-}
-
 /// Returns the offset of the root element's closing bracket.
 ///
 /// A '>' standing inside an attribute value is passed over.
@@ -74,6 +49,41 @@ std::size_t RootTagEnd(const std::string& xml)
             return i;
     }
     return std::string::npos;
+}
+
+/// One root attribute where it stands in the header.
+struct AttributeMatch {
+    std::size_t position = 0;  ///< Offset of the separator before the name.
+    std::size_t length = 0;    ///< Length from that separator to the closing quote.
+    std::string value;         ///< The value as the header carries it, still escaped.
+};
+
+/// Returns root attribute `name` where it stands in `xml`.
+///
+/// @param xml Header XML.
+/// @param name Attribute name.
+/// @return Where the attribute stands, or nothing when it is absent.
+std::optional<AttributeMatch> FindAttribute(const std::string& xml, const std::string& name)
+{
+    // Searched no further than the root element. The game writes child elements
+    // carrying attributes of their own -- every entry of UsedMods and of DLCs has
+    // some -- and a search over the whole header answers with one of those
+    // whenever the root has none of that name.
+    const std::size_t rootEnd = RootTagEnd(xml);
+    if (rootEnd == std::string::npos)
+        return std::nullopt;
+
+    // The separator before the name is part of the match: the leading \s is what
+    // tells a whole name from the tail of a longer one. The header carries SaveId
+    // inside AutoSaveId, and GameReleaseVersion inside NewGameReleaseVersion.
+    const std::regex pattern("\\s" + name + "=\"([^\"]*)\"");
+    std::smatch m;
+    if (!std::regex_search(xml.cbegin(), xml.cbegin() + rootEnd, m, pattern))
+        return std::nullopt;
+    // Positions are counted from the iterator the search began at, which is the
+    // start of the header.
+    return AttributeMatch{static_cast<std::size_t>(m.position(0)),
+                          static_cast<std::size_t>(m.length(0)), m[1].str()};
 }
 
 }  // namespace

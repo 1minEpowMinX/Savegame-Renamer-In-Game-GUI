@@ -41,6 +41,7 @@
     <ClCompile Include="cpp\src\game\SaveLoadHook.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\Strings.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\tests\DescriptionRead.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\DescriptionSafety.cpp"><Filter>tests</Filter></ClCompile>
     <ClCompile Include="cpp\tests\DescriptionRename.cpp"><Filter>tests</Filter></ClCompile>
     <ClCompile Include="cpp\tests\DescriptionWrite.cpp"><Filter>tests</Filter></ClCompile>
     <ClCompile Include="cpp\tests\RealSave.cpp"><Filter>tests</Filter></ClCompile>
