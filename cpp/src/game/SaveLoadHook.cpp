@@ -154,9 +154,9 @@ private:
     Offsets::IFlashVariableObject* m_obj = nullptr;
 };
 
-/// Returns the highlighted button of the menu movie, or an empty holder.
+/// Places the menu movie's highlighted button in `out`.
 ///
-/// @param out Receives the button.
+/// @param out Receives the button, left empty when there is none.
 void SelectedButton(VarObj& out)
 {
     out.Reset();

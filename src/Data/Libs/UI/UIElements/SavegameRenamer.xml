@@ -18,7 +18,7 @@
         <param name="canReset" desc="1 when the save carries a stashed original name" type="bool" />
       </function>
 
-      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: the movie cannot reach the localization tables">
+      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: the movie cannot reach the localization tables, and a key assigned to a text field from ActionScript is not resolved on the way in">
         <param name="title" desc="dialog heading" type="string" />
         <param name="accept" desc="word beside the Enter key" type="string" />
         <param name="cancel" desc="word beside the Esc key" type="string" />
@@ -27,7 +27,7 @@
       </function>
 
       <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt drawn over the save list">
-        <param name="visible" desc="" type="bool" />
+        <param name="visible" desc="1 to put the prompt on screen, 0 to take it off" type="bool" />
       </function>
 
       <function name="SetInput" funcname="fc_setInput" desc="key feed from the plugin's input listener: the engine delivers typed characters to the movie but not Enter or Esc">
@@ -47,7 +47,7 @@
       <event name="OnReset" fscommand="onRenameReset" desc="the player asked for the original name back" />
 
       <event name="OnPlayAudio" fscommand="onPlayAudio" desc="execute global audio trigger">
-        <param name="TriggerName" desc="" type="string" />
+        <param name="TriggerName" desc="name of the global audio trigger to play" type="string" />
       </event>
 
     </events>
@@ -55,10 +55,9 @@
   </UIElement>
 
   <!-- The same movie declared a second time, for the prompt drawn over the save
-       list. It has to be its own element because the dialog's element takes the
-       mouse across the whole screen: leaving that one visible to carry the
-       prompt stole clicks and the wheel from the list underneath. This one
-       touches no input at all. -->
+       list. It is its own element because the dialog's element takes the mouse
+       across the whole screen, which costs the list underneath its clicks and
+       its wheel. This one touches no input at all. -->
   <UIElement name="SavegameRenamerHint" mouseevents="0" cursor="0" keyevents="0" controller_input="0" events_exclusive="0">
 
     <GFx file="renamer.gfx" layer="45">
@@ -69,7 +68,11 @@
 
     <functions>
 
-      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: the movie cannot reach the localization tables">
+      <!-- The dialog's signature entire, because there is one movie and one
+           fc_setLabels behind both elements, and the plugin captions them
+           through the same call. Only hint is seen here: the other four land on
+           the dialog box, which this element never shows. -->
+      <function name="SetLabels" funcname="fc_setLabels" desc="the captions, already translated: as on the SavegameRenamer element above">
         <param name="title" desc="dialog heading" type="string" />
         <param name="accept" desc="word beside the Enter key" type="string" />
         <param name="cancel" desc="word beside the Esc key" type="string" />
@@ -78,7 +81,7 @@
       </function>
 
       <function name="ShowHint" funcname="fc_showHint" desc="shows or hides the F2 prompt">
-        <param name="visible" desc="" type="bool" />
+        <param name="visible" desc="1 to put the prompt on screen, 0 to take it off" type="bool" />
       </function>
 
     </functions>

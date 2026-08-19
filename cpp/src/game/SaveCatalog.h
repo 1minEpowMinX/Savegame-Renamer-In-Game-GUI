@@ -13,9 +13,8 @@ struct SaveEntry {
 
 /// Reads the game's savegame list and asks it to rebuild after a file changed.
 ///
-/// The manager instance is captured by Install() from the `this` of the first
-/// UpdateSaveGameDescriptions call. Find() and Refresh() report nothing until
-/// that call has come.
+/// Find() and Refresh() report nothing until the hook Install() places has
+/// captured the manager instance.
 namespace SaveCatalog {
 
 /// Hooks UpdateSaveGameDescriptions so the manager instance can be captured.

@@ -24,14 +24,16 @@ import project
 OUTPUT = os.path.join(project.DATA_DIR, "Libs", "UI", "renamer.gfx")
 SCRATCH = os.path.join(project.BUILD_DIR, "flash")
 
-# JPEXS Free Flash Decompiler, which compiles the skeleton and imports the
-# script into it. Resolved late so that importing this module costs nothing on a
-# machine that only wants the other half of the build.
+
 def ffdec():
     """Return the path of the FFDec command line.
 
     @return Path as configured.
     """
+    # JPEXS Free Flash Decompiler, which compiles the skeleton and imports the
+    # script into it. Resolved per call rather than at import, so importing this
+    # module costs nothing on a machine that only wants the other half of the
+    # build.
     return buildenv.require("FFDEC", "the JPEXS FFDec command line")
 
 

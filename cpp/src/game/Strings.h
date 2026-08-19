@@ -28,8 +28,7 @@ struct Labels {
 
 /// Returns the labels in the language the game is running in.
 ///
-/// Resolved on each call rather than cached. A key the tables do not carry
-/// falls back to English.
+/// A key the tables do not carry falls back to English.
 ///
 /// @return The labels.
 Labels Get();

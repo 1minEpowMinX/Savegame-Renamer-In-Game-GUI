@@ -99,7 +99,8 @@
     <NMakeCleanCommandLine>echo Clean is not wired: the build tree belongs to libKCD2.</NMakeCleanCommandLine>
     <NMakeOutput>$(LibKCD2Build)\SavegameRenamer\SavegameRenamer.dll</NMakeOutput>
 
-    <!-- IntelliSense only. The compiler gets these from CMake. -->
+    <!-- IntelliSense only. The compiler gets these from CMake, and the standard
+         from the build environment cpp/.buildenv/CMakeLists.txt is configured by. -->
     <NMakePreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;WIN32_LEAN_AND_MEAN;NOMINMAX;WIN32;_WIN64;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(MSBuildProjectDirectory)\cpp\include;$(MSBuildProjectDirectory)\cpp\src;$(MSBuildProjectDirectory)\cpp\tests;$(LibKCD2Root)\include;$(LibKCD2Root)\include\CryEngine\CryCommon;$(LibKCD2Build)\vcpkg_installed\x64-windows-static-md\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <AdditionalOptions>/std:c++17 /utf-8</AdditionalOptions>
