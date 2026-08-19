@@ -317,6 +317,7 @@ function mkKeyHint(parent, name, depth, key, capFrame, capSpan, label, action,
     drawHit(clip);
 
     clip.onRollOver = function () {
+        playAudio(SND_FOCUS);
         this.labelText.styleFmt.color = COLOR_HOVER;
         setText(this.labelText, this.labelValue);
     };
@@ -560,12 +561,17 @@ function closeWith(event, arg) {
 // Acts on a key the engine delivers to the plugin rather than to the movie.
 function fc_setInput(action) {
     if (action == "accept") {
+        playAudio(SND_CHOICE);
         closeWith("onRenameAccept", stripBars(input.text));
     } else if (action == "cancel") {
+        playAudio(SND_CLOSE);
         closeWith("onRenameCancel", "");
     } else if (action == "reset") {
         if (keyReset._visible) {
+            playAudio(SND_CHOICE);
             closeWith("onRenameReset", "");
+        } else {
+            playAudio(SND_DISABLE);
         }
     }
 }
