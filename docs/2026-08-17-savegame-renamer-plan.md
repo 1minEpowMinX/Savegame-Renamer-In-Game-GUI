@@ -83,7 +83,7 @@
 
 Шаги 1 и 2 (репозиторий, структура, клон libKCD2) выполнены заранее, коммит `e853c1e`.
 
-- [ ] **Step 3: Поднять vcpkg**
+- [x] **Step 3: Поднять vcpkg**
 
 ```bash
 git clone https://github.com/microsoft/vcpkg.git "D:/Games/Self-Mods/KCD2/_deps/vcpkg"
@@ -92,11 +92,11 @@ git clone https://github.com/microsoft/vcpkg.git "D:/Games/Self-Mods/KCD2/_deps/
 
 Задать `VCPKG_ROOT=D:\Games\Self-Mods\KCD2\_deps\vcpkg` в окружении пользователя: корневой `CMakeLists.txt` libKCD2 читает именно эту переменную.
 
-- [ ] **Step 4: Добавить Catch2 в манифест зависимостей**
+- [x] **Step 4: Добавить Catch2 в манифест зависимостей**
 
 В `_deps/libKCD2/.buildenv/vcpkg.json` дописать `"catch2"` в `dependencies`. Остальные пакеты (`spdlog`, `boost-container`, `boost-optional`, `boost-smart-ptr`, `minhook`, `pugixml`, `xbyak`) уже там.
 
-- [ ] **Step 5: Завести junction и CMake подпроекта**
+- [x] **Step 5: Завести junction и CMake подпроекта**
 
 ```bash
 cmd //c mklink //J "D:\Games\Self-Mods\KCD2\_deps\libKCD2\Projects\SavegameRenamer" "D:\Games\Self-Mods\KCD2\savegame_renamer\cpp"
@@ -144,7 +144,7 @@ catch_discover_tests(SavegameRenamerTests)
 
 Цель тестов сознательно не тянет `kcd_re` и PCH: модель обязана собираться и проверяться в отрыве от игры.
 
-- [ ] **Step 6: Поправить пресет под установленную Visual Studio**
+- [x] **Step 6: Поправить пресет под установленную Visual Studio**
 
 В `_deps/libKCD2/.buildenv/CMakePresets.json` заменить `CMAKE_MAKE_PROGRAM` на путь установленной VS:
 
@@ -154,7 +154,7 @@ D:/IDE/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microso
 
 Пресет в апстриме прибит к `18/Community` на диске C, у нас установка на D.
 
-- [ ] **Step 7: Написать точку входа**
+- [x] **Step 7: Написать точку входа**
 
 `cpp/src/plugin.cpp`:
 
@@ -202,7 +202,7 @@ KCSE_PLUGIN_LOAD(kcse)
 
 `KCSE_PLUGIN_LOAD` разворачивается в функцию, возвращающую `bool`; без `return true` загрузчик отбросит плагин с сообщением «returned false from KCSEPlugin_Load». Слушатель `DataLoaded` нужен как страховка проверки: если на момент загрузки `gEnv->pLog` ещё не создан, первая строка в лог не попадёт, а вторая попадёт гарантированно.
 
-- [ ] **Step 8: Собрать**
+- [x] **Step 8: Собрать**
 
 Сборка запускается из корня libKCD2, из окружения `vcvars64`:
 
@@ -212,7 +212,7 @@ cmd //c ""D:\IDE\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars6
 
 Ожидается: `SavegameRenamer.dll` и `SavegameRenamerTests.exe` в каталоге сборки. Первый прогон долгий: vcpkg соберёт boost и spdlog.
 
-- [ ] **Step 9: Развернуть и проверить загрузку**
+- [x] **Step 9: Развернуть и проверить загрузку**
 
 Скопировать DLL в `<игра>/Mods/savegame_renamer/KCSE/Plugins/`, положить `src/mod.manifest`:
 
@@ -236,11 +236,11 @@ cmd //c ""D:\IDE\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars6
 
 Ожидается: строка есть. Если её нет, дальше идти нельзя: вся остальная работа опирается на то, что плагин грузится. Проверить при отказе: экспортируются ли `KCSEPlugin_Version` и `KCSEPlugin_Load` (`dumpbin /exports`), совпадает ли ожидаемая версия KCSE.
 
-- [ ] **Step 10: Положить лицензию**
+- [x] **Step 10: Положить лицензию**
 
 Файл `LICENSE` с текстом GNU GPL v3: KCSE распространяется под GPLv3, мод линкуется с `kcd_re` и публикуется с исходниками.
 
-- [ ] **Step 11: Прогнать пустые тесты**
+- [x] **Step 11: Прогнать пустые тесты**
 
 ```bash
 ctest --test-dir "D:/Games/Self-Mods/KCD2/_deps/libKCD2/.buildenv/build-release" --output-on-failure
@@ -248,7 +248,7 @@ ctest --test-dir "D:/Games/Self-Mods/KCD2/_deps/libKCD2/.buildenv/build-release"
 
 Ожидается: цель тестов собралась и запустилась. Тестов пока нет, это проверка того, что Catch2 подключён.
 
-- [ ] **Step 12: Коммит**
+- [x] **Step 12: Коммит**
 
 ```bash
 git add -A && git commit -m "chore: scaffold KCSE plugin project"
@@ -272,7 +272,7 @@ git add -A && git commit -m "chore: scaffold KCSE plugin project"
 
 Модель держит в памяти только заголовок: payload переписывается потоковым копированием из исходного файла. Сохранение весит мегабайты, читать его целиком незачем.
 
-- [ ] **Step 1: Написать генератор фикстур**
+- [x] **Step 1: Написать генератор фикстур**
 
 `cpp/tests/TestFixture.h`:
 
@@ -315,7 +315,7 @@ inline std::string SampleXml(int saveId = 3754,
 }
 ```
 
-- [ ] **Step 2: Написать падающий тест**
+- [x] **Step 2: Написать падающий тест**
 
 `cpp/tests/DescriptionRead.cpp`:
 
@@ -353,12 +353,12 @@ TEST_CASE("Read rejects a truncated header", "[description]")
 }
 ```
 
-- [ ] **Step 3: Прогнать тест, убедиться что падает**
+- [x] **Step 3: Прогнать тест, убедиться что падает**
 
 Run: `ctest --test-dir cpp/build -R description --output-on-failure`
 Expected: FAIL, `whs/Description.h` не найден.
 
-- [ ] **Step 4: Написать заголовок модели**
+- [x] **Step 4: Написать заголовок модели**
 
 `cpp/include/whs/Description.h`:
 
@@ -415,7 +415,7 @@ private:
 }  // namespace whs
 ```
 
-- [ ] **Step 5: Реализовать разбор**
+- [x] **Step 5: Реализовать разбор**
 
 `cpp/src/whs/Description.cpp`:
 
@@ -510,12 +510,12 @@ std::string Description::DisplayName() const
 }  // namespace whs
 ```
 
-- [ ] **Step 6: Прогнать тесты**
+- [x] **Step 6: Прогнать тесты**
 
 Run: `ctest --test-dir cpp/build -R description --output-on-failure`
 Expected: PASS, три теста.
 
-- [ ] **Step 7: Коммит**
+- [x] **Step 7: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(whs): parse the savegame description header"
@@ -537,7 +537,7 @@ git add cpp && git commit -m "feat(whs): parse the savegame description header"
 
 Очистка отделена от `Description` намеренно: это чистая функция над строкой, её тесты не трогают файловую систему, и её же будет вызывать слой ввода для подсветки счётчика.
 
-- [ ] **Step 1: Написать падающий тест**
+- [x] **Step 1: Написать падающий тест**
 
 `cpp/tests/Sanitise.cpp`:
 
@@ -572,12 +572,12 @@ TEST_CASE("XmlEscape escapes ampersand first", "[sanitise]")
 
 Последний случай важен: если `&` экранируется не первым, уже экранированный текст испортится.
 
-- [ ] **Step 2: Прогнать, убедиться что падает**
+- [x] **Step 2: Прогнать, убедиться что падает**
 
 Run: `ctest --test-dir cpp/build -R sanitise --output-on-failure`
 Expected: FAIL, `whs/Sanitise.h` не найден.
 
-- [ ] **Step 3: Реализовать**
+- [x] **Step 3: Реализовать**
 
 `cpp/include/whs/Sanitise.h`:
 
@@ -658,12 +658,12 @@ std::string XmlEscape(std::string_view raw)
 }  // namespace whs
 ```
 
-- [ ] **Step 4: Прогнать тесты**
+- [x] **Step 4: Прогнать тесты**
 
 Run: `ctest --test-dir cpp/build -R sanitise --output-on-failure`
 Expected: PASS, четыре теста.
 
-- [ ] **Step 5: Коммит**
+- [x] **Step 5: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(whs): sanitise and escape player-typed names"
@@ -687,7 +687,7 @@ git add cpp && git commit -m "feat(whs): sanitise and escape player-typed names"
 
 `SetDisplayName` меняет только текст в памяти. Запись на диск появится в Task 5, поэтому тесты этой задачи проверяют состояние объекта, а не файл.
 
-- [ ] **Step 1: Написать падающий тест**
+- [x] **Step 1: Написать падающий тест**
 
 `cpp/tests/DescriptionRename.cpp`:
 
@@ -784,12 +784,12 @@ TEST_CASE("An empty name resets instead of blanking the entry", "[rename]")
 
 Последний тест фиксирует правило спецификации: пустой ввод означает сброс.
 
-- [ ] **Step 2: Прогнать, убедиться что падает**
+- [x] **Step 2: Прогнать, убедиться что падает**
 
 Run: `ctest --test-dir cpp/build -R rename --output-on-failure`
 Expected: FAIL, `SetDisplayName` не объявлен.
 
-- [ ] **Step 3: Расширить заголовок**
+- [x] **Step 3: Расширить заголовок**
 
 В `cpp/include/whs/Description.h` добавить в публичную секцию:
 
@@ -821,7 +821,7 @@ Expected: FAIL, `SetDisplayName` не объявлен.
 
 Заголовок должен включать `<string_view>`.
 
-- [ ] **Step 4: Реализовать**
+- [x] **Step 4: Реализовать**
 
 Дописать в `cpp/src/whs/Description.cpp`, добавив `#include "whs/Sanitise.h"`:
 
@@ -959,7 +959,7 @@ std::string XmlUnescape(std::string_view raw)
 
 `&amp;` стоит в таблице последним, чтобы `&amp;lt;` расшифровался в `&lt;`, а не в `<`.
 
-- [ ] **Step 5: Дописать тест на обратную функцию**
+- [x] **Step 5: Дописать тест на обратную функцию**
 
 В `cpp/tests/Sanitise.cpp`:
 
@@ -972,12 +972,12 @@ TEST_CASE("XmlUnescape is the inverse of XmlEscape", "[sanitise]")
 }
 ```
 
-- [ ] **Step 6: Прогнать все тесты**
+- [x] **Step 6: Прогнать все тесты**
 
 Run: `ctest --test-dir cpp/build --output-on-failure`
 Expected: PASS, все тесты Task 2, 3, 4.
 
-- [ ] **Step 7: Коммит**
+- [x] **Step 7: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(whs): rename a savegame and reset it to its original name"
@@ -997,7 +997,7 @@ git add cpp && git commit -m "feat(whs): rename a savegame and reset it to its o
 
 Запись обязана оставить payload побайтово неизменным и не должна оставлять файл в промежуточном состоянии.
 
-- [ ] **Step 1: Написать падающий тест**
+- [x] **Step 1: Написать падающий тест**
 
 `cpp/tests/DescriptionWrite.cpp`:
 
@@ -1114,12 +1114,12 @@ TEST_CASE("Write leaves no temporary file behind", "[write]")
 }
 ```
 
-- [ ] **Step 2: Прогнать, убедиться что падает**
+- [x] **Step 2: Прогнать, убедиться что падает**
 
 Run: `ctest --test-dir cpp/build -R write --output-on-failure`
 Expected: FAIL, `Write` не объявлен.
 
-- [ ] **Step 3: Реализовать**
+- [x] **Step 3: Реализовать**
 
 В `cpp/include/whs/Description.h`:
 
@@ -1179,12 +1179,12 @@ bool Description::Write() const
 
 `std::filesystem::rename` на Windows заменяет существующий файл, что здесь и требуется.
 
-- [ ] **Step 4: Прогнать тесты**
+- [x] **Step 4: Прогнать тесты**
 
 Run: `ctest --test-dir cpp/build -R write --output-on-failure`
 Expected: PASS, пять тестов.
 
-- [ ] **Step 5: Написать проверку на настоящем сохранении**
+- [x] **Step 5: Написать проверку на настоящем сохранении**
 
 `cpp/tests/RealSave.cpp`:
 
@@ -1226,7 +1226,7 @@ TEST_CASE("A real savegame survives a rename and a reset", "[real]")
 }
 ```
 
-- [ ] **Step 6: Прогнать сверку с эталонным прототипом**
+- [x] **Step 6: Прогнать сверку с эталонным прототипом**
 
 Скопировать реальный сейв во временный каталог, задать `KCD2_TEST_SAVE` и прогнать. Затем той же операцией через `prototypes/whs_header.py` получить второй файл и сравнить результаты побайтово:
 
@@ -1236,7 +1236,7 @@ python -c "import sys; sys.path.insert(0,'prototypes'); from whs_header import H
 
 Ожидается: заголовки совпадают по полю `UIDescription`, payload у обоих идентичен исходному. Прототип не пишет `RenamerOriginal`, поэтому сравнивать надо поле, а не весь файл.
 
-- [ ] **Step 7: Коммит**
+- [x] **Step 7: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(whs): write the header back atomically"
@@ -1260,13 +1260,13 @@ git add cpp && git commit -m "feat(whs): write the header back atomically"
 
 Это первая задача, которая трогает игру, поэтому автоматических тестов у неё нет: проверка идёт консольной командой в живой игре.
 
-- [ ] **Step 1: Найти путь к менеджеру**
+- [x] **Step 1: Найти путь к менеджеру**
 
 Прочитать `C_SaveGameManager.h` и выписать: как добраться до экземпляра (заголовок прямо говорит, что это не синглтон, а поле `C_PlayerProfileWHManager` по смещению `+0x48`, и что корневой адрес профиль-менеджера автором не разрешён), какие поля дают списки, какой адрес у `UpdateSaveGameDescriptions`.
 
 Если корневой адрес действительно не разрешён, взять его из Address Library или найти сканированием сигнатуры по вызову `CreateSaveGame`. Записать найденный способ комментарием в `SaveCatalog.cpp`: это самое хрупкое место всего мода.
 
-- [ ] **Step 2: Реализовать перечисление**
+- [x] **Step 2: Реализовать перечисление**
 
 `cpp/src/game/SaveCatalog.h`:
 
@@ -1304,17 +1304,17 @@ public:
 
 `SaveCatalog::List` идёт по `m_slotsByType`, для каждого описания берёт `m_fileName`, достраивает полный путь к каталогу сохранений и читает отображаемое имя через `whs::Description::Read`. Имя берётся из файла, а не из описания в памяти: так каталог и модель не разъезжаются.
 
-- [ ] **Step 3: Зарегистрировать временную консольную команду**
+- [x] **Step 3: Зарегистрировать временную консольную команду**
 
 В `cpp/src/plugin.cpp` добавить команду `renamer_list`, печатающую `id`, имя и путь для каждой записи. Команда временная, служит проверкой этой задачи и удаляется в Task 12.
 
-- [ ] **Step 4: Проверить в игре**
+- [x] **Step 4: Проверить в игре**
 
 Запустить игру, открыть консоль, выполнить `renamer_list`.
 
 Ожидается: перечислены те же сохранения и с теми же именами, что видны в меню загрузки. Расхождение по количеству означает, что перебор слотов неполон.
 
-- [ ] **Step 5: Коммит**
+- [x] **Step 5: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(game): enumerate savegames through C_SaveGameManager"
@@ -1333,33 +1333,33 @@ git add cpp && git commit -m "feat(game): enumerate savegames through C_SaveGame
 
 Задача даёт первый пригодный к использованию результат: мод уже делает то же, что 3488, но обновляет список без выхода из меню.
 
-- [ ] **Step 1: Реализовать обновление**
+- [x] **Step 1: Реализовать обновление**
 
 `SaveCatalog::Refresh` вызывает `UpdateSaveGameDescriptions` по найденному в Task 6 адресу.
 
-- [ ] **Step 2: Зарегистрировать временную консольную команду**
+- [x] **Step 2: Зарегистрировать временную консольную команду**
 
 `renamer_set <id> <name...>` собирает остаток аргументов в имя, находит запись через `Find`, читает `whs::Description`, вызывает `SetDisplayName`, `Write`, затем `Refresh`.
 
-- [ ] **Step 3: Проверить в игре**
+- [x] **Step 3: Проверить в игре**
 
 Не выходя из меню загрузки, выполнить `renamer_set <id> Перед боем с Истваном`.
 
 Ожидается: список перерисовался прямо на экране, имя изменилось, выход на экран плейлайнов не потребовался. Это ключевое отличие от мода 3488.
 
-- [ ] **Step 4: Проверить сброс**
+- [x] **Step 4: Проверить сброс**
 
 Выполнить `renamer_set <id>` без имени.
 
 Ожидается: вернулось исходное квестовое имя вместе с хвостом задания.
 
-- [ ] **Step 5: Проверить, что сохранение грузится**
+- [x] **Step 5: Проверить, что сохранение грузится**
 
 Загрузить переименованное сохранение.
 
 Ожидается: загружается нормально.
 
-- [ ] **Step 6: Коммит**
+- [x] **Step 6: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat(game): rename a save and refresh the list in place"
@@ -1378,7 +1378,7 @@ git add cpp && git commit -m "feat(game): rename a save and refresh the list in 
 - Consumes: ничего из предыдущих задач
 - Produces: `void RenameDialog::Show(const std::string& currentName)`, `void RenameDialog::Hide()`
 
-- [ ] **Step 1: Написать описание элемента**
+- [x] **Step 1: Написать описание элемента**
 
 `flash/renamer.xml`:
 
@@ -1413,7 +1413,7 @@ git add cpp && git commit -m "feat(game): rename a save and refresh the list in 
 
 Слой 47 берётся на единицу выше слоя MCM, чтобы диалоги не спорили, если оба мода стоят.
 
-- [ ] **Step 2: Собрать пустой .gfx**
+- [x] **Step 2: Собрать пустой .gfx**
 
 Взять `_deps/libKCD2/Projects/MCM/flash/mcm.gfx` как заготовку, в JPEXS FFDec заменить кадровый скрипт на минимальный `renamer.as`:
 
@@ -1447,15 +1447,15 @@ stop();
 
 Сохранить как `flash/renamer.gfx`, положить рядом `gfxfontlib.gfx` и `gfxfontlib_glyphs.gfx` из MCM.
 
-- [ ] **Step 3: Разложить ресурсы в pak-дерево**
+- [x] **Step 3: Разложить ресурсы в pak-дерево**
 
 Описание элемента кладётся в `src/Data/Libs/UI/UIElements/SavegameRenamer.xml`, `renamer.gfx` и шрифтовые библиотеки — в `src/Data/Libs/UI/`. Путь взят из шапки `Projects/MCM/src/plugin.cpp`: «Libs/UI/UIElements/MCM.xml + mcm.gfx, shipped in Mods/MCM/Data/MCM.pak».
 
-- [ ] **Step 4: Реализовать владение элементом**
+- [x] **Step 4: Реализовать владение элементом**
 
 `RenameDialog` находит элемент по имени `SavegameRenamer`, вызывает `Open`/`Close` и подписывается на три события. Пока обработчики только пишут в лог.
 
-- [ ] **Step 5: Проверить в игре**
+- [x] **Step 5: Проверить в игре**
 
 Временная консольная команда `renamer_dialog` вызывает `Show("test")`.
 
@@ -1463,7 +1463,7 @@ stop();
 
 Если прямоугольника нет, проблема в регистрации элемента, а не в скрипте: проверить, что XML попал в pak по правильному пути и что имя элемента совпадает.
 
-- [ ] **Step 6: Коммит**
+- [x] **Step 6: Коммит**
 
 ```bash
 git add flash cpp src && git commit -m "feat(ui): register the rename dialog element"
@@ -1484,7 +1484,7 @@ git add flash cpp src && git commit -m "feat(ui): register the rename dialog ele
   - `RenameDialog::SetCancelHandler(std::function<void()>)`
   - `RenameDialog::SetResetHandler(std::function<void()>)`
 
-- [ ] **Step 1: Добавить поле ввода в ActionScript**
+- [x] **Step 1: Добавить поле ввода в ActionScript**
 
 Дописать в `flash/renamer.as`, соблюдая ограничения парсера FFDec:
 
@@ -1537,21 +1537,21 @@ function fc_setInput(action) {
 
 Enter и Esc приходят не как char-события, поэтому обрабатываются через `fc_setInput`, а не внутри movie.
 
-- [ ] **Step 2: Реализовать форвардинг клавиш**
+- [x] **Step 2: Реализовать форвардинг клавиш**
 
 `InputForwarder` реализует `IInputEventListener`, и пока диалог открыт, перехватывает Enter и Esc, отправляя `SetInput("accept")` и `SetInput("cancel")`, а остальные клавиши пропускает дальше. Пока диалог открыт, F2 и навигация по списку не должны срабатывать.
 
-- [ ] **Step 3: Связать события с обработчиками**
+- [x] **Step 3: Связать события с обработчиками**
 
 `RenameDialog` разбирает `fscommand` и вызывает установленные обработчики.
 
-- [ ] **Step 4: Проверить в игре**
+- [x] **Step 4: Проверить в игре**
 
 Открыть диалог командой `renamer_dialog`, набрать текст, в том числе кириллицу, нажать Enter.
 
 Ожидается: символы появляются в поле, счётчик считает, Enter закрывает диалог и печатает в лог набранный текст, Esc закрывает и печатает отмену. Меню под диалогом на эти нажатия не реагирует.
 
-- [ ] **Step 5: Коммит**
+- [x] **Step 5: Коммит**
 
 ```bash
 git add flash cpp && git commit -m "feat(ui): accept typed names in the dialog"
@@ -1572,7 +1572,7 @@ git add flash cpp && git commit -m "feat(ui): accept typed names in the dialog"
 
 Здесь лежит главная неизвестная всего проекта: индекс выделенной строки.
 
-- [ ] **Step 1: Выяснить, как получить выделенную строку**
+- [x] **Step 1: Выяснить, как получить выделенную строку**
 
 Заголовок `C_UISaveLoad.h` называет входящие диспетчеры `OnLoadButton` и `OnDeleteLoadButton`, они дают индекс нажатой строки. Нужна выделенная.
 
@@ -1585,17 +1585,17 @@ git add flash cpp && git commit -m "feat(ui): accept typed names in the dialog"
 
 Записать выбранный способ комментарием в `SaveLoadHook.cpp`.
 
-- [ ] **Step 2: Повесить F2**
+- [x] **Step 2: Повесить F2**
 
 `InputForwarder` при открытой странице списка и закрытом диалоге ловит F2, спрашивает у хука выделенный `SaveEntry` и открывает диалог.
 
-- [ ] **Step 3: Связать результат**
+- [x] **Step 3: Связать результат**
 
 Обработчик принятия: `SanitiseName`, затем `whs::Description::Read`, `SetDisplayName`, `Write`, `SaveCatalog::Refresh`. Обработчик сброса: `ResetName`, `Write`, `Refresh`. Обработчик отмены не делает ничего.
 
 При отказе `Write` показать сообщение об ошибке и не трогать список.
 
-- [ ] **Step 4: Проверить сценарии в игре**
+- [x] **Step 4: Проверить сценарии в игре**
 
 Пройти по каждому:
 
@@ -1608,7 +1608,7 @@ git add flash cpp && git commit -m "feat(ui): accept typed names in the dialog"
 7. Загрузить переименованное сохранение. Ожидается: грузится.
 8. Переименовать дважды подряд, затем сбросить. Ожидается: вернулось исходное квестовое имя, а не первое пользовательское.
 
-- [ ] **Step 5: Коммит**
+- [x] **Step 5: Коммит**
 
 ```bash
 git add cpp && git commit -m "feat: rename the selected save with F2 from the load menu"
@@ -1626,25 +1626,25 @@ git add cpp && git commit -m "feat: rename the selected save with F2 from the lo
 - Consumes: рабочий диалог из Task 10
 - Produces: диалог в стиле ванильного модального окна и подсказка в меню
 
-- [ ] **Step 1: Снять эталон**
+- [x] **Step 1: Снять эталон**
 
 Открыть в игре ванильное подтверждение удаления сохранения и сделать скриншот. Из него берутся: цвет фона и рамки, шрифт и кегль заголовка, отступы, вид кнопок, положение окна.
 
 Соответствующие текстуры лежат в `Data/IPL_GameData.pak` по пути `Libs/UI/Textures/Apse/`, файл `modal_dialog_*.dds`.
 
-- [ ] **Step 2: Подогнать вёрстку**
+- [x] **Step 2: Подогнать вёрстку**
 
 Переписать построение `box` в `renamer.as` под снятые размеры. Способ подгонки тот же, что у MCM: итерации по скриншотам, константы абсолютные, вынесены в начало файла.
 
-- [ ] **Step 3: Добавить строки локализации**
+- [x] **Step 3: Добавить строки локализации**
 
 Заголовок диалога, подписи кнопок и подсказка `F2 Переименовать` кладутся в таблицу локализации мода по образцу `better_arm_of_beowulf`. Английский обязателен, остальные языки по желанию.
 
-- [ ] **Step 4: Проверить в игре**
+- [x] **Step 4: Проверить в игре**
 
 Ожидается: диалог визуально неотличим от ванильного модального окна, подсказка про F2 видна на странице списка, кириллица и латиница рендерятся одинаково.
 
-- [ ] **Step 5: Коммит**
+- [x] **Step 5: Коммит**
 
 ```bash
 git add flash src && git commit -m "style(ui): match the vanilla modal dialog"
@@ -1662,15 +1662,15 @@ git add flash src && git commit -m "style(ui): match the vanilla modal dialog"
 - Consumes: всё предыдущее
 - Produces: `releases/savegame_renamer-1.0.zip`
 
-- [ ] **Step 1: Убрать временные команды**
+- [x] **Step 1: Убрать временные команды**
 
 Удалить `renamer_list`, `renamer_set` и `renamer_dialog`. Они были инструментом проверки задач 6, 7 и 8, в релизе им не место: мод заявлен как GUI-вариант.
 
-- [ ] **Step 2: Написать упаковщик**
+- [x] **Step 2: Написать упаковщик**
 
 Взять `better_arm_of_beowulf/tools/build.py` за основу, сохранив его требование к zip без extra field в центральном каталоге, иначе движок не читает pak. Добавить копирование собранной DLL в `src/KCSE/Plugins/`.
 
-- [ ] **Step 3: Собрать релиз**
+- [x] **Step 3: Собрать релиз**
 
 ```bash
 python tools/build.py --release
@@ -1678,17 +1678,17 @@ python tools/build.py --release
 
 Ожидается: `releases/savegame_renamer-1.0.zip` со структурой `savegame_renamer/mod.manifest`, `savegame_renamer/Data/*.pak`, `savegame_renamer/KCSE/Plugins/savegame_renamer.dll`.
 
-- [ ] **Step 4: Проверить установку с нуля**
+- [x] **Step 4: Проверить установку с нуля**
 
 Удалить рабочую копию мода из папки игры, распаковать релизный архив, запустить игру, пройти сценарий 1 из Task 10.
 
 Ожидается: работает на чистой установке.
 
-- [ ] **Step 5: Написать описание для Nexus**
+- [x] **Step 5: Написать описание для Nexus**
 
 В `docs/nexus-description.bbcode.txt`: что делает мод, требование KCSE и Address Library, установка, клавиша F2, отличие от `Rename Your Savegame` (интерфейс вместо консоли и обновление списка на месте), совместимость, лицензия GPLv3 со ссылкой на исходники.
 
-- [ ] **Step 6: Коммит**
+- [x] **Step 6: Коммит**
 
 ```bash
 git add -A && git commit -m "build: package the release archive"

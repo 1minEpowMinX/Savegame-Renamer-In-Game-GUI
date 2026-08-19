@@ -54,7 +54,7 @@
 - Consumes: ничего
 - Produces: в `flash/renamer.as` — `function playAudio(trigger)` и константы `SND_OPEN`, `SND_CLOSE`, `SND_FOCUS`, `SND_CHOICE`, `SND_DISABLE`, все со строковыми значениями имён триггеров. Задача 2 расставляет вызовы `playAudio` с этими константами и ничего нового не заводит.
 
-- [ ] **Step 1: Снять исходное состояние артефакта**
+- [x] **Step 1: Снять исходное состояние артефакта**
 
 ```bash
 python -c "import zipfile; d=zipfile.ZipFile('src/Data/savegame_renamer.pak').read('Libs/UI/UIElements/SavegameRenamer.xml').decode('utf-8'); print('onPlayAudio' in d)"
@@ -62,7 +62,7 @@ python -c "import zipfile; d=zipfile.ZipFile('src/Data/savegame_renamer.pak').re
 
 Ожидается: `False`. Это красная фаза: событие ещё не объявлено.
 
-- [ ] **Step 2: Объявить событие в XML**
+- [x] **Step 2: Объявить событие в XML**
 
 В `src/Data/Libs/UI/UIElements/SavegameRenamer.xml`, внутрь блока `<events>` элемента `SavegameRenamer`, после объявления `OnReset` и перед закрывающим `</events>`:
 
@@ -75,7 +75,7 @@ python -c "import zipfile; d=zipfile.ZipFile('src/Data/savegame_renamer.pak').re
 
 Отступы 6 и 8 пробелов, как у соседних объявлений. Элемент `SavegameRenamerHint` ниже по файлу не трогается.
 
-- [ ] **Step 3: Проверить, что XML остался разборным**
+- [x] **Step 3: Проверить, что XML остался разборным**
 
 ```bash
 python -c "import xml.etree.ElementTree as ET; r=ET.parse('src/Data/Libs/UI/UIElements/SavegameRenamer.xml').getroot(); print([e.get('fscommand') for e in r.iter('event')])"
@@ -83,7 +83,7 @@ python -c "import xml.etree.ElementTree as ET; r=ET.parse('src/Data/Libs/UI/UIEl
 
 Ожидается: `['onRenameAccept', 'onRenameCancel', 'onRenameReset', 'onPlayAudio']`.
 
-- [ ] **Step 4: Завести секцию звуков в ActionScript**
+- [x] **Step 4: Завести секцию звуков в ActionScript**
 
 В `flash/renamer.as`, между `var Y_KEYS = ...` и разделителем `// ---- dialog box --`, отдельной секцией:
 
@@ -111,7 +111,7 @@ function playAudio(trigger) {
 
 Разделитель ровно 78 символов, как остальные в файле.
 
-- [ ] **Step 5: Озвучить открытие диалога**
+- [x] **Step 5: Озвучить открытие диалога**
 
 В `flash/renamer.as` дописать последней строкой тела `fc_open`:
 
@@ -131,7 +131,7 @@ function fc_open(currentName, canReset) {
 
 Звук идёт последним, когда окно уже поднято и фокус выставлен.
 
-- [ ] **Step 6: Собрать**
+- [x] **Step 6: Собрать**
 
 ```bash
 python tools\build.py
@@ -139,7 +139,7 @@ python tools\build.py
 
 Ожидается: `built 16 localization paks`, затем `packed src\Data\savegame_renamer.pak` со списком файлов и кодом возврата 0. Отказ FFDec на разборе `renamer.as` валит сборку здесь же.
 
-- [ ] **Step 7: Проверить артефакт, зелёная фаза**
+- [x] **Step 7: Проверить артефакт, зелёная фаза**
 
 ```bash
 python -c "import zipfile,zlib; z=zipfile.ZipFile('src/Data/savegame_renamer.pak'); print('onPlayAudio' in z.read('Libs/UI/UIElements/SavegameRenamer.xml').decode('utf-8')); d=zlib.decompress(z.read('Libs/UI/renamer.gfx')[8:]); print(b'onPlayAudio' in d, b'ui_menu_open' in d)"
@@ -147,7 +147,7 @@ python -c "import zipfile,zlib; z=zipfile.ZipFile('src/Data/savegame_renamer.pak
 
 Ожидается: `True`, затем `True True`. Первое — событие в объявлении элемента, второе — имя команды и имя триггера в скомпилированном ActionScript.
 
-- [ ] **Step 8: Проверить на слух**
+- [x] **Step 8: Проверить на слух**
 
 ```bash
 python tools\build.py --deploy
@@ -155,7 +155,7 @@ python tools\build.py --deploy
 
 Запустить игру, открыть список сохранений, встать на любую строку, нажать F2. Окно должно подняться со звуком открытия меню, тем же, что звучит при входе в меню игры.
 
-- [ ] **Step 9: Если тихо, разделить два отказа**
+- [x] **Step 9: Если тихо, разделить два отказа**
 
 Отказывать могут имя триггера или канал доставки. Пробовать по одному, возвращая правку перед следующей пробой.
 
@@ -181,7 +181,7 @@ function playAudio(trigger) {
 
    Зазвучало — дело было в канале, обёртка остаётся в этом виде, а имена не трогаются.
 
-- [ ] **Step 10: Коммит**
+- [x] **Step 10: Коммит**
 
 ```bash
 git add src/Data/Libs/UI/UIElements/SavegameRenamer.xml flash/renamer.as src/Data/Libs/UI/renamer.gfx src/Data/savegame_renamer.pak
@@ -199,7 +199,7 @@ git commit -m "feat(ui): sound the rename dialog opening with the game's own tri
 - Consumes: `playAudio(trigger)`, `SND_FOCUS`, `SND_CHOICE`, `SND_CLOSE`, `SND_DISABLE` из задачи 1
 - Produces: ничего, задача последняя в коде
 
-- [ ] **Step 1: Озвучить наведение**
+- [x] **Step 1: Озвучить наведение**
 
 В `flash/renamer.as`, в теле `mkKeyHint`, первой строкой обработчика:
 
@@ -215,7 +215,7 @@ git commit -m "feat(ui): sound the rename dialog opening with the game's own tri
 
 Подсказка F2 через это не зазвучит: `mkKeyHint` строит и её, но сразу после постройки `hint.onRollOver` присваивается `null`, а её элемент вдобавок объявлен с `mouseevents="0"`.
 
-- [ ] **Step 2: Озвучить три исхода и отказ**
+- [x] **Step 2: Озвучить три исхода и отказ**
 
 Заменить тело `fc_setInput` целиком:
 
@@ -243,7 +243,7 @@ function fc_setInput(action) {
 
 Клик мышью по строке подсказки приходит сюда же, `clip.onRelease` зовёт `fc_setInput(this.action)`. Отдельных точек вызова для мыши не заводить, иначе клавиша и клик разойдутся.
 
-- [ ] **Step 3: Собрать**
+- [x] **Step 3: Собрать**
 
 ```bash
 python tools\build.py
@@ -251,7 +251,7 @@ python tools\build.py
 
 Ожидается: код возврата 0 и `packed src\Data\savegame_renamer.pak`.
 
-- [ ] **Step 4: Проверить, что все пять триггеров попали в артефакт**
+- [x] **Step 4: Проверить, что все пять триггеров попали в артефакт**
 
 ```bash
 python -c "import zipfile,zlib; d=zlib.decompress(zipfile.ZipFile('src/Data/savegame_renamer.pak').read('Libs/UI/renamer.gfx')[8:]); print([t.decode() for t in [b'ui_menu_open',b'ui_menu_close',b'ui_menu_change_focus',b'ui_menu_change_choice',b'ui_menu_disable'] if t in d])"
@@ -259,7 +259,7 @@ python -c "import zipfile,zlib; d=zlib.decompress(zipfile.ZipFile('src/Data/save
 
 Ожидается список из всех пяти имён. Если задача 1 закончилась на семействе `APSE_*`, подставить его имена.
 
-- [ ] **Step 5: Проверить на слух**
+- [x] **Step 5: Проверить на слух**
 
 ```bash
 python tools\build.py --deploy
@@ -275,7 +275,7 @@ python tools\build.py --deploy
 6. Del на сохранении без него: отказной звук, окно остаётся открытым, строка сброса по-прежнему скрыта.
 7. Нажать Enter и Esc с клавиатуры и кликнуть те же строки мышью: звук одинаковый обоими способами.
 
-- [ ] **Step 6: Коммит**
+- [x] **Step 6: Коммит**
 
 ```bash
 git add flash/renamer.as src/Data/Libs/UI/renamer.gfx src/Data/savegame_renamer.pak
@@ -295,7 +295,7 @@ git commit -m "feat(ui): sound hover, accept, cancel and reset in the rename dia
 - Consumes: ничего
 - Produces: ничего
 
-- [ ] **Step 1: Дописать строку в список возможностей**
+- [x] **Step 1: Дописать строку в список возможностей**
 
 В `docs/nexus/description.bbcode.txt`, в блоке `Main features`, сразу после строки про графику из ванильных меню:
 
@@ -303,7 +303,7 @@ git commit -m "feat(ui): sound hover, accept, cancel and reset in the rename dia
 [*]Sounds like the menu it sits in: hover, confirm, cancel and refusal all play the game's own interface triggers. No sound file ships with the mod[/*]
 ```
 
-- [ ] **Step 2: Проверить, что разметка списка не разъехалась**
+- [x] **Step 2: Проверить, что разметка списка не разъехалась**
 
 ```bash
 python -c "import io; s=io.open('docs/nexus/description.bbcode.txt',encoding='utf-8').read(); print(s.count('[list'), s.count('[/list]'), s.count('[*]'), s.count('[/*]'))"
@@ -311,7 +311,7 @@ python -c "import io; s=io.open('docs/nexus/description.bbcode.txt',encoding='ut
 
 Ожидается: `4 4 17 17`. До правки было `4 4 16 16`. Считается `[list` без закрывающей скобки: один из списков в файле открыт как `[list=1]`.
 
-- [ ] **Step 3: Коммит**
+- [x] **Step 3: Коммит**
 
 ```bash
 git add docs/nexus/description.bbcode.txt
