@@ -36,6 +36,7 @@
     <ClCompile Include="cpp\src\whs\Sanitise.cpp"><Filter>model</Filter></ClCompile>
     <ClCompile Include="cpp\src\plugin.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\RenameDialog.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\RenameFlow.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\SaveCatalog.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\SaveLoadHook.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\Strings.cpp"><Filter>game</Filter></ClCompile>
@@ -50,7 +51,9 @@
     <ClInclude Include="cpp\include\whs\Description.h"><Filter>model</Filter></ClInclude>
     <ClInclude Include="cpp\include\whs\Sanitise.h"><Filter>model</Filter></ClInclude>
     <ClInclude Include="cpp\src\Log.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\Hook.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\RenameDialog.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\RenameFlow.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\SaveCatalog.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\SaveLoadHook.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\Strings.h"><Filter>game</Filter></ClInclude>
@@ -68,9 +71,12 @@
     <None Include="tools\build_cpp.bat"><Filter>build</Filter></None>
     <None Include="tools\build_flash.py"><Filter>build</Filter></None>
     <None Include="tools\build_localization.py"><Filter>build</Filter></None>
+    <None Include="tools\pak.py"><Filter>build</Filter></None>
+    <None Include="tools\project.py"><Filter>build</Filter></None>
     <None Include="README.md"><Filter>docs</Filter></None>
     <None Include="docs\2026-08-17-savegame-renamer-design.md"><Filter>docs</Filter></None>
     <None Include="docs\2026-08-17-savegame-renamer-plan.md"><Filter>docs</Filter></None>
+    <None Include="docs\2026-08-19-refactoring-design.md"><Filter>docs</Filter></None>
     <None Include="docs\nexus\description.bbcode.txt"><Filter>docs</Filter></None>
     <None Include="docs\nexus\make_art.py"><Filter>docs</Filter></None>
     <None Include="tools\buildenv.py"><Filter>build</Filter></None>
