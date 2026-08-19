@@ -46,6 +46,10 @@
 
       <event name="OnReset" fscommand="onRenameReset" desc="the player asked for the original name back" />
 
+      <event name="OnPlayAudio" fscommand="onPlayAudio" desc="execute global audio trigger">
+        <param name="TriggerName" desc="" type="string" />
+      </event>
+
     </events>
 
   </UIElement>

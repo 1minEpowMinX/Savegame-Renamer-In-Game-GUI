@@ -119,6 +119,26 @@ var Y_META = Y_INPUT + ROW_INPUT + GAP_COUNTER;
 var Y_RULE = Y_META + ROW_META + GAP_RULE;
 var Y_KEYS = Y_RULE + GAP_KEYS;
 
+// -------------------------------------------------------------- ui sounds --
+
+// The game's own interface triggers, taken from the Audio class every vanilla
+// movie carries. The engine plays one for any element that declares the
+// onPlayAudio event: C_UICommonEventHandler is attached to every flash element
+// and is what receives it. The menu family is the one this dialog belongs to,
+// being drawn over the load list; the panel screens sound their own way.
+var SND_OPEN = "ui_menu_open";
+var SND_CLOSE = "ui_menu_close";
+var SND_FOCUS = "ui_menu_change_focus";
+var SND_CHOICE = "ui_menu_change_choice";
+var SND_DISABLE = "ui_menu_disable";
+
+// Plays one of the game's global audio triggers.
+//
+// @param trigger Name of the trigger.
+function playAudio(trigger) {
+    fscommand("onPlayAudio", trigger);
+}
+
 // ------------------------------------------------------------- dialog box --
 var box = _root.createEmptyMovieClip("box", 1);
 box._visible = false;
@@ -484,6 +504,7 @@ function fc_open(currentName, canReset) {
     updateCounter();
     Selection.setFocus(input);
     Selection.setSelection(input.text.length, input.text.length);
+    playAudio(SND_OPEN);
 }
 
 // Shows or hides the F2 prompt over the save list.
