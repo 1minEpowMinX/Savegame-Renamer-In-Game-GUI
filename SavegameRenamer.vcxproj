@@ -177,6 +177,8 @@
     <None Include="docs\2026-08-17-savegame-renamer-design.md" />
 	<None Include="docs\2026-08-17-savegame-renamer-plan.md" />
     <None Include="docs\2026-08-19-refactoring-design.md" />
+    <None Include="docs\2026-08-19-ui-audio-design.md" />
+    <None Include="docs\2026-08-19-ui-audio-plan.md" />
     <None Include="docs\nexus\description.bbcode.txt" />
     <None Include="docs\nexus\make_art.py" />
     <None Include="README.md" />
