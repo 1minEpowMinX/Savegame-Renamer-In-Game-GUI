@@ -95,7 +95,7 @@ shell would run. What the project adds is what a batch file cannot tell the
 editor: the file tree, the include paths and defines IntelliSense needs, and F5
 set to launch the game so breakpoints bind once KCSE has loaded the plugin.
 
-Two configurations, both x64:
+Three configurations, all x64:
 
 | Configuration | Build runs | F5 starts |
 |---|---|---|
@@ -103,10 +103,10 @@ Two configurations, both x64:
 | `Deploy` | that, then `tools\build.py --deploy` &mdash; flash, localization, pak, install | the game |
 | `Package` | that, then `--deploy --release` as well &mdash; also writes the release archive | the game |
 
-The two commands are chained rather than independent: the pipeline copies the
+The commands are chained rather than independent: the pipeline copies the
 plugin it has just built, so it does not run when the compile failed. `Deploy`
-needs FFDec on the machine and the game closed, which is why the C++ loop is a
-configuration of its own.
+and `Package` need FFDec on the machine and the game closed, which is why the
+C++ loop is a configuration of its own.
 
 Each configuration starts what it has just built. Release installs nothing, so a
 game started from it would be running whichever plugin was deployed last rather
