@@ -8,7 +8,7 @@ The information you want is already in the file. It just isn't yours to write.
 
 [size=6][b]Main features[/b][/size]
 [list]
-[*][b]F2[/b] on the highlighted save opens a rename dialog. The key does nothing anywhere else in the menu[/*]
+[*][b]F2[/b] on the highlighted save opens a rename dialog. The key does nothing anywhere else in the game[/*]
 [*][b]Enter[/b] accepts, [b]Esc[/b] cancels, [b]Del[/b] puts the original name back. Every prompt is clickable too[/*]
 [*]The load list redraws immediately, without leaving the page and coming back[/*]
 [*]The original quest name is kept inside the save, so a rename is never one-way[/*]
