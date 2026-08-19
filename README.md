@@ -99,16 +99,16 @@ Three configurations, all x64:
 
 | Configuration | Build runs | F5 starts |
 |---|---|---|
-| `Release` | `tools\build_cpp.bat` &mdash; the C++ alone, the loop while editing it | the test executable |
+| `Build` | `tools\build_cpp.bat` &mdash; the C++ alone, the loop while editing it | the test executable |
 | `Deploy` | that, then `tools\build.py --deploy` &mdash; flash, localization, pak, install | the game |
-| `Package` | that, then `--deploy --release` as well &mdash; also writes the release archive | the game |
+| `Release` | that, then `--deploy --release` as well &mdash; also writes the release archive | the game |
 
 The commands are chained rather than independent: the pipeline copies the
 plugin it has just built, so it does not run when the compile failed. `Deploy`
-and `Package` need FFDec on the machine and the game closed, which is why the
+and `Release` need FFDec on the machine and the game closed, which is why the
 C++ loop is a configuration of its own.
 
-Each configuration starts what it has just built. Release installs nothing, so a
+Each configuration starts what it has just built. `Build` installs nothing, so a
 game started from it would be running whichever plugin was deployed last rather
 than the one just compiled.
 
