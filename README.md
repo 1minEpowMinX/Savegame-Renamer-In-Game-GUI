@@ -101,6 +101,7 @@ Two configurations, both x64:
 |---|---|---|
 | `Release` | `tools\build_cpp.bat` &mdash; the C++ alone, the loop while editing it | the test executable |
 | `Deploy` | that, then `tools\build.py --deploy` &mdash; flash, localization, pak, install | the game |
+| `Package` | that, then `--deploy --release` as well &mdash; also writes the release archive | the game |
 
 The two commands are chained rather than independent: the pipeline copies the
 plugin it has just built, so it does not run when the compile failed. `Deploy`

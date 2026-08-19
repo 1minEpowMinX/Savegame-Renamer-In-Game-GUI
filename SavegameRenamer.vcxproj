@@ -9,9 +9,11 @@
      which the rest of the build reads too. -->
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- Release builds the plugin and nothing else, which is the loop while editing
-       C++. Deploy runs the whole pipeline afterwards: the flash, the localization
-       tables, the pak, and the copy into the game. -->
+  <!-- Release builds the C++ and nothing else, which is the loop while editing
+       it. Deploy runs the whole pipeline afterwards: the flash, the localization
+       tables, the pak, and the copy into the game. Package does that and writes
+       the release archive as well, which is a deliberate act rather than
+       something every rebuild should redo. -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -19,6 +21,10 @@
     </ProjectConfiguration>
     <ProjectConfiguration Include="Deploy|x64">
       <Configuration>Deploy</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Package|x64">
+      <Configuration>Package</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -66,6 +72,7 @@
 
     <BuildCpp>"$(MSBuildProjectDirectory)\tools\build_cpp.bat"</BuildCpp>
     <BuildMod>"$(PythonExe)" "$(MSBuildProjectDirectory)\tools\build.py" --deploy</BuildMod>
+    <BuildPackage>"$(PythonExe)" "$(MSBuildProjectDirectory)\tools\build.py" --deploy --release</BuildPackage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -78,6 +85,14 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Deploy'">
     <NMakeBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildMod)</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildMod)</NMakeReBuildCommandLine>
+  </PropertyGroup>
+
+  <!-- The archive is written from the source tree and the build output, but the
+       install runs first: a release worth cutting is one that was installed and
+       started at least once. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Package'">
+    <NMakeBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildPackage)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>$(BuildCpp) &amp;&amp; $(BuildPackage)</NMakeReBuildCommandLine>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -106,7 +121,7 @@
 
   <!-- The plugin is loaded into the game by KCSE, so the thing to start is the
        game. Breakpoints bind once it has loaded the DLL. -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Deploy'" Label="Debugging">
+  <PropertyGroup Condition="'$(Configuration)' == 'Deploy' or '$(Configuration)' == 'Package'" Label="Debugging">
     <LocalDebuggerCommand>$(KCD2Root)\Bin\Win64MasterMasterSteamPGO\KingdomCome.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>$(KCD2Root)\Bin\Win64MasterMasterSteamPGO</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
