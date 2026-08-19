@@ -95,6 +95,12 @@ private:
     /// @return One entry per field, empty when the attribute is absent.
     std::vector<std::string> UiFields() const;
 
+    /// Returns one UIDescription field, decoded.
+    ///
+    /// @param field Position of the field.
+    /// @return The field's text.
+    std::string Field(UiField field) const;
+
     /// Sets root attribute `name`, adding it to the root element when absent.
     ///
     /// @param name Attribute name.
@@ -110,6 +116,12 @@ private:
     ///
     /// @param fields One entry per field, as UiFields returns them.
     void SetUiFields(const std::vector<std::string>& fields);
+
+    /// Writes the header and a copy of the payload to `path`.
+    ///
+    /// @param path File to create, overwriting any existing one.
+    /// @return True when both were written whole.
+    bool WriteTo(const std::filesystem::path& path) const;
 };
 
 }  // namespace whs

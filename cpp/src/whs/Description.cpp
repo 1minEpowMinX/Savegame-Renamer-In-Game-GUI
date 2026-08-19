@@ -31,18 +31,29 @@ bool ParseInt(const std::string& text, int& out)
     }
 }
 
-/// Returns the pattern matching `name` where it stands as an attribute.
+/// One root attribute where it stands in the header.
+struct AttributeMatch {
+    std::size_t position = 0;  ///< Offset of the separator before the name.
+    std::size_t length = 0;    ///< Length from that separator to the closing quote.
+    std::string value;         ///< The value as the header carries it, still escaped.
+};
+
+/// Returns root attribute `name` where it stands in `xml`.
 ///
-/// The separator before the name is part of the match.
-///
+/// @param xml Header XML.
 /// @param name Attribute name.
-/// @return The pattern.
-std::regex AttributePattern(const std::string& name)
+/// @return Where the attribute stands, or nothing when it is absent.
+std::optional<AttributeMatch> FindAttribute(const std::string& xml, const std::string& name)
 {
-    // The leading \s is what tells a whole name from the tail of a longer one.
-    // The header carries SaveId inside AutoSaveId, and GameReleaseVersion inside
-    // NewGameReleaseVersion.
-    return std::regex("\\s" + name + "=\"([^\"]*)\"");
+    // The separator before the name is part of the match: the leading \s is what
+    // tells a whole name from the tail of a longer one. The header carries SaveId
+    // inside AutoSaveId, and GameReleaseVersion inside NewGameReleaseVersion.
+    const std::regex pattern("\\s" + name + "=\"([^\"]*)\"");
+    std::smatch m;
+    if (!std::regex_search(xml, m, pattern))
+        return std::nullopt;
+    return AttributeMatch{static_cast<std::size_t>(m.position(0)),
+                          static_cast<std::size_t>(m.length(0)), m[1].str()};
 }
 
 /// Returns the offset of the root element's closing bracket.
@@ -111,10 +122,10 @@ std::optional<Description> Description::Read(const std::filesystem::path& path)
 
 std::string Description::Attribute(const std::string& name) const
 {
-    std::smatch m;
-    if (!std::regex_search(m_xml, m, AttributePattern(name)))
+    const auto found = FindAttribute(m_xml, name);
+    if (!found.has_value())
         return {};
-    return m[1].str();
+    return found->value;
 }
 
 std::vector<std::string> Description::UiFields() const
@@ -145,10 +156,8 @@ void Description::SetAttribute(const std::string& name, const std::string& value
     // format string, and the value carries whatever the player typed. A name
     // holding "$&" would paste the matched attribute back into itself, quotes
     // and all, and leave the header unparseable.
-    std::smatch m;
-    if (std::regex_search(m_xml, m, AttributePattern(name))) {
-        m_xml.replace(static_cast<std::size_t>(m.position(0)),
-                      static_cast<std::size_t>(m.length(0)), written);
+    if (const auto found = FindAttribute(m_xml, name)) {
+        m_xml.replace(found->position, found->length, written);
         return;
     }
     // A new attribute goes last on the root element, just before its closing
@@ -161,10 +170,8 @@ void Description::SetAttribute(const std::string& name, const std::string& value
 
 void Description::RemoveAttribute(const std::string& name)
 {
-    std::smatch m;
-    if (std::regex_search(m_xml, m, AttributePattern(name)))
-        m_xml.erase(static_cast<std::size_t>(m.position(0)),
-                    static_cast<std::size_t>(m.length(0)));
+    if (const auto found = FindAttribute(m_xml, name))
+        m_xml.erase(found->position, found->length);
 }
 
 void Description::SetUiFields(const std::vector<std::string>& fields)
@@ -178,14 +185,19 @@ void Description::SetUiFields(const std::vector<std::string>& fields)
     SetAttribute("UIDescription", packed);
 }
 
+std::string Description::Field(UiField field) const
+{
+    return XmlUnescape(UiFields()[static_cast<std::size_t>(field)]);
+}
+
 std::string Description::DisplayName() const
 {
-    return XmlUnescape(UiFields()[static_cast<std::size_t>(UiField::Quest)]);
+    return Field(UiField::Quest);
 }
 
 std::string Description::ObjectiveName() const
 {
-    return XmlUnescape(UiFields()[static_cast<std::size_t>(UiField::Objective)]);
+    return Field(UiField::Objective);
 }
 
 bool Description::HasCustomName() const
@@ -213,6 +225,32 @@ void Description::SetDisplayName(std::string_view name)
     SetUiFields(fields);
 }
 
+bool Description::WriteTo(const std::filesystem::path& path) const
+{
+    std::ifstream src(m_path, std::ios::binary);
+    std::ofstream dst(path, std::ios::binary | std::ios::trunc);
+    if (!src || !dst)
+        return false;
+
+    const std::uint32_t magic = kMagic;
+    const std::int32_t length = static_cast<std::int32_t>(m_xml.size() + 1);
+    dst.write(reinterpret_cast<const char*>(&magic), 4);
+    dst.write(reinterpret_cast<const char*>(&length), 4);
+    dst.write(m_xml.data(), static_cast<std::streamsize>(m_xml.size()));
+    dst.put('\0');
+
+    // Copied through a fixed buffer, so a save of any size costs one header and
+    // one buffer in memory.
+    src.seekg(static_cast<std::streamoff>(m_payloadOffset));
+    std::vector<char> buffer(1u << 20);
+    while (src) {
+        src.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+        dst.write(buffer.data(), src.gcount());
+    }
+    dst.flush();
+    return dst.good() && !src.bad();
+}
+
 bool Description::Write() const
 {
     // The file has to still hold the save this object was read from. The id
@@ -226,38 +264,11 @@ bool Description::Write() const
 
     const auto temp = m_path.parent_path() / (m_path.filename().string() + ".renamer-tmp");
     std::error_code ec;
-    bool copied = false;
-
-    {
-        std::ifstream src(m_path, std::ios::binary);
-        std::ofstream dst(temp, std::ios::binary | std::ios::trunc);
-        if (!src || !dst) {
-            std::filesystem::remove(temp, ec);
-            return false;
-        }
-
-        const std::uint32_t magic = kMagic;
-        const std::int32_t length = static_cast<std::int32_t>(m_xml.size() + 1);
-        dst.write(reinterpret_cast<const char*>(&magic), 4);
-        dst.write(reinterpret_cast<const char*>(&length), 4);
-        dst.write(m_xml.data(), static_cast<std::streamsize>(m_xml.size()));
-        dst.put('\0');
-
-        // Copied through a fixed buffer, so a save of any size costs one header
-        // and one buffer in memory.
-        src.seekg(static_cast<std::streamoff>(m_payloadOffset));
-        std::vector<char> buffer(1u << 20);
-        while (src) {
-            src.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-            dst.write(buffer.data(), src.gcount());
-        }
-        dst.flush();
-        copied = dst.good() && !src.bad();
-    }
 
     // A half-written temp file is not left beside the save: the game enumerates
-    // the directory, and the next write would find it in the way.
-    if (!copied) {
+    // the directory, and the next write would find it in the way. WriteTo has
+    // closed both streams by the time this is decided.
+    if (!WriteTo(temp)) {
         std::filesystem::remove(temp, ec);
         return false;
     }
