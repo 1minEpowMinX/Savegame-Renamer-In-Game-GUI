@@ -5,7 +5,7 @@
     <description>Rename an existing savegame from the in-game load menu. Press F2 on the highlighted save, type a name, and the list updates on the spot. No console, no external tools. Requires KCSE.</description>
     <author>Lefxxx</author>
     <version>1.2</version>
-    <created_on>2026-08-19</created_on>
+    <created_on>2026-08-21</created_on>
     <modid>savegame_renamer</modid>
     <modifies_level>false</modifies_level>
   </info>
