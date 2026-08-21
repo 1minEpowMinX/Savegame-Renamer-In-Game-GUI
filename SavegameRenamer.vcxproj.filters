@@ -34,7 +34,9 @@
   <ItemGroup>
     <ClCompile Include="cpp\src\whs\Description.cpp"><Filter>model</Filter></ClCompile>
     <ClCompile Include="cpp\src\whs\Sanitise.cpp"><Filter>model</Filter></ClCompile>
+    <ClCompile Include="cpp\src\whs\Saves.cpp"><Filter>model</Filter></ClCompile>
     <ClCompile Include="cpp\src\plugin.cpp"><Filter>game</Filter></ClCompile>
+    <ClCompile Include="cpp\src\game\MenuSelection.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\RenameDialog.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\RenameFlow.cpp"><Filter>game</Filter></ClCompile>
     <ClCompile Include="cpp\src\game\SaveCatalog.cpp"><Filter>game</Filter></ClCompile>
@@ -46,13 +48,16 @@
     <ClCompile Include="cpp\tests\DescriptionWrite.cpp"><Filter>tests</Filter></ClCompile>
     <ClCompile Include="cpp\tests\RealSave.cpp"><Filter>tests</Filter></ClCompile>
     <ClCompile Include="cpp\tests\Sanitise.cpp"><Filter>tests</Filter></ClCompile>
+    <ClCompile Include="cpp\tests\Saves.cpp"><Filter>tests</Filter></ClCompile>
   </ItemGroup>
 
   <ItemGroup>
     <ClInclude Include="cpp\include\whs\Description.h"><Filter>model</Filter></ClInclude>
     <ClInclude Include="cpp\include\whs\Sanitise.h"><Filter>model</Filter></ClInclude>
+    <ClInclude Include="cpp\include\whs\Saves.h"><Filter>model</Filter></ClInclude>
     <ClInclude Include="cpp\src\Log.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\Hook.h"><Filter>game</Filter></ClInclude>
+    <ClInclude Include="cpp\src\game\MenuSelection.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\RenameDialog.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\RenameFlow.h"><Filter>game</Filter></ClInclude>
     <ClInclude Include="cpp\src\game\SaveCatalog.h"><Filter>game</Filter></ClInclude>
