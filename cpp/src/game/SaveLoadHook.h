@@ -1,6 +1,9 @@
 #pragma once
 
-/// Hooks the load-menu controller so the visible save list can be rebuilt.
+#include <functional>
+
+/// Hooks the load-menu controller so the visible save list can be rebuilt, and
+/// reports when the menu arrives at that list and when it leaves.
 ///
 /// The controller and the playline it draws are captured from the game's own
 /// call to BuildLoadGamePage.
@@ -12,20 +15,23 @@ namespace SaveLoadHook {
 /// @return True when the load-page hook was created and enabled.
 bool Install();
 
-/// Returns true once the game has built the load page at least once.
-bool Ready();
+/// Sets the handler called when the menu arrives at the save list or leaves it.
+///
+/// Arrival is reported once the page has been built, so a handler that draws
+/// over the list runs after it is laid out; departure is reported as the menu
+/// turns to the page it is leaving for.
+///
+/// @param handler Called with whether the save list is now on screen.
+void SetSaveListHandler(std::function<void(bool)> handler);
 
 /// Rebuilds the load page from the manager's current descriptions.
 ///
 /// @return True when the page was rebuilt.
 bool RebuildLoadPage();
 
-/// Returns the id of the savegame row the player has highlighted.
+/// Returns the playline the load page was last built for.
 ///
-/// Reads the menu movie's own selection state, which follows the mouse and the
-/// arrow keys as the vanilla delete action does.
-///
-/// @return The id, or -1 when the highlighted item is not a savegame row.
-int SelectedSaveId();
+/// @return The index counted from zero, or -1 before the page has been built.
+int Playline();
 
 }  // namespace SaveLoadHook

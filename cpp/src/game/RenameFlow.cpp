@@ -17,6 +17,12 @@ struct Pending {
     /// Id of the save, or -1 while no dialog is open.
     int saveId = -1;
 
+    /// Playline the dialog was opened on.
+    ///
+    /// Held rather than read again on accept: the id alone names one save per
+    /// playline, and the menu may have moved on by then.
+    int playline = -1;
+
     /// The line the dialog was opened on, localized, as the list renders it.
     ///
     /// Held to tell an edit from a confirmation of the line as it was offered.
@@ -26,6 +32,7 @@ struct Pending {
     void Clear()
     {
         saveId = -1;
+        playline = -1;
         name.clear();
     }
 };
@@ -37,22 +44,16 @@ Pending g_pending;
 /// @param name Text as typed, or empty to reset to the original quest name.
 void ApplyRename(const std::string& name)
 {
-    const auto entry = SaveCatalog::Find(g_pending.saveId);
+    auto entry = SaveCatalog::Find(g_pending.saveId, g_pending.playline);
     g_pending.Clear();
     if (!entry.has_value()) {
         SR_LOG("the save went away while the dialog was open");
         return;
     }
 
-    auto header = whs::Description::Read(entry->file);
-    if (!header.has_value()) {
-        SR_LOG("could not read %s", entry->file.string().c_str());
-        return;
-    }
-
-    header->SetDisplayName(name);
-    if (!header->Write()) {
-        SR_LOG("could not write %s", entry->file.string().c_str());
+    entry->header.SetDisplayName(name);
+    if (!entry->header.Write()) {
+        SR_LOG("could not write %s", entry->header.Path().string().c_str());
         return;
     }
 
@@ -60,13 +61,20 @@ void ApplyRename(const std::string& name)
     // description and the page still holds the old text.
     SaveCatalog::Refresh();
     SaveLoadHook::RebuildLoadPage();
-    SR_LOG("%d is now '%s'", entry->id, Strings::Localize(header->DisplayName()).c_str());
+    SR_LOG("%d is now '%s'", entry->id,
+           Strings::Localize(entry->header.DisplayName()).c_str());
 }
 
 }  // namespace
 
 void Wire()
 {
+    // The hooks report where the menu is; what to draw there is this layer's to
+    // decide, so nothing below it knows the dialog exists.
+    SaveLoadHook::SetSaveListHandler([](bool onSaveList) {
+        RenameDialog::ShowHint(onSaveList);
+    });
+
     RenameDialog::SetAcceptHandler([](const std::string& typed) {
         // Confirming the line as it was offered is not a rename. A save that
         // has never been renamed carries a localization key rather than text,
@@ -84,21 +92,27 @@ void Wire()
     RenameDialog::SetCancelHandler([] { g_pending.Clear(); });
 }
 
+void MenuClosed()
+{
+    RenameDialog::ShowHint(false);
+}
+
 bool OpenFor(int saveId)
 {
-    const auto entry = SaveCatalog::Find(saveId);
+    const int playline = SaveLoadHook::Playline();
+    const auto entry = SaveCatalog::Find(saveId, playline);
     if (!entry.has_value()) {
-        SR_LOG("no savegame with id %d", saveId);
+        SR_LOG("no savegame with id %d in playline %d", saveId, playline);
         return false;
     }
 
-    const auto header = whs::Description::Read(entry->file);
-    const bool canReset = header.has_value() && header->HasCustomName();
+    const bool canReset = entry->header.HasCustomName();
 
     // The field opens on the line the list currently shows, localized, so a
     // player who only wants to mark the original can type around it instead of
     // retyping it. Clearing the field resets, same as the button.
     g_pending.saveId = saveId;
+    g_pending.playline = playline;
     g_pending.name = entry->displayName;
     if (RenameDialog::Show(entry->displayName, canReset))
         return true;

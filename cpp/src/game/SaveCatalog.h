@@ -1,14 +1,15 @@
 #pragma once
 
-#include <filesystem>
 #include <optional>
 #include <string>
 
+#include "whs/Description.h"
+
 /// One savegame as the load list shows it.
 struct SaveEntry {
-    int id = 0;                    ///< SaveId, the number shown before the name.
-    std::string displayName;       ///< Name read back out of the file.
-    std::filesystem::path file;    ///< Full path to the .whs.
+    int id = 0;                ///< SaveId, the number shown before the name.
+    std::string displayName;   ///< Name read back out of the file, localized.
+    whs::Description header;   ///< The header the name was read from.
 };
 
 /// Reads the game's savegame list and asks it to rebuild after a file changed.
@@ -22,13 +23,15 @@ namespace SaveCatalog {
 /// @return True when the hook was created and enabled.
 bool Install();
 
-/// Returns the savegame with `saveId`, or nothing when it is not listed.
+/// Returns the savegame with `saveId` in `playline`, or nothing when no file of
+/// that id stands there.
 ///
 /// @param saveId Id as shown in the load list.
+/// @param playline Playline the load list is showing, counted from zero.
 /// @return The matching entry.
-std::optional<SaveEntry> Find(int saveId);
+std::optional<SaveEntry> Find(int saveId, int playline);
 
-/// Makes the game re-read every .whs and rebuild its per-type lists.
+/// Makes the game re-read every .whs and rebuild its save lists.
 ///
 /// @return True when the call was made.
 bool Refresh();
