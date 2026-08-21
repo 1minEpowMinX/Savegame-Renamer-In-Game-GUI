@@ -69,6 +69,6 @@ GPLv3, sources at [url=https://github.com/1minEpowMinX/Savegame-Renamer-In-Game-
 [size=6][b]Shout outs[/b][/size]
 Warhorse Studios.
 
-[b]thazer[/b], whose [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url] is the reason this one exists. It showed that the name in the header could be rewritten at all, and after using it I wanted the same thing without leaving the menu. This mod grew out of that idea.
+[url=https://www.nexusmods.com/profile/thazer]thazer[/url], whose [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3488]Rename Your Savegame[/url] is the reason this one exists. It showed that the name in the header could be rewritten at all, and after using it I wanted the same thing without leaving the menu. This mod grew out of that idea.
 
-The author [url=https://github.com/JerryYOJ/libKCD2]JerryYOJ[/url] for [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]KCSE[/url], the [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url] and [url=https://github.com/JerryYOJ/libKCD2]libKCD2[/url], without which none of the game's own machinery would be reachable.
+The author [url=https://www.nexusmods.com/profile/JerryYOJ]JerryYOJ[/url] for [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3332]KCSE[/url], the [url=https://www.nexusmods.com/kingdomcomedeliverance2/mods/3381]Address Library For KCSE[/url] and [url=https://github.com/JerryYOJ/libKCD2]libKCD2[/url], without which none of the game's own machinery would be reachable.
