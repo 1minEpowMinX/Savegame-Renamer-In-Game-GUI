@@ -40,6 +40,9 @@ public:
     /// Returns the save id declared by the SaveId attribute.
     int SaveId() const { return m_saveId; }
 
+    /// Returns the file this description was read from.
+    const std::filesystem::path& Path() const { return m_path; }
+
     /// Returns the name the load list shows for this save.
     ///
     /// A save the mod has not touched carries a localization key here rather

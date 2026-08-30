@@ -5,9 +5,10 @@
 
 #include "whs/Description.h"
 
-// KCD2_TEST_SAVE points at a COPY of a real .whs. The test renames it, resets
-// it and checks the file came back byte-identical in size; without the variable
-// it is skipped, so the suite still runs on a machine without the game.
+// KCD2_TEST_SAVE points at a COPY of a real .whs the mod has never renamed: the
+// test renames it, resets it and checks the file came back byte-identical in
+// size, which holds only from the name the game gave it. Without the variable it
+// is skipped, so the suite still runs on a machine without the game.
 TEST_CASE("A real savegame survives a rename and a reset", "[real]")
 {
     const char* env = std::getenv("KCD2_TEST_SAVE");

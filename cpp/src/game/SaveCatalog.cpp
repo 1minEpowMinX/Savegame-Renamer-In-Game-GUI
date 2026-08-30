@@ -2,6 +2,8 @@
 
 #include <ShlObj.h>
 
+#include <utility>
+
 #include "REL.h"
 #include "Strings.h"
 #include "framework/C_SaveGameDescription.h"
@@ -9,7 +11,7 @@
 
 #include "Hook.h"
 #include "Log.h"
-#include "whs/Description.h"
+#include "whs/Saves.h"
 
 using wh::framework::C_SaveGameDescription;
 using wh::framework::C_SaveGameManager;
@@ -48,45 +50,6 @@ std::filesystem::path SavesRoot()
     return root / L"kingdomcome2" / L"saves";
 }
 
-/// Returns the full path of `fileName` under the playline holding save `saveId`.
-///
-/// Candidates are matched on the SaveId inside the header as well as on the
-/// name. An ambiguous match resolves to an empty path.
-///
-/// @param fileName Bare name such as "permanent3754.whs".
-/// @param saveId Id the header must declare.
-/// @return The resolved path, or an empty path.
-std::filesystem::path ResolvePath(const std::string& fileName, int saveId)
-{
-    const auto root = SavesRoot();
-    if (root.empty())
-        return {};
-
-    // The description carries the bare file name and the manager does not expose
-    // the playline index, so every "<root>/playline*/<name>" is a candidate and
-    // the header is what tells them apart.
-    std::error_code ec;
-    std::filesystem::path found;
-    for (const auto& dir : std::filesystem::directory_iterator(root, ec)) {
-        if (!dir.is_directory(ec))
-            continue;
-        const auto candidate = dir.path() / fileName;
-        if (!std::filesystem::exists(candidate, ec))
-            continue;
-
-        const auto header = whs::Description::Read(candidate);
-        if (!header.has_value() || header->SaveId() != saveId)
-            continue;
-        if (!found.empty()) {
-            SR_LOG("'%s' with id %d exists in more than one playline, skipping",
-                   fileName.c_str(), saveId);
-            return {};
-        }
-        found = candidate;
-    }
-    return found;
-}
-
 }  // namespace
 
 bool Install()
@@ -94,29 +57,34 @@ bool Install()
     return Hook::Install(kUpdateDescriptionsId, &HookedUpdateDescriptions, g_originalUpdate);
 }
 
-std::optional<SaveEntry> Find(int saveId)
+std::optional<SaveEntry> Find(int saveId, int playline)
 {
     if (!g_manager)
         return std::nullopt;
 
-    // Matched on the manager's own description before anything touches the disk:
-    // resolving a path reads the header of every file of that name across the
-    // playlines, and doing it for the whole list would run on each press of the
-    // rename key.
+    const auto root = SavesRoot();
+    int matchedById = 0;
+
+    // Matched on the manager's own descriptions before anything touches the disk,
+    // so the common press of the rename key costs one header read rather than the
+    // whole list.
     for (const auto& slot : g_manager->m_slotsByType) {
         for (const C_SaveGameDescription* desc : slot.m_saves) {
             if (!desc || desc->m_saveIndex != saveId)
                 continue;
+            ++matchedById;
+
+            // Ids are handed out per playline, so the same id and the same file
+            // name occur once in each of them. The description does not say which
+            // playline it came from; the file the page is showing is the one that
+            // exists in the playline the page was built for, and a description
+            // belonging to another one simply resolves to nothing here.
+            auto header = whs::FindSave(root, playline, desc->m_fileName.c_str(), saveId);
+            if (!header.has_value())
+                continue;
 
             SaveEntry entry;
             entry.id = desc->m_saveIndex;
-            entry.file = ResolvePath(desc->m_fileName.c_str(), entry.id);
-            if (entry.file.empty())
-                return std::nullopt;
-
-            const auto header = whs::Description::Read(entry.file);
-            if (!header.has_value())
-                return std::nullopt;
 
             // The line as the load list renders it, so the dialog can offer it
             // for editing and a custom name can be built on top of the original.
@@ -124,9 +92,13 @@ std::optional<SaveEntry> Find(int saveId)
             const std::string objective = Strings::Localize(header->ObjectiveName());
             if (!objective.empty())
                 entry.displayName += " - " + objective;
+            entry.header = std::move(*header);
             return entry;
         }
     }
+
+    if (matchedById > 0)
+        SR_LOG("id %d is listed but no file of it stands in playline %d", saveId, playline);
     return std::nullopt;
 }
 

@@ -55,14 +55,19 @@
 
     <!-- Where the game is installed; the Deploy configuration starts it. -->
     <KCD2Root Condition="'$(KCD2Root)' == ''">$(KCD2_ROOT)</KCD2Root>
-    <KCD2Root Condition="'$(KCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'KCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim())</KCD2Root>
+    <KCD2Root Condition="'$(KCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'KCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim().Trim('"'))</KCD2Root>
 
     <!-- The reverse-engineered headers and the build environment this project is
          a subproject of. -->
     <LibKCD2Root Condition="'$(LibKCD2Root)' == ''">$(LIBKCD2_ROOT)</LibKCD2Root>
-    <LibKCD2Root Condition="'$(LibKCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'LIBKCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim())</LibKCD2Root>
+    <LibKCD2Root Condition="'$(LibKCD2Root)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'LIBKCD2_ROOT\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim().Trim('"'))</LibKCD2Root>
     <LibKCD2Root Condition="'$(LibKCD2Root)' == ''">$(MSBuildProjectDirectory)\..\_deps\libKCD2</LibKCD2Root>
     <LibKCD2Build>$(LibKCD2Root)\.buildenv\build-release</LibKCD2Build>
+
+    <!-- A copy of a real savegame for cpp/tests/RealSave.cpp, which skips itself
+         when nothing names one. -->
+    <KCD2TestSave Condition="'$(KCD2TestSave)' == ''">$(KCD2_TEST_SAVE)</KCD2TestSave>
+    <KCD2TestSave Condition="'$(KCD2TestSave)' == '' and '$(BuildEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(BuildEnvText), 'KCD2_TEST_SAVE\s*=\s*([^\r\n]*)').Groups.get_Item(1).Value.Trim().Trim('"'))</KCD2TestSave>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -119,6 +124,11 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Build' or '$(Configuration)' == 'Release'" Label="Debugging">
     <LocalDebuggerCommand>$(LibKCD2Build)\SavegameRenamer\SavegameRenamerTests.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>$(LibKCD2Build)\SavegameRenamer</LocalDebuggerWorkingDirectory>
+    <!-- The tests read the savegame to work on out of the environment, and the
+         debugger hands the process its own rather than the one build.env was
+         read into. Merged, so the process keeps everything else it needs. -->
+    <LocalDebuggerEnvironment Condition="'$(KCD2TestSave)' != ''">KCD2_TEST_SAVE=$(KCD2TestSave)</LocalDebuggerEnvironment>
+    <LocalDebuggerMergeEnvironment Condition="'$(KCD2TestSave)' != ''">true</LocalDebuggerMergeEnvironment>
   </PropertyGroup>
 
   <!-- The plugin is loaded into the game by KCSE, so the thing to start is the
@@ -131,6 +141,7 @@
   <!-- Wildcards and/or some other MSBuild constructs used in project item definitions are not supported in VC projects. -->
   <ItemGroup>
 	<ClCompile Include="cpp\src\plugin.cpp" />
+    <ClCompile Include="cpp\src\game\MenuSelection.cpp" />
     <ClCompile Include="cpp\src\game\RenameDialog.cpp" />
     <ClCompile Include="cpp\src\game\RenameFlow.cpp" />
 	<ClCompile Include="cpp\src\game\SaveCatalog.cpp" />
@@ -138,19 +149,23 @@
 	<ClCompile Include="cpp\src\game\Strings.cpp" />
 	<ClCompile Include="cpp\src\whs\Description.cpp" />
 	<ClCompile Include="cpp\src\whs\Sanitise.cpp" />
+	<ClCompile Include="cpp\src\whs\Saves.cpp" />
     <ClCompile Include="cpp\tests\DescriptionRead.cpp" />
     <ClCompile Include="cpp\tests\DescriptionSafety.cpp" />
 	<ClCompile Include="cpp\tests\DescriptionRename.cpp" />
 	<ClCompile Include="cpp\tests\DescriptionWrite.cpp" />
 	<ClCompile Include="cpp\tests\RealSave.cpp" />
 	<ClCompile Include="cpp\tests\Sanitise.cpp" />
+	<ClCompile Include="cpp\tests\Saves.cpp" />
   </ItemGroup>
 
   <ItemGroup>
 	<ClInclude Include="cpp\src\Log.h" />
     <ClInclude Include="cpp\include\whs\Description.h" />
 	<ClInclude Include="cpp\include\whs\Sanitise.h" />
+	<ClInclude Include="cpp\include\whs\Saves.h" />
     <ClInclude Include="cpp\src\game\Hook.h" />
+    <ClInclude Include="cpp\src\game\MenuSelection.h" />
     <ClInclude Include="cpp\src\game\RenameDialog.h" />
     <ClInclude Include="cpp\src\game\RenameFlow.h" />
 	<ClInclude Include="cpp\src\game\SaveCatalog.h" />

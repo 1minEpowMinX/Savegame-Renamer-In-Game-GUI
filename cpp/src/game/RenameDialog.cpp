@@ -120,6 +120,17 @@ void ApplyLabels(IUIElement* el)
     Call(el, "SetLabels", "fc_setLabels", args);
 }
 
+/// Forwards a key the engine does not deliver to the movie.
+///
+/// @param action One of "accept", "cancel" or "reset".
+/// @return True when the element accepted the call.
+bool SendInput(const char* action)
+{
+    SUIArguments args;
+    args.AddArgument(action);
+    return Call(DialogElement(), "SetInput", "fc_setInput", args);
+}
+
 /// Forwards the dialog's own keys into the movie while it is open, and consumes
 /// them.
 class KeyListener : public Offsets::IInputEventListener {
@@ -281,13 +292,6 @@ void ShowHint(bool visible)
 
     if (!visible)
         el->SetVisible(false);
-}
-
-bool SendInput(const char* action)
-{
-    SUIArguments args;
-    args.AddArgument(action);
-    return Call(DialogElement(), "SetInput", "fc_setInput", args);
 }
 
 void SetAcceptHandler(std::function<void(const std::string&)> handler)

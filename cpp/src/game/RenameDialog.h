@@ -32,12 +32,6 @@ bool Show(const std::string& currentName, bool canReset);
 /// @param visible Whether the prompt should be on screen.
 void ShowHint(bool visible);
 
-/// Forwards a key the engine does not deliver to the movie.
-///
-/// @param action One of "accept", "cancel" or "reset".
-/// @return True when the element accepted the call.
-bool SendInput(const char* action);
-
 /// Sets the handler called when the player confirms a name.
 ///
 /// @param handler Called with the text as typed.

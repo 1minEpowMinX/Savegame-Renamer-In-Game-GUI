@@ -15,6 +15,7 @@
 #include "crysystem/SSystemGlobalEnvironment.h"
 
 #include "Log.h"
+#include "game/MenuSelection.h"
 #include "game/RenameDialog.h"
 #include "game/RenameFlow.h"
 #include "game/SaveCatalog.h"
@@ -35,7 +36,7 @@ class RenameKeyListener : public Offsets::IInputEventListener {
 
         // Self-gating: the id is -1 unless a savegame row is highlighted, which
         // is what keeps the key inert everywhere else in the menu.
-        const int saveId = SaveLoadHook::SelectedSaveId();
+        const int saveId = MenuSelection::SaveId();
         if (saveId < 0)
             return false;
 
@@ -81,9 +82,8 @@ void InstallUi()
 
 void OnKcseMessage(KCSE::Message* msg)
 {
-    // Leaving the menu for the world takes the prompt with it.
     if (msg && msg->type == KCSE::IMessagingInterface::kMessage_LoadGame)
-        RenameDialog::ShowHint(false);
+        RenameFlow::MenuClosed();
 
     if (msg && msg->type == KCSE::IMessagingInterface::kMessage_DataLoaded)
         InstallUi();

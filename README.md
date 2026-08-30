@@ -22,7 +22,7 @@ replaced, so it does not conflict with other interface mods.
 
 | Path | What it holds |
 |---|---|
-| `cpp/include`, `cpp/src/whs` | the savegame header model, with no dependency on the game |
+| `cpp/include`, `cpp/src/whs` | the savegames on disk, with no dependency on the game |
 | `cpp/src/game` | everything that touches the running game: the hooks, the dialog, the catalog, and the rename they drive |
 | `cpp/tests` | Catch2 tests for the model, run offline on copies of real saves |
 | `flash/` | the dialog: `base.xml` is the SWF skeleton, `renamer.as` is all of the behaviour |
