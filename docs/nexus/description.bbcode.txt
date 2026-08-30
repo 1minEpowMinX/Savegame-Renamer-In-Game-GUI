@@ -28,6 +28,11 @@ The quest name and the objective printed under it (if it exist via "-" symbol) 
 
 Nothing else in the file is touched, and the save data itself is copied through byte for byte. The write goes to a temporary file and replaces the original only once complete, so an interrupted write cannot leave you with half a savegame.
 
+[size=6][b]Playlines[/b][/size]
+A playline cannot be given a name of its own. The game rebuilds that heading from a template every time the menu opens, and a playline is only a folder of saves with nowhere to keep one.
+
+The line underneath it is another matter: it is the quest name of that playline's most recent save, which is the very field this mod rewrites. Rename the newest save in a playline and the [i]Select Playline[/i] screen carries your text. Not a real name for the playthrough, but it labels the slot.
+
 [size=6][b]Languages[/b][/size]
 Czech, English, French, German, Italian, Spanish, Portuguese, Polish, Russian, Ukrainian, Turkish, Japanese, Korean, Simplified and Traditional Chinese, and Vietnamese — every language the game ships with.
 
